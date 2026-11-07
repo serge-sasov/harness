@@ -8,7 +8,7 @@
 | status | done |
 | depends_on | T-005 |
 | artifacts | `harness/agents/analyst.md` |
-| commit | записан в T-007 |
+| commit | 9ad3ec9 |
 
 ## Acceptance
 
