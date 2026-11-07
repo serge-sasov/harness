@@ -8,7 +8,7 @@
 | status | done |
 | depends_on | T-005 |
 | artifacts | `harness/agents/coder.md` |
-| commit | записан в T-009 |
+| commit | e4a4686 |
 
 ## Acceptance
 
