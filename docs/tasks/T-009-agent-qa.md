@@ -8,7 +8,7 @@
 | status | done |
 | depends_on | T-005 |
 | artifacts | `harness/agents/qa.md` |
-| commit | записан в T-010 |
+| commit | 95b3949 |
 
 ## Acceptance
 

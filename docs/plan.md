@@ -25,8 +25,8 @@
 | T-006 | Sub-agent `analyst` | analyst | T-005 | done | `harness/agents/analyst.md` | 9ad3ec9 |
 | T-007 | Sub-agent `architect` | architect | T-005 | done | `harness/agents/architect.md` | 061f8e5 |
 | T-008 | Sub-agent `coder` | coder | T-005 | done | `harness/agents/coder.md` | e4a4686 |
-| T-009 | Sub-agent `qa` | qa | T-005 | done | `harness/agents/qa.md` | см. T-010 |
-| T-010 | Sub-agent `doc-writer` | doc-writer | T-005 | pending | `harness/agents/doc-writer.md` | — |
+| T-009 | Sub-agent `qa` | qa | T-005 | done | `harness/agents/qa.md` | 95b3949 |
+| T-010 | Sub-agent `doc-writer` | doc-writer | T-005 | done | `harness/agents/doc-writer.md` | см. T-011 |
 | T-011 | Sub-agent `orchestrator` | orchestrator | T-005 | pending | `harness/agents/orchestrator.md` | — |
 | T-012 | Команды opencode | orchestrator | T-006..T-011 | pending | `harness/commands/` | — |
 | T-013 | Smoke-test полного цикла | qa | T-012 | pending | `docs/qa/`, пилотные артефакты | — |

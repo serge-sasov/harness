@@ -22,7 +22,7 @@ fork again
   fork again
     #90EE90:T-009 Sub-agent qa;
   fork again
-    #D3D3D3:T-010 Sub-agent doc-writer;
+    #90EE90:T-010 Sub-agent doc-writer;
   fork again
     #D3D3D3:T-011 Sub-agent orchestrator;
   end fork
