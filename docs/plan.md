@@ -22,7 +22,7 @@
 | T-003 | Board + карточки задач | orchestrator | T-002 | done | `docs/plan.md`, `docs/tasks/` | c621012 |
 | T-004 | Диаграмма активности + рендер SVG | orchestrator | T-003 | done | `docs/activity.puml`, `docs/activity.svg` | 1ede40d |
 | T-005 | Шаблоны артефактов | orchestrator | T-002 | done | `harness/templates/` | см. T-006 |
-| T-006 | Sub-agent `analyst` | analyst | T-005 | pending | `harness/agents/analyst.md` | — |
+| T-006 | Sub-agent `analyst` | analyst | T-005 | done | `harness/agents/analyst.md` | см. T-007 |
 | T-007 | Sub-agent `architect` | architect | T-005 | pending | `harness/agents/architect.md` | — |
 | T-008 | Sub-agent `coder` | coder | T-005 | pending | `harness/agents/coder.md` | — |
 | T-009 | Sub-agent `qa` | qa | T-005 | pending | `harness/agents/qa.md` | — |

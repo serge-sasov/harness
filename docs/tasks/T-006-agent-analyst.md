@@ -5,19 +5,19 @@
 | id | T-006 |
 | title | Ролевой sub-agent `analyst` (сбор требований, RAG-анализ) |
 | role | analyst |
-| status | pending |
+| status | done |
 | depends_on | T-005 |
 | artifacts | `harness/agents/analyst.md` |
-| commit | — |
+| commit | записан в T-007 |
 
 ## Acceptance
 
-- [ ] Frontmatter: `mode: subagent`, `model: ollama-metrics/qwen3.8:27b-64k`, `temperature: 0.1`.
-- [ ] Permission: edit только `docs/analysis/**` и `docs/tasks/**` (лог своей задачи); `task: deny`; deny на `~/.config/opencode/**`, `D:..Q:`.
-- [ ] Промпт ссылается на регламент `harness/process.md` п. 4–7.
-- [ ] Определены вход (карточка задачи, требования, RAG) и выход (docs/analysis/*.md).
-- [ ] Указан инструментарий: `local-rag_rag_search`, `local-rag_rag_context`.
+- [x] Frontmatter: `mode: subagent`, `model: ollama-metrics/qwen3.8:27b-64k`, `temperature: 0.1`.
+- [x] Permission: edit только `docs/analysis/**` и `docs/tasks/**` (лог своей задачи); `task: deny`; deny на `~/.config/opencode/**`, `D:..Q:`.
+- [x] Промпт ссылается на регламент `harness/process.md` п. 4–7.
+- [x] Определены вход (карточка задачи, требования, RAG) и выход (docs/analysis/*.md).
+- [x] Указан инструментарий: `local-rag_rag_search`, `local-rag_rag_context`.
 
 ## Log
 
-- 2026-11-07: задача создана.
+- 2026-11-07: создан `harness/agents/analyst.md` (роль, зона записи, RAG-инструменты, запреты).
