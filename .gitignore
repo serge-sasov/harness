@@ -1,0 +1,15 @@
+# Секреты
+.env
+*.pem
+*.key
+secrets.*
+
+# ОС
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Временные файлы
+*.tmp
+*.log
+__pycache__/
