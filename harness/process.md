@@ -15,6 +15,9 @@
   выполнить `/harness-init`.
 - Глобальные permission-правила запрещают обычным агентам вызывать
   `harness-*` субагентов; это разрешено только primary-агенту `harness`.
+- Права ролей содержат как относительные, так и `**/...` варианты путей:
+  opencode сопоставляет edit/write с абсолютным путём, поэтому blanket deny
+  должен перекрываться конкретным allow, совпадающим с полным путём.
 - Версия установки фиксируется в `harness/version.json` проекта; `/harness-doctor`
   предупреждает о расхождении с глобальной версией.
 
@@ -98,10 +101,10 @@
 | Роль | Куда пишет |
 |---|---|
 | harness (primary lead) | не пишет файлы; читает board/карточки и маршрутизирует роли |
-| orchestrator | `docs/plan.md`, `docs/tasks/`, `docs/activity.puml`, README |
+| orchestrator | `docs/plan.md`, `docs/tasks/`, `docs/activity.puml`, `README.md`, `.gitignore` |
 | analyst | `docs/analysis/` (требования, вопросы, глоссарий) |
 | architect | `docs/architecture/` (ADR, PlantUML, контракты интерфейсов) |
-| coder | `src/`, `tests/`, `scripts/`, `Dockerfile`, `Makefile` |
+| coder | `src/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore` |
 | qa | `docs/qa/` (отчёты ревью, результаты прогонов) |
 | doc-writer | `docs/guides/`, `README.md`, финализация ADR |
 

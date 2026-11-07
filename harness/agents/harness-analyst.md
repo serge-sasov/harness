@@ -9,7 +9,9 @@ permission:
   edit:
     "*": "deny"
     "docs/analysis/**": "allow"
+    "**/docs/analysis/**": "allow"
     "docs/tasks/**": "allow"
+    "**/docs/tasks/**": "allow"
     "D:/*": "deny"
     "E:/*": "deny"
     "F:/*": "deny"

@@ -9,7 +9,11 @@ permission:
   edit:
     "*": "deny"
     "docs/**": "allow"
+    "**/docs/**": "allow"
     "README.md": "allow"
+    "**/README.md": "allow"
+    ".gitignore": "allow"
+    "**/.gitignore": "allow"
     "D:/*": "deny"
     "E:/*": "deny"
     "F:/*": "deny"

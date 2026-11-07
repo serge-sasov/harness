@@ -138,6 +138,36 @@ Lead не редактирует файлы сам; board и коммиты вы
 }
 ```
 
+## 5.1. Права и абсолютные пути
+
+opencode сопоставляет `edit`/`write` с абсолютным путём (Windows-разделители
+нормализуются в `/`). Поэтому относительного шаблона `docs/**` недостаточно:
+он соответствует `docs/plan.md`, но не `C:/project/docs/plan.md`.
+
+В ролях harness поэтому продублированы оба варианта:
+
+```yaml
+edit:
+  "*": "deny"
+  "docs/**": "allow"
+  "**/docs/**": "allow"
+  ".gitignore": "allow"
+  "**/.gitignore": "allow"
+```
+
+`**/docs/**` и `**/.gitignore` матчатся на абсолютный путь при любом
+расположении проекта и при workspace root `/`. Не удаляйте абсолютные
+варианты: blanket deny `"*": "deny"` остаётся, а конкретные allow-правила
+должны совпасть с полным путём.
+
+`.gitignore` разрешён ролям `harness-orchestrator` и `harness-coder`.
+Остальные роли его не правят — это осознанное ограничение.
+
+Если opencode показывает workspace root `/`, запускайте его из каталога
+проекта и проверьте `git rev-parse --show-toplevel`: корень должен совпадать
+с проектом. Абсолютные варианты паттернов защищают от этой проблемы, но
+корректный workspace root всё равно предпочтителен.
+
 ## 6. Версии и pin-версии
 
 - Глобальная версия: `~/.config/opencode/harness/version.json`.
@@ -190,6 +220,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/uninstall.ps
 | `build` не может вызвать роли | глобальный `permission.task` deny | это ожидаемое поведение |
 | harness не вызывает роли | нет allow-правил у агента `harness` | проверить `opencode debug agent harness` |
 | проект не запускается | нет `harness/process.md` или `docs/plan.md` | выполнить `/harness-init` |
+| edit `docs/plan.md` заблокирован, хотя есть `docs/**` allow | путь абсолютный, относительный шаблон не совпал | обновить harness, перезапустить opencode; в ролях должны быть `**/docs/**` |
+| write `.gitignore` заблокирован | `.gitignore` не входит в зону роли | использовать `harness-orchestrator` или `harness-coder` |
+| workspace root `/` | opencode запущен не из корня проекта / неверный cwd | запустить из проекта, проверить `git rev-parse --show-toplevel` |
 | старые агенты обходят gating | остались `.opencode/agents/analyst.md` и т.п. | удалить старые копии или переименовать в `harness-*` |
 | конфиг не пропатчился | в `opencode.jsonc` есть комментарии | добавить `permission.task` вручную |
 | версия отличается | проект инициализирован старой версией | обновить проект осознанно; см. pin |

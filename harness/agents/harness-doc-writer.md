@@ -9,9 +9,13 @@ permission:
   edit:
     "*": "deny"
     "README.md": "allow"
+    "**/README.md": "allow"
     "docs/guides/**": "allow"
+    "**/docs/guides/**": "allow"
     "docs/architecture/adr-*.md": "allow"
+    "**/docs/architecture/adr-*.md": "allow"
     "docs/tasks/**": "allow"
+    "**/docs/tasks/**": "allow"
     "D:/*": "deny"
     "E:/*": "deny"
     "F:/*": "deny"

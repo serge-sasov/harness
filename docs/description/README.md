@@ -96,12 +96,17 @@ sequence-диаграммы каждого сценария, концептуа�
 | Роль | Зона записи | Запрещено |
 |---|---|---|
 | harness lead | не пишет файлы; только читает и делегирует | edit/write, git commit, вызов ролей вне harness |
-| orchestrator | `docs/**`, `README.md` | работа других ролей, `git push/tag/reset/rebase` |
+| orchestrator | `docs/**`, `README.md`, `.gitignore` | работа других ролей, `git push/tag/reset/rebase` |
 | analyst | `docs/analysis/**`, `docs/tasks/**` (свой статус/лог) | архитектура, код, тесты, коммиты |
 | architect | `docs/architecture/**`, `docs/tasks/**` | код, тесты, правка `docs/analysis` |
-| coder | `src/**`, `tests/**`, `scripts/**`, `Dockerfile`, `docker-compose*.yml`, `Makefile` | prod-действия, `git commit`, `docker push`, облачные CLI |
+| coder | `src/**`, `tests/**`, `scripts/**`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore` | prod-действия, `git commit`, `docker push`, облачные CLI |
 | qa | `docs/qa/**`, `docs/tasks/**` | исправление кода и артефактов, коммиты, деплой |
 | doc-writer | `README.md`, `docs/guides/**`, `docs/architecture/adr-*.md` (редактура) | код, тесты, CI/CD, изменение смысла ADR |
+
+Права содержат и относительные, и `**/...` варианты паттернов: opencode
+сопоставляет edit/write с абсолютным путём, поэтому blanket deny `"*": "deny"`
+перекрывается конкретным allow, совпадающим с полным путём. `.gitignore`
+разрешён orchestrator и coder.
 
 Общие запреты: правка `~/.config/opencode/**`, секреты в коде/логах/коммитах,
 вложенный вызов sub-agent'ов, выход за пределы диска `C:`, prod-деплой.

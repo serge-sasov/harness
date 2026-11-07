@@ -7,7 +7,9 @@ permission:
   edit:
     "*": "deny"
     "docs/qa/**": "allow"
+    "**/docs/qa/**": "allow"
     "docs/tasks/**": "allow"
+    "**/docs/tasks/**": "allow"
     "D:/*": "deny"
     "E:/*": "deny"
     "F:/*": "deny"

@@ -633,7 +633,7 @@ sequence-диаграммы каждого сценария, концептуа�
 </tr>
 <tr>
 <td>orchestrator</td>
-<td><code>docs/**</code>, <code>README.md</code></td>
+<td><code>docs/**</code>, <code>README.md</code>, <code>.gitignore</code></td>
 <td>работа других ролей, <code>git push/tag/reset/rebase</code></td>
 </tr>
 <tr>
@@ -648,7 +648,7 @@ sequence-диаграммы каждого сценария, концептуа�
 </tr>
 <tr>
 <td>coder</td>
-<td><code>src/**</code>, <code>tests/**</code>, <code>scripts/**</code>, <code>Dockerfile</code>, <code>docker-compose*.yml</code>, <code>Makefile</code></td>
+<td><code>src/**</code>, <code>tests/**</code>, <code>scripts/**</code>, <code>Dockerfile</code>, <code>docker-compose*.yml</code>, <code>Makefile</code>, <code>.gitignore</code></td>
 <td>prod-действия, <code>git commit</code>, <code>docker push</code>, облачные CLI</td>
 </tr>
 <tr>
@@ -663,6 +663,10 @@ sequence-диаграммы каждого сценария, концептуа�
 </tr>
 </tbody>
 </table></div>
+<p>Права содержат и относительные, и <code>**/...</code> варианты паттернов: opencode
+сопоставляет edit/write с абсолютным путём, поэтому blanket deny <code>"*": "deny"</code>
+перекрывается конкретным allow, совпадающим с полным путём. <code>.gitignore</code>
+разрешён orchestrator и coder.</p>
 <p>Общие запреты: правка <code>~/.config/opencode/**</code>, секреты в коде/логах/коммитах,
 вложенный вызов sub-agent'ов, выход за пределы диска <code>C:</code>, prod-деплой.</p>
 <h3 id="24-источники-истины-и-артефакты">2.4 Источники истины и артефакты</h3>
