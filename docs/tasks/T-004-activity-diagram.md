@@ -8,7 +8,7 @@
 | status | done |
 | depends_on | T-003 |
 | artifacts | `docs/activity.puml`, `docs/activity.svg` |
-| commit | записан в T-005 |
+| commit | 1ede40d |
 
 ## Acceptance
 

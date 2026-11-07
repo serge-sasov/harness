@@ -5,18 +5,18 @@
 | id | T-005 |
 | title | Шаблоны task-card, adr, plan-row |
 | role | orchestrator |
-| status | pending |
+| status | done |
 | depends_on | T-002 |
 | artifacts | `harness/templates/task-card.md`, `harness/templates/adr.md`, `harness/templates/plan-row.md` |
-| commit | — |
+| commit | записан в T-006 |
 
 ## Acceptance
 
-- [ ] `task-card.md` содержит все поля карточки из `harness/process.md` п. 3.
-- [ ] `adr.md` — шаблон Architecture Decision Record (контекст, решение, альтернативы, последствия).
-- [ ] `plan-row.md` — шаблон строки board и правила заполнения.
-- [ ] Шаблоны не содержат placeholder-мусора, готовы к копированию.
+- [x] `task-card.md` содержит все поля карточки из `harness/process.md` п. 3.
+- [x] `adr.md` — шаблон Architecture Decision Record (контекст, решение, альтернативы, последствия).
+- [x] `plan-row.md` — шаблон строки board и правила заполнения.
+- [x] Шаблоны не содержат placeholder-мусора, готовы к копированию.
 
 ## Log
 
-- 2026-11-07: задача создана.
+- 2026-11-07: созданы `harness/templates/task-card.md`, `adr.md`, `plan-row.md`.

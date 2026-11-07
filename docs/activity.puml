@@ -10,9 +10,9 @@ start
 #90EE90:T-002 Единый регламент\nharness/process.md;
 fork
   #90EE90:T-003 Board + карточки задач\ndocs/plan.md, docs/tasks/;
-  #FFE082:T-004 Activity-диаграмма + SVG\nцветовые статусы задач;
+  #90EE90:T-004 Activity-диаграмма + SVG\nцветовые статусы задач;
 fork again
-  #D3D3D3:T-005 Шаблоны артефактов\nharness/templates/;
+  #90EE90:T-005 Шаблоны артефактов\nharness/templates/;
   fork
     #D3D3D3:T-006 Sub-agent analyst;
   fork again
