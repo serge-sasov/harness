@@ -1,0 +1,42 @@
+@startuml
+skinparam defaultFontName Segoe UI
+skinparam ActivityBackgroundColor #FFFFFF
+skinparam ActivityBorderColor #555555
+skinparam ArrowColor #555555
+title Локальный harness — план задач T-001..T-013
+
+start
+#90EE90:T-001 Git bootstrap\n.gitignore, README;
+#90EE90:T-002 Единый регламент\nharness/process.md;
+fork
+  #90EE90:T-003 Board + карточки задач\ndocs/plan.md, docs/tasks/;
+  #FFE082:T-004 Activity-диаграмма + SVG\nцветовые статусы задач;
+fork again
+  #D3D3D3:T-005 Шаблоны артефактов\nharness/templates/;
+  fork
+    #D3D3D3:T-006 Sub-agent analyst;
+  fork again
+    #D3D3D3:T-007 Sub-agent architect;
+  fork again
+    #D3D3D3:T-008 Sub-agent coder;
+  fork again
+    #D3D3D3:T-009 Sub-agent qa;
+  fork again
+    #D3D3D3:T-010 Sub-agent doc-writer;
+  fork again
+    #D3D3D3:T-011 Sub-agent orchestrator;
+  end fork
+end fork
+#D3D3D3:T-012 Команды opencode\nrole-run, board-update, board-report;
+#D3D3D3:T-013 Smoke-test полного цикла\nпилотная задача;
+stop
+
+legend right
+|= Цвет |= Статус |
+|<#90EE90>| done |
+|<#FFE082>| in_progress |
+|<#D3D3D3>| pending |
+|<#FF9090>| failed |
+|<#FFB347>| blocked |
+endlegend
+@enduml

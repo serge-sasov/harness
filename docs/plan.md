@@ -19,8 +19,8 @@
 |---|---|---|---|---|---|---|
 | T-001 | Git bootstrap: `git init`, `.gitignore`, README | orchestrator | — | done | `.gitignore`, `README.md` | 2a19b33 |
 | T-002 | Единый регламент процесса | orchestrator | T-001 | done | `harness/process.md` | 9d713d8 |
-| T-003 | Board + карточки задач | orchestrator | T-002 | done | `docs/plan.md`, `docs/tasks/` | см. T-004 |
-| T-004 | Диаграмма активности + рендер SVG | orchestrator | T-003 | pending | `docs/activity.puml`, `docs/activity.svg` | — |
+| T-003 | Board + карточки задач | orchestrator | T-002 | done | `docs/plan.md`, `docs/tasks/` | c621012 |
+| T-004 | Диаграмма активности + рендер SVG | orchestrator | T-003 | done | `docs/activity.puml`, `docs/activity.svg` | см. T-005 |
 | T-005 | Шаблоны артефактов | orchestrator | T-002 | pending | `harness/templates/` | — |
 | T-006 | Sub-agent `analyst` | analyst | T-005 | pending | `harness/agents/analyst.md` | — |
 | T-007 | Sub-agent `architect` | architect | T-005 | pending | `harness/agents/architect.md` | — |

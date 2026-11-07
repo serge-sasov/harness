@@ -8,7 +8,7 @@
 | status | done |
 | depends_on | T-002 |
 | artifacts | `docs/plan.md`, `docs/tasks/T-001..T-013-*.md` |
-| commit | записан в T-004 |
+| commit | c621012 |
 
 ## Acceptance
 
