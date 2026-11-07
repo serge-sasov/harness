@@ -19,6 +19,8 @@
 - Права ролей содержат как относительные, так и `**/...` варианты путей:
   opencode сопоставляет edit/write с абсолютным путём, поэтому blanket deny
   должен перекрываться конкретным allow, совпадающим с полным путём.
+- Проблемы и найденные решения фиксируются ролями в `docs/issues/` через
+  skill `harness-issues`; индекс ведёт orchestrator.
 - Версия установки фиксируется в `harness/version.json` проекта; `/harness-doctor`
   предупреждает о расхождении с глобальной версией.
 
@@ -109,6 +111,9 @@
 | qa | `docs/qa/` (отчёты ревью, результаты прогонов) |
 | doc-writer | `docs/guides/`, `README.md`, финализация ADR |
 
+Все роли могут создавать issue-файлы в `docs/issues/`; индекс
+`docs/issues/README.md` ведёт и сверяет orchestrator.
+
 ## 9. Запреты
 
 - Правка `~/.config/opencode/**` и системных конфигов.
@@ -116,3 +121,19 @@
 - Секреты, токены, ключи в коде, логах, коммитах.
 - Вложенный вызов под-агентов (`task: deny` у ролевых sub-agent'ов; primary `harness` имеет task allow только для harness-ролей).
 - Выход за пределы диска `C:` (см. permissions агентов).
+
+## 10. Учёт проблем и решений
+
+- Любая роль, столкнувшаяся с проблемой, блокировкой, permission deny, сбоем
+  MCP/RAG/модели, git/board или нашедшая workaround, создаёт issue-запись.
+- Запись создаётся через skill `harness-issues` и
+  `harness/scripts/new-issue.ps1`; fallback — вручную по
+  `harness/templates/issue.md`.
+- Один файл — одна проблема: `docs/issues/ISSUE-YYYYMMDD-HHMMSS-<slug>.md`.
+- Перечень ведётся в `docs/issues/README.md`; индекс сверяет и коммитит
+  orchestrator.
+- Обязательные поля: статус, severity, type, source, role, абсолютный location,
+  симптомы, причина, решение/workaround, проверка, prevention, ссылки.
+- Issue ID указывается в логе карточки задачи. Issue не заменяет карточку.
+- Секреты, токены и содержимое `.env` в issue не записываются.
+- После решения статус переводится в `resolved`/`workaround`; история не удаляется.

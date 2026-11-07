@@ -51,6 +51,9 @@ $requiredSource = @(
     (Join-Path $SourceRoot "agents\harness-orchestrator.md"),
     (Join-Path $SourceRoot "commands\harness-run.md"),
     (Join-Path $SourceRoot "skills\harness\SKILL.md"),
+    (Join-Path $SourceRoot "skills\harness-issues\SKILL.md"),
+    (Join-Path $SourceRoot "templates\issue.md"),
+    (Join-Path $SourceRoot "scripts\new-issue.ps1"),
     (Join-Path $SourceRoot "process.md"),
     (Join-Path $SourceRoot "version.json")
 )
@@ -58,6 +61,11 @@ foreach ($item in $requiredSource) {
     if (-not (Test-Path -LiteralPath $item)) {
         throw "Не найден обязательный файл harness: $item"
     }
+}
+
+$sourceSkills = @(Get-ChildItem -LiteralPath (Join-Path $SourceRoot "skills") -Directory)
+if ($sourceSkills.Count -eq 0) {
+    throw "В $SourceRoot\skills нет ни одного skill."
 }
 
 New-Item -ItemType Directory -Force -Path $BackupRoot | Out-Null
@@ -75,8 +83,13 @@ foreach ($pattern in @("harness-*.md")) {
     Get-ChildItem -LiteralPath (Join-Path $GlobalRoot "commands") -Filter $pattern -File -ErrorAction SilentlyContinue |
         ForEach-Object { Backup-IfExists -Path $_.FullName -BackupRoot (Join-Path $BackupRoot "commands") }
 }
-if (Test-Path -LiteralPath (Join-Path $GlobalRoot "skills\harness")) {
-    Backup-IfExists -Path (Join-Path $GlobalRoot "skills\harness") -BackupRoot (Join-Path $BackupRoot "skills")
+if (Test-Path -LiteralPath (Join-Path $GlobalRoot "skills")) {
+    foreach ($skill in $sourceSkills) {
+        $targetSkill = Join-Path (Join-Path $GlobalRoot "skills") $skill.Name
+        if (Test-Path -LiteralPath $targetSkill) {
+            Backup-IfExists -Path $targetSkill -BackupRoot (Join-Path $BackupRoot "skills")
+        }
+    }
 }
 if (Test-Path -LiteralPath (Join-Path $GlobalRoot "harness")) {
     Backup-IfExists -Path (Join-Path $GlobalRoot "harness") -BackupRoot (Join-Path $BackupRoot "harness")
@@ -85,10 +98,12 @@ if (Test-Path -LiteralPath (Join-Path $GlobalRoot "opencode.jsonc")) {
     Copy-Item -LiteralPath (Join-Path $GlobalRoot "opencode.jsonc") -Destination (Join-Path $BackupRoot "opencode.jsonc") -Force
 }
 
-# Копирование агентов, команд, skill и общих файлов
+# Копирование агентов, команд, skills и общих файлов
 Copy-Item -Path (Join-Path $SourceRoot "agents\*.md") -Destination (Join-Path $GlobalRoot "agents") -Force
 Copy-Item -Path (Join-Path $SourceRoot "commands\*.md") -Destination (Join-Path $GlobalRoot "commands") -Force
-Copy-Item -Path (Join-Path $SourceRoot "skills\harness") -Destination (Join-Path $GlobalRoot "skills") -Recurse -Force
+foreach ($skill in $sourceSkills) {
+    Copy-Item -Path $skill.FullName -Destination (Join-Path $GlobalRoot "skills") -Recurse -Force
+}
 
 $globalHarness = Join-Path $GlobalRoot "harness"
 Copy-Item -Path (Join-Path $SourceRoot "process.md") -Destination $globalHarness -Force
@@ -213,7 +228,7 @@ Write-Host ""
 Write-Host "Harness установлен глобально для пользователя $UserProfile"
 Write-Host "  agents:   $(Join-Path $GlobalRoot 'agents')"
 Write-Host "  commands: $(Join-Path $GlobalRoot 'commands')"
-Write-Host "  skill:    $(Join-Path $GlobalRoot 'skills\harness')"
+Write-Host "  skills:   $($sourceSkills.Name -join ', ')"
 Write-Host "  support:  $globalHarness"
 Write-Host "  backup:   $BackupRoot"
 Write-Host ""

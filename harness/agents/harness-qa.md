@@ -10,6 +10,8 @@ permission:
     "**/docs/qa/**": "allow"
     "docs/tasks/**": "allow"
     "**/docs/tasks/**": "allow"
+    "docs/issues/**": "allow"
+    "**/docs/issues/**": "allow"
     "D:/*": "deny"
     "E:/*": "deny"
     "F:/*": "deny"
@@ -55,6 +57,7 @@ permission:
     "*mypy*": "allow"
     "*eslint*": "allow"
     "*Test-Path*": "allow"
+    "*new-issue.ps1*": "allow"
     "*git commit*": "deny"
     "*git push*": "deny"
     "*Remove-Item*": "deny"
@@ -77,6 +80,7 @@ permission:
 ## Артефакты (единственное место записи)
 
 - `docs/qa/review-T-XXX.md` — отчёт ревью: проверяемые критерии, результаты, замечания, вердикт.
+- `docs/issues/` — issue-записи о проблемах и решениях (skill `harness-issues`).
 - `docs/tasks/T-XXX-*.md` — только статус/лог собственной задачи.
 
 ## Запрещено

@@ -31,7 +31,7 @@ package "Источники истины" {
 }
 
 package "Артефакты" {
-  component "docs/analysis\ndocs/architecture\ndocs/qa\ndocs/guides" as docs
+  component "docs/analysis\ndocs/architecture\ndocs/qa\ndocs/guides\ndocs/issues" as docs
   component "src, tests, scripts\nDockerfile, compose" as code
   component "activity.puml / .svg" as activity
 }
@@ -72,6 +72,7 @@ qa --> tiel
 orch --> board : статусы и коммиты
 orch --> cards : acceptance / блокеры
 orch --> activity : цвет статуса
+orch --> docs : issue index
 orch --> puml : check_syntax / render
 orch --> git : add + commit
 

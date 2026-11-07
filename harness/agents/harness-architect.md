@@ -12,6 +12,8 @@ permission:
     "**/docs/architecture/**": "allow"
     "docs/tasks/**": "allow"
     "**/docs/tasks/**": "allow"
+    "docs/issues/**": "allow"
+    "**/docs/issues/**": "allow"
     "D:/*": "deny"
     "E:/*": "deny"
     "F:/*": "deny"
@@ -48,6 +50,7 @@ permission:
     "git status*": "allow"
     "git diff*": "allow"
     "git log*": "allow"
+    "*new-issue.ps1*": "allow"
     "*git commit*": "deny"
     "*git push*": "deny"
     "*Remove-Item*": "deny"
@@ -73,6 +76,7 @@ permission:
 - `docs/architecture/adr-NNN-<slug>.md` — решения по шаблону ADR.
 - `docs/architecture/<slug>.puml` и `<slug>.svg` — схемы.
 - `docs/architecture/contracts-<slug>.md` — интерфейсы и форматы.
+- `docs/issues/` — issue-записи о проблемах и решениях (skill `harness-issues`).
 - `docs/tasks/T-XXX-*.md` — только статус/лог собственной задачи.
 
 ## Обязательный контроль схем

@@ -37,11 +37,14 @@ $globalFiles = @(
     (Join-Path $GlobalRoot "commands\harness-board-report.md"),
     (Join-Path $GlobalRoot "commands\harness-doctor.md"),
     (Join-Path $GlobalRoot "skills\harness\SKILL.md"),
+    (Join-Path $GlobalRoot "skills\harness-issues\SKILL.md"),
     (Join-Path $GlobalHarness "process.md"),
     (Join-Path $GlobalHarness "version.json"),
     (Join-Path $GlobalHarness "templates\task-card.md"),
     (Join-Path $GlobalHarness "templates\adr.md"),
-    (Join-Path $GlobalHarness "templates\plan-row.md")
+    (Join-Path $GlobalHarness "templates\plan-row.md"),
+    (Join-Path $GlobalHarness "templates\issue.md"),
+    (Join-Path $GlobalHarness "scripts\new-issue.ps1")
 )
 $missingGlobal = @()
 foreach ($file in $globalFiles) {
@@ -112,6 +115,21 @@ if ((Test-Path -LiteralPath $marker) -and (Test-Path -LiteralPath $plan)) {
     }
     else {
         Write-Warn "нет harness/version.json; выполните /harness-init -Force или добавьте файл"
+    }
+    $issuesIndex = Join-Path $Project "docs\issues\README.md"
+    $issueTemplate = Join-Path $Project "harness\templates\issue.md"
+    $issueScript = Join-Path $Project "harness\scripts\new-issue.ps1"
+    if (Test-Path -LiteralPath $issuesIndex) {
+        Write-Ok "журнал проблем docs/issues/README.md существует"
+    }
+    else {
+        Write-Warn "docs/issues/README.md ещё не создан; появится при первом issue"
+    }
+    if ((Test-Path -LiteralPath $issueTemplate) -and (Test-Path -LiteralPath $issueScript)) {
+        Write-Ok "issue-шаблон и new-issue.ps1 доступны в проекте"
+    }
+    else {
+        Write-Warn "нет harness/templates/issue.md или harness/scripts/new-issue.ps1; выполните /harness-init -Force"
     }
 }
 else {

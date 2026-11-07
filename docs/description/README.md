@@ -66,7 +66,7 @@ sequence-диаграммы каждого сценария, концептуа�
 | Роли | `harness-orchestrator`, `harness-analyst`, `harness-architect`, `harness-coder`, `harness-qa`, `harness-doc-writer` | выполнение работ по зонам ответственности |
 | Модели | `qwen3.8:27b-64k`, `tiel-coder:35b-a3b-mtp-128k` (text/vision) | локальный инференс без внешних API |
 | Источники истины | `docs/plan.md`, `docs/tasks/*.md` | состав работ, статусы, зависимости, acceptance |
-| Артефакты | `docs/analysis`, `docs/architecture`, `docs/qa`, `docs/guides`, `src`, `tests` | результаты ролей |
+| Артефакты | `docs/analysis`, `docs/architecture`, `docs/qa`, `docs/guides`, `docs/issues`, `src`, `tests` | результаты ролей |
 | Инструменты | MCP `plantuml-render`, `local-rag`, Git | проверка/рендер схем, поиск по источникам, версионирование |
 | Пилот | FastAPI REST API, NoteService, NoteRepository, SQLite | сквозной пример реализации |
 
@@ -106,7 +106,8 @@ sequence-диаграммы каждого сценария, концептуа�
 Права содержат и относительные, и `**/...` варианты паттернов: opencode
 сопоставляет edit/write с абсолютным путём, поэтому blanket deny `"*": "deny"`
 перекрывается конкретным allow, совпадающим с полным путём. `.gitignore`
-разрешён orchestrator и coder.
+разрешён orchestrator и coder. Все роли могут создавать issue-файлы в
+`docs/issues/**`; индекс ведёт orchestrator.
 
 Общие запреты: правка `~/.config/opencode/**`, секреты в коде/логах/коммитах,
 вложенный вызов sub-agent'ов, выход за пределы диска `C:`, prod-деплой.
@@ -127,6 +128,7 @@ sequence-диаграммы каждого сценария, концептуа�
 | Код и тесты | `src/`, `tests/`, `scripts/`, `Dockerfile`, compose, `Makefile` | coder |
 | Activity-диаграмма | `docs/activity.puml`, `docs/activity.svg` | orchestrator |
 | Гайды | `docs/guides/**`, `README.md` | doc-writer |
+| Журнал проблем | `docs/issues/ISSUE-*.md`, `docs/issues/README.md` | все роли; индекс — orchestrator |
 
 ---
 
@@ -393,6 +395,18 @@ compose, Makefile, скрипты), зелёные тесты и локальн�
 Исходник: [`docs/activity.puml`](../activity.puml). Зелёный — `done`, серый —
 `pending`, жёлтый — `in_progress`, красный — `failed`, оранжевый — `blocked`.
 
+### 6.6 Журнал проблем
+
+Проблемы harness фиксируются skill `harness-issues`:
+
+- `docs/issues/ISSUE-YYYYMMDD-HHMMSS-<slug>.md` — одна проблема;
+- [`docs/issues/README.md`](../issues/README.md) — индекс-перечень.
+
+Запись содержит статус, severity, type, source, роль, абсолютный location,
+симптомы, воспроизведение, причину, решение/workaround, проверку, prevention
+и timeline. Все роли могут создавать issue-файлы; `harness-orchestrator`
+сверяет индекс и включает их в коммит задачи. Секреты в issue не записываются.
+
 ---
 
 ## 7. Пилотный кейс «Мини-CRUD сервис» (T-013)
@@ -570,11 +584,13 @@ python docs/description/build_html.py
 | `harness/agents/*.md` | primary-агент `harness` и ролевые sub-agent'ы |
 | `harness/commands/*.md` | команды `/harness-*` |
 | `harness/skills/harness/SKILL.md` | глобальный skill harness |
-| `harness/templates/*.md` | шаблоны card, ADR, plan-row |
-| `harness/scripts/*.ps1` | install, init, doctor, uninstall |
+| `harness/skills/harness-issues/SKILL.md` | skill учёта проблем и решений |
+| `harness/templates/*.md` | шаблоны card, ADR, plan-row, issue |
+| `harness/scripts/*.ps1` | install, init, doctor, uninstall, new-issue |
 | `harness/version.json` | версия установки |
 | `docs/plan.md` | board задач |
 | `docs/tasks/*.md` | карточки задач |
+| `docs/issues/` | журнал проблем и решений |
 | `docs/analysis/` | требования пилота |
 | `docs/architecture/` | ADR и схемы пилота |
 | `docs/qa/` | отчёт ревью пилота |

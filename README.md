@@ -17,9 +17,12 @@
   `/harness-board-update`, `/harness-board-report`, `/harness-init`,
   `/harness-doctor`
 - `harness/skills/harness/SKILL.md` — глобальный skill с кратким workflow
-- `harness/templates/` — шаблоны артефактов (task-card, adr, plan-row)
-- `harness/scripts/` — `install.ps1`, `init.ps1`, `doctor.ps1`, `uninstall.ps1`
+- `harness/skills/harness-issues/SKILL.md` — skill учёта проблем и решений
+- `harness/templates/` — шаблоны артефактов (task-card, adr, plan-row, issue)
+- `harness/scripts/` — `install.ps1`, `init.ps1`, `doctor.ps1`,
+  `uninstall.ps1`, `new-issue.ps1`
 - `harness/version.json` — версия установки
+- `docs/issues/` — журнал проблем и решений (один MD на проблему + индекс)
 - `docs/plan.md` — общий план (board задач: статус, роль, зависимости)
 - `docs/tasks/` — карточки задач (по одной MD-файлу на задачу)
 - `docs/activity.puml` / `activity.svg` — диаграмма активности
@@ -47,7 +50,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/install.ps1
 
 Скрипт:
 
-1. копирует агентов, команды, skill, шаблоны и скрипты в
+1. копирует агентов, команды, skills, шаблоны и скрипты в
    `~/.config/opencode/`;
 2. делает backup изменяемых файлов в `~/.config/opencode/backups/`;
 3. добавляет или обновляет в `opencode.jsonc` разрешение
@@ -93,6 +96,18 @@ Harness не включается автоматически: `default_agent` о
 - Глобальное обновление действует на все проекты. Для «заморозки» версии
   в отдельном проекте можно позже включить vendor-копию агентов и команд
   в `.opencode/`.
+
+## Журнал проблем
+
+При любой проблеме, блокировке или найденном workaround harness-роль
+использует skill `harness-issues` и создаёт запись в `docs/issues/`:
+
+- `docs/issues/ISSUE-YYYYMMDD-HHMMSS-<slug>.md` — одна проблема;
+- `docs/issues/README.md` — перечень и индекс.
+
+Запись содержит симптомы, абсолютное место, причину, решение/workaround,
+проверку и prevention. Orchestrator сверяет индекс и включает issue-файлы
+в коммит задачи. Секреты в issue не записываются.
 
 ## Ограничения
 

@@ -19,5 +19,9 @@
     "harness-board-update",
     "harness-board-report",
     "harness-doctor"
+  ],
+  "skills": [
+    "harness",
+    "harness-issues"
   ]
 }

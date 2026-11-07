@@ -56,6 +56,7 @@ Lead не редактирует файлы сам: board и коммиты де
 - `docs/tasks/T-XXX-*.md` — карточки задач;
 - `docs/activity.puml` / `.svg` — статусы задач;
 - `docs/analysis/`, `docs/architecture/`, `docs/qa/`, `docs/guides/` — артефакты ролей;
+- `docs/issues/` — журнал проблем и решений (skill `harness-issues`);
 - `src/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile` — код и CI/CD.
 
 ## Статусы и приёмка
@@ -65,6 +66,10 @@ Lead не редактирует файлы сам: board и коммиты де
 
 Задача закрывается только по критериям `acceptance` из карточки. При провале —
 `failed` с причиной в `Blockers`, до 3 попыток, затем `blocked`.
+
+При любой проблеме, блокировке или найденном workaround используй skill
+`harness-issues` и создай запись в `docs/issues/`; orchestrator обновит индекс
+и включит issue в коммит задачи.
 
 ## Глобальная установка и версии
 

@@ -43,6 +43,8 @@ $requiredGlobal = @(
     (Join-Path $GlobalHarness "templates\task-card.md"),
     (Join-Path $GlobalHarness "templates\adr.md"),
     (Join-Path $GlobalHarness "templates\plan-row.md"),
+    (Join-Path $GlobalHarness "templates\issue.md"),
+    (Join-Path $GlobalHarness "scripts\new-issue.ps1"),
     (Join-Path $GlobalRoot "agents\harness.md")
 )
 foreach ($item in $requiredGlobal) {
@@ -71,12 +73,25 @@ if ($Force -and (Test-Path -LiteralPath $HarnessDir)) {
 
 New-Item -ItemType Directory -Force -Path $HarnessDir | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $HarnessDir "templates") | Out-Null
-foreach ($sub in @("tasks", "analysis", "architecture", "qa", "guides")) {
+New-Item -ItemType Directory -Force -Path (Join-Path $HarnessDir "scripts") | Out-Null
+foreach ($sub in @("tasks", "analysis", "architecture", "qa", "guides", "issues")) {
     New-Item -ItemType Directory -Force -Path (Join-Path $DocsDir $sub) | Out-Null
 }
 
 Copy-Item -Path (Join-Path $GlobalHarness "process.md") -Destination $HarnessDir -Force
 Copy-Item -Path (Join-Path $GlobalHarness "templates\*") -Destination (Join-Path $HarnessDir "templates") -Force
+Copy-Item -Path (Join-Path $GlobalHarness "scripts\new-issue.ps1") -Destination (Join-Path $HarnessDir "scripts") -Force
+
+$issuesIndex = Join-Path $DocsDir "issues\README.md"
+if (-not (Test-Path -LiteralPath $issuesIndex)) {
+    $issuesHeader = @'
+# Issues
+
+| ID | Кратко | Severity | Status | Location | Source | Updated |
+|---|---|---|---|---|---|---|
+'@
+    Write-Utf8NoBom -Path $issuesIndex -Text ($issuesHeader + "`r`n")
+}
 
 $version = Get-Content -LiteralPath (Join-Path $GlobalHarness "version.json") -Raw | ConvertFrom-Json
 $version | Add-Member -NotePropertyName initialized_at -NotePropertyValue ((Get-Date).ToString("o")) -Force
@@ -157,6 +172,7 @@ Write-Host "Harness инициализирован в проекте: $Project"
 Write-Host "  process:  $Marker"
 Write-Host "  board:    $PlanPath"
 Write-Host "  activity: $ActivityPath"
+Write-Host "  issues:   $issuesIndex"
 Write-Host "  version:  $(Join-Path $HarnessDir 'version.json')"
 Write-Host ""
 Write-Host "Дальше: заполните docs/plan.md, создайте карточку по шаблону"

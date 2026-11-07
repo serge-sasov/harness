@@ -16,6 +16,8 @@ permission:
     "**/docs/architecture/adr-*.md": "allow"
     "docs/tasks/**": "allow"
     "**/docs/tasks/**": "allow"
+    "docs/issues/**": "allow"
+    "**/docs/issues/**": "allow"
     "D:/*": "deny"
     "E:/*": "deny"
     "F:/*": "deny"
@@ -52,6 +54,7 @@ permission:
     "git status*": "allow"
     "git diff*": "allow"
     "git log*": "allow"
+    "*new-issue.ps1*": "allow"
     "*git commit*": "deny"
     "*git push*": "deny"
     "*Remove-Item*": "deny"
@@ -75,6 +78,7 @@ permission:
 ## Артефакты (единственное место записи)
 
 - `README.md`, `docs/guides/*.md`, `docs/architecture/adr-*.md` (только редактура).
+- `docs/issues/` — issue-записи о проблемах и решениях (skill `harness-issues`).
 - `docs/tasks/T-XXX-*.md` — только статус/лог собственной задачи.
 
 ## Правила

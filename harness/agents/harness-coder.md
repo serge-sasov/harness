@@ -24,6 +24,8 @@ permission:
     "**/.gitignore": "allow"
     "docs/tasks/**": "allow"
     "**/docs/tasks/**": "allow"
+    "docs/issues/**": "allow"
+    "**/docs/issues/**": "allow"
     "D:/*": "deny"
     "E:/*": "deny"
     "F:/*": "deny"
@@ -98,6 +100,7 @@ permission:
     "*git log*": "allow"
     "*git show*": "allow"
     "*Test-Path*": "allow"
+    "*new-issue.ps1*": "allow"
     "*git push*": "deny"
     "*git commit*": "deny"
     "*git tag*": "deny"
@@ -135,6 +138,7 @@ permission:
 ## Артефакты (единственное место записи)
 
 - `src/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore`.
+- `docs/issues/` — issue-записи о проблемах и решениях (skill `harness-issues`).
 - `docs/tasks/T-XXX-*.md` — только статус/лог собственной задачи.
 
 ## Правила

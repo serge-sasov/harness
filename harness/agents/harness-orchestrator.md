@@ -52,6 +52,7 @@ permission:
     "git log*": "allow"
     "git add *": "allow"
     "git commit *": "allow"
+    "*new-issue.ps1*": "allow"
     "git push*": "deny"
     "git tag*": "deny"
     "git reset*": "deny"
@@ -75,6 +76,7 @@ permission:
 4. Приёмка задачи по `acceptance`; при провале — `failed`, причина в карточку.
 5. Обновление `docs/activity.puml` (цвет по статусу) и перерендер `docs/activity.svg` через MCP `plantuml-render`.
 6. Git-коммиты после задач: `git add` + `git commit` (формат `T-XXX: ...`).
+7. Ведение `docs/issues/`: сверка индекса `README.md`, проверка issue-файлов ролей, включение их в коммит задачи.
 
 ## Границы
 
@@ -88,7 +90,7 @@ permission:
 2. Проверь зависимости; при невыполненных — стоп с отчётом.
 3. Поставь `in_progress` (план + карточка + цвет диаграммы).
 4. Прими результат роли: сверь с `acceptance`.
-5. `done` или `failed`; обнови план, карточку, диаграмму, SVG.
+5. `done` или `failed`; обнови план, карточку, диаграмму, SVG, проверь issue-файлы и индекс `docs/issues/README.md`.
 6. `git add` затронутых файлов и `git commit -m "T-XXX: ..."`.
 7. В отчёте — статус, коммит, следующий разблокированный задачи.
 

@@ -43,11 +43,14 @@ foreach ($target in $targets) {
     Write-Host "Удалён $($target.FullName)"
 }
 
-$skillPath = Join-Path $GlobalRoot "skills\harness"
-if (Test-Path -LiteralPath $skillPath) {
-    Copy-Item -LiteralPath $skillPath -Destination (Join-Path $BackupRoot "skills-harness") -Recurse -Force
-    Remove-Item -LiteralPath $skillPath -Recurse -Force
-    Write-Host "Удалён $skillPath"
+$skillsRoot = Join-Path $GlobalRoot "skills"
+if (Test-Path -LiteralPath $skillsRoot) {
+    New-Item -ItemType Directory -Force -Path (Join-Path $BackupRoot "skills") | Out-Null
+    Get-ChildItem -LiteralPath $skillsRoot -Directory -Filter "harness*" -ErrorAction SilentlyContinue | ForEach-Object {
+        Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $BackupRoot "skills") -Recurse -Force
+        Remove-Item -LiteralPath $_.FullName -Recurse -Force
+        Write-Host "Удалён $($_.FullName)"
+    }
 }
 
 if (Test-Path -LiteralPath $GlobalHarness) {

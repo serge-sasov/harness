@@ -65,6 +65,7 @@ permission:
   skill:
     "*": "deny"
     "harness": "allow"
+    "harness-issues": "allow"
   external_directory:
     "*": "deny"
 ---
@@ -101,6 +102,7 @@ permission:
    - при успехе — `done`, обновление артефактов, `git add` + `git commit`;
    - при провале — `failed`, причина в `Blockers`; до 3 попыток исправления,
      затем `blocked` и эскалация пользователю.
+   - проверь, что проблемы задачи зафиксированы в `docs/issues/` и индексе.
 7. Верни отчёт: статус, коммит, разблокированные задачи, блокеры.
 
 ## Сервисные команды
@@ -121,3 +123,5 @@ permission:
 - Не делай `git push`, `git tag`, `git reset`, `git rebase`.
 - При нехватке контекста или противоречии в карточке — остановись и сообщи
   блокер, не угадывай.
+- Если проблема или workaround возникли вручную, поручи `harness-orchestrator`
+  зафиксировать их через skill `harness-issues` в `docs/issues/`.

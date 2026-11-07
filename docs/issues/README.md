@@ -1,0 +1,9 @@
+# Issues
+
+Журнал проблем harness. Один файл — одна проблема; создаётся через skill
+`harness-issues` и `harness/scripts/new-issue.ps1`.
+
+| ID | Кратко | Severity | Status | Location | Source | Updated |
+|---|---|---|---|---|---|---|
+| [ISSUE-20261107-231419](ISSUE-20261107-231419-global-task-deny-blocked-harness-subagents.md) | Global task deny blocked harness subagents | blocker | resolved | C:/Users/sergey/.config/opencode/opencode.jsonc: permission.task | global harness | 2026-11-07T23:14:19.1723574+03:00 |
+| [ISSUE-20261107-231419-2](ISSUE-20261107-231419-2-absolute-windows-paths-did-not-match-harness-edit-rules.md) | Absolute Windows paths did not match harness edit rules | major | resolved | C:/study/ai/research/analytic/harness/agents/harness-*.md; opencode permission edit | global harness | 2026-11-07T23:14:19.4276040+03:00 |

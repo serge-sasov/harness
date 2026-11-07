@@ -12,6 +12,8 @@ permission:
     "**/docs/analysis/**": "allow"
     "docs/tasks/**": "allow"
     "**/docs/tasks/**": "allow"
+    "docs/issues/**": "allow"
+    "**/docs/issues/**": "allow"
     "D:/*": "deny"
     "E:/*": "deny"
     "F:/*": "deny"
@@ -49,6 +51,7 @@ permission:
     "git diff*": "allow"
     "git log*": "allow"
     "git show*": "allow"
+    "*new-issue.ps1*": "allow"
     "*git commit*": "deny"
     "*git push*": "deny"
     "*Remove-Item*": "deny"
@@ -74,6 +77,7 @@ permission:
 - `docs/analysis/requirements-<slug>.md` — требования: контекст, use-cases, НФТ, ограничения.
 - `docs/analysis/questions-<slug>.md` — открытые вопросы и допущения.
 - `docs/analysis/glossary.md` — термины предметной области.
+- `docs/issues/` — issue-записи о проблемах и решениях (skill `harness-issues`).
 - `docs/tasks/T-XXX-*.md` — только статус/лог собственной задачи.
 
 ## Запрещено

@@ -7,7 +7,7 @@
 
 | Часть | Расположение | Содержимое |
 |---|---|---|
-| Инструменты harness | `~/.config/opencode/` | агенты `harness-*`, команды `/harness-*`, skill `harness`, шаблоны, скрипты |
+| Инструменты harness | `~/.config/opencode/` | агенты `harness-*`, команды `/harness-*`, skills `harness` и `harness-issues`, шаблоны, скрипты |
 | Состояние проекта | `<проект>/` | `harness/process.md`, `harness/version.json`, `docs/plan.md`, `docs/tasks/`, артефакты, git |
 
 Board, карточки задач и артефакты не могут быть глобальными: это состояние
@@ -24,7 +24,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/install.ps1
 
 Скрипт:
 
-1. копирует агентов, команды, skill, шаблоны и скрипты в
+1. копирует агентов, команды, skills, шаблоны и скрипты в
    `~/.config/opencode/`;
 2. делает backup изменяемых файлов в
    `~/.config/opencode/backups/harness-install-<timestamp>/`;
@@ -169,6 +169,47 @@ edit:
 с проектом. Абсолютные варианты паттернов защищают от этой проблемы, но
 корректный workspace root всё равно предпочтителен.
 
+## 5.2. Журнал проблем (`harness-issues`)
+
+Skill `harness-issues` фиксирует проблемы harness, их причину, место и
+решение. Один файл — одна проблема:
+
+```text
+docs/issues/
+  README.md
+  ISSUE-20261107-230501-task-deny.md
+```
+
+Создание записи:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/new-issue.ps1 `
+  -Title "Краткое название" `
+  -Severity major `
+  -Status open `
+  -Type permission `
+  -Source "T-001" `
+  -Role "harness-analyst" `
+  -Location "C:\project\file:line"
+```
+
+Скрипт создаёт issue-файл, добавляет строку в `docs/issues/README.md` и
+печатает путь. При совпадении timestamp к ID добавляется `-2`, `-3`.
+Обязательные разделы: симптомы, воспроизведение, причина,
+решение/workaround, проверка, prevention, ссылки, timeline.
+
+Правила:
+
+- issue создают все harness-роли; индекс сверяет `harness-orchestrator`;
+- issue ID указывается в логе карточки задачи;
+- `status`: `open`, `investigating`, `workaround`, `resolved`, `wontfix`;
+- секреты в issue не записываются;
+- issue не заменяет карточку задачи и не удаляется после исправления.
+
+Если `harness/scripts/new-issue.ps1` или `harness/templates/issue.md`
+отсутствуют в проекте, выполните `/harness-init -Force` (с backup) или
+создайте запись вручную по шаблону.
+
 ## 6. Версии и pin-версии
 
 - Глобальная версия: `~/.config/opencode/harness/version.json`.
@@ -227,6 +268,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/uninstall.ps
 | workspace root `/` | opencode запущен не из корня проекта / неверный cwd | запустить из проекта, проверить `git rev-parse --show-toplevel` |
 | старые агенты обходят gating | остались `.opencode/agents/analyst.md` и т.п. | удалить старые копии или переименовать в `harness-*` |
 | конфиг не пропатчился | в `opencode.jsonc` есть комментарии | добавить `permission.task` с allow вручную |
+| `new-issue.ps1` не найден | проект инициализирован старой версией | выполнить `/harness-init -Force` с backup |
 | версия отличается | проект инициализирован старой версией | обновить проект осознанно; см. pin |
 
 ## 9. Переход на opencode V2

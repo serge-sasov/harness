@@ -8,6 +8,7 @@
 | status | pending |
 | depends_on | T-YYY, T-ZZZ |
 | artifacts | пути к артефактам через запятую |
+| issues | ISSUE-... (ссылки на docs/issues/, если были проблемы) |
 | commit | хэш коммита после выполнения |
 
 ## Acceptance
