@@ -134,7 +134,7 @@ permission:
 
 ## Артефакты (единственное место записи)
 
-- `src/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`.
+- `src/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore`.
 - `docs/tasks/T-XXX-*.md` — только статус/лог собственной задачи.
 
 ## Правила

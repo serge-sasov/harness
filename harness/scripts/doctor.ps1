@@ -67,16 +67,18 @@ $harnessIds = @(
 if (Test-Path -LiteralPath $configPath) {
     $config = Get-Content -LiteralPath $configPath -Raw
     if ($config -match '"task"\s*:') {
-        $missingIds = @($harnessIds | Where-Object { $config -notmatch [regex]::Escape('"' + $_ + '"') })
-        if ($missingIds.Count -eq 0) {
-            Write-Ok "permission.task содержит запреты для всех harness-ролей"
+        $notAllowed = @($harnessIds | Where-Object {
+            $config -notmatch ('"' + [regex]::Escape($_) + '"\s*:\s*"allow"')
+        })
+        if ($notAllowed.Count -eq 0) {
+            Write-Ok "permission.task разрешает все harness-роли"
         }
         else {
-            Write-Warn "в permission.task нет правил для: $($missingIds -join ', ')"
+            Write-Warn "permission.task не даёт allow для: $($notAllowed -join ', ')"
         }
     }
     else {
-        Write-Warn "в opencode.jsonc нет блока permission.task; build-агент может вызвать harness-роли"
+        Write-Warn "в opencode.jsonc нет блока permission.task; выполните install.ps1 для явных allow-правил"
     }
     if ($config -match '"plantuml-render"') { Write-Ok "MCP plantuml-render настроен" } else { Write-Warn "MCP plantuml-render не найден в конфиге" }
     if ($config -match '"local-rag"') { Write-Ok "MCP local-rag настроен" } else { Write-Warn "MCP local-rag не найден в конфиге" }
@@ -85,7 +87,7 @@ if (Test-Path -LiteralPath $configPath) {
     if ($config -match 'tiel-coder:35b-a3b-mtp-128k-vision') { Write-Ok "модель tiel-coder vision объявлена" } else { Write-Warn "модель tiel-coder vision не найдена в конфиге" }
 }
 else {
-    Write-Warn "не найден $configPath; permission-gating не настроен"
+    Write-Warn "не найден $configPath; allow-правила harness не настроены"
 }
 
 $marker = Join-Path $Project "harness\process.md"

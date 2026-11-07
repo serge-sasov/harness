@@ -50,8 +50,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/install.ps1
 1. копирует агентов, команды, skill, шаблоны и скрипты в
    `~/.config/opencode/`;
 2. делает backup изменяемых файлов в `~/.config/opencode/backups/`;
-3. добавляет в `opencode.jsonc` запрет `permission.task` для `harness-*`
-   ролей, чтобы обычные агенты не вызывали их случайно.
+3. добавляет или обновляет в `opencode.jsonc` разрешение
+   `permission.task` для `harness-*` ролей.
 
 После установки перезапустите opencode. Проверка:
 

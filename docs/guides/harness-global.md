@@ -28,24 +28,24 @@ powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/install.ps1
    `~/.config/opencode/`;
 2. делает backup изменяемых файлов в
    `~/.config/opencode/backups/harness-install-<timestamp>/`;
-3. добавляет в `opencode.jsonc` правила:
+3. добавляет или обновляет в `opencode.jsonc` разрешения:
 
 ```jsonc
 "permission": {
   "task": {
-    "harness-orchestrator": "deny",
-    "harness-analyst": "deny",
-    "harness-architect": "deny",
-    "harness-coder": "deny",
-    "harness-qa": "deny",
-    "harness-doc-writer": "deny"
+    "harness-orchestrator": "allow",
+    "harness-analyst": "allow",
+    "harness-architect": "allow",
+    "harness-coder": "allow",
+    "harness-qa": "allow",
+    "harness-doc-writer": "allow"
   }
 }
 ```
 
-Эти правила не дают обычным агентам вызывать harness-роли. Primary-агент
-`harness` имеет собственные allow-правила для этих же ролей; в V1 правила
-агента добавляются после глобальных и перекрывают их.
+Эти правила разрешают любому primary-агенту явно вызывать harness-роли.
+Роли не вызывают друг друга: у них остаётся `task: deny`. Primary-агент
+`harness` сохраняет собственные allow-правила.
 
 Если в `opencode.jsonc` есть комментарии, скрипт не правит файл автоматически,
 а печатает готовый сниппет для ручного добавления.
@@ -123,7 +123,8 @@ Lead не редактирует файлы сам; board и коммиты вы
 ## 5. Защита от случайного запуска
 
 1. Явные команды `/harness-*`; harness не является агентом по умолчанию.
-2. Глобальный `permission.task` запрещает обычным агентам вызывать `harness-*`.
+2. Глобальный `permission.task` разрешает любому primary-агенту явно вызывать
+   `harness-*`; роли не вызывают друг друга (`task: deny`).
 3. Marker-файлы `harness/process.md` и `docs/plan.md` обязательны.
 4. Harness-инструкции не добавляются в глобальный `AGENTS.md`.
 5. Skill `harness` имеет явное описание и не предназначен для авто-применения.
@@ -217,14 +218,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/uninstall.ps
 |---|---|---|
 | команда `/harness-*` не видна | opencode не перезапущен после установки | перезапустить opencode |
 | harness-агент не виден | файлы не попали в `~/.config/opencode/agents/` | проверить `/harness-doctor`, повторить install |
-| `build` не может вызвать роли | глобальный `permission.task` deny | это ожидаемое поведение |
+| `build` может вызвать роли | `permission.task` содержит allow | штатное поведение; иначе запустить install и перезапустить opencode |
+| `build` не может вызвать роли | остался старый `deny`-блок | выполнить install.ps1, перезапустить opencode; проверить `opencode debug agent build` |
 | harness не вызывает роли | нет allow-правил у агента `harness` | проверить `opencode debug agent harness` |
 | проект не запускается | нет `harness/process.md` или `docs/plan.md` | выполнить `/harness-init` |
 | edit `docs/plan.md` заблокирован, хотя есть `docs/**` allow | путь абсолютный, относительный шаблон не совпал | обновить harness, перезапустить opencode; в ролях должны быть `**/docs/**` |
 | write `.gitignore` заблокирован | `.gitignore` не входит в зону роли | использовать `harness-orchestrator` или `harness-coder` |
 | workspace root `/` | opencode запущен не из корня проекта / неверный cwd | запустить из проекта, проверить `git rev-parse --show-toplevel` |
 | старые агенты обходят gating | остались `.opencode/agents/analyst.md` и т.п. | удалить старые копии или переименовать в `harness-*` |
-| конфиг не пропатчился | в `opencode.jsonc` есть комментарии | добавить `permission.task` вручную |
+| конфиг не пропатчился | в `opencode.jsonc` есть комментарии | добавить `permission.task` с allow вручную |
 | версия отличается | проект инициализирован старой версией | обновить проект осознанно; см. pin |
 
 ## 9. Переход на opencode V2

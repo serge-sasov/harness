@@ -116,25 +116,62 @@ if (-not $SkipConfig) {
         )
         for ($i = 0; $i -lt $harnessIds.Count; $i++) {
             $comma = if ($i -lt ($harnessIds.Count - 1)) { "," } else { "" }
-            $lines += "      `"$($harnessIds[$i])`": `"deny`"$comma"
+            $lines += "      `"$($harnessIds[$i])`": `"allow`"$comma"
         }
         $lines += @("    }", "  }", "}")
         Write-Utf8NoBom -Path $configPath -Text (($lines -join "`r`n") + "`r`n")
-        Write-Host "Создан $configPath с permission-правилами harness."
+        Write-Host "Создан $configPath с allow-правилами harness."
     }
     else {
         $raw = Get-Content -LiteralPath $configPath -Raw
-        if ($raw -match '"task"\s*:') {
-            Write-Host "В opencode.jsonc уже есть блок task; permission-правила не изменялись."
-        }
-        elseif ($raw -match '(?m)^\s*//' -or $raw -match '(?m)^\s*/\*') {
+        if ($raw -match '(?m)^\s*//' -or $raw -match '(?m)^\s*/\*') {
             Write-Warning "opencode.jsonc содержит комментарии; автоматическая правка пропущена."
             Write-Host "Добавьте вручную в объект `"permission`":"
             Write-Host '  "task": {'
             foreach ($id in $harnessIds) {
-                Write-Host "    `"$id`": `"deny`","
+                Write-Host "    `"$id`": `"allow`","
             }
             Write-Host '  }'
+        }
+        elseif ($raw -match '"task"\s*:') {
+            $newRaw = $raw
+            $changed = $false
+            foreach ($id in $harnessIds) {
+                $pattern = '("' + [regex]::Escape($id) + '"\s*:\s*)"(?:deny|allow)"'
+                if ($newRaw -match $pattern) {
+                    $updated = [regex]::Replace($newRaw, $pattern, '$1"allow"')
+                    if ($updated -ne $newRaw) {
+                        $changed = $true
+                        $newRaw = $updated
+                    }
+                }
+            }
+            if ($changed) {
+                Write-Utf8NoBom -Path $configPath -Text $newRaw
+                try {
+                    Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json | Out-Null
+                    Write-Host "permission.task: harness-роли переведены в allow."
+                }
+                catch {
+                    Copy-Item -LiteralPath (Join-Path $BackupRoot "opencode.jsonc") -Destination $configPath -Force
+                    throw "Ошибка валидации opencode.jsonc; файл восстановлен из backup. $_"
+                }
+            }
+            else {
+                $missing = @($harnessIds | Where-Object {
+                    $newRaw -notmatch ('"' + [regex]::Escape($_) + '"\s*:\s*"allow"')
+                })
+                if ($missing.Count -eq 0) {
+                    Write-Host "permission.task уже разрешает все harness-роли."
+                }
+                else {
+                    Write-Warning "В permission.task не хватает allow-правил: $($missing -join ', ')"
+                    Write-Host "Добавьте вручную:"
+                    foreach ($id in $missing) {
+                        Write-Host "  `"$id`": `"allow`""
+                    }
+                }
+            }
         }
         else {
             $match = [regex]::Match($raw, '("permission"\s*:\s*\{)')
@@ -145,7 +182,7 @@ if (-not $SkipConfig) {
                 $lines = @('    "task": {')
                 for ($i = 0; $i -lt $harnessIds.Count; $i++) {
                     $comma = if ($i -lt ($harnessIds.Count - 1)) { "," } else { "" }
-                    $lines += "      `"$($harnessIds[$i])`": `"deny`"$comma"
+                    $lines += "      `"$($harnessIds[$i])`": `"allow`"$comma"
                 }
                 $lines += '    },'
                 $insert = ($lines -join "`r`n") + "`r`n"
@@ -153,7 +190,7 @@ if (-not $SkipConfig) {
                 Write-Utf8NoBom -Path $configPath -Text $newRaw
                 try {
                     Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json | Out-Null
-                    Write-Host "В opencode.jsonc добавлены permission-правила harness."
+                    Write-Host "В opencode.jsonc добавлены allow-правила harness."
                 }
                 catch {
                     Copy-Item -LiteralPath (Join-Path $BackupRoot "opencode.jsonc") -Destination $configPath -Force
@@ -167,7 +204,7 @@ else {
     Write-Host "SkipConfig: добавьте в объект permission вручную:"
     Write-Host '  "task": {'
     foreach ($id in $harnessIds) {
-        Write-Host "    `"$id`": `"deny`","
+        Write-Host "    `"$id`": `"allow`","
     }
     Write-Host '  }'
 }
