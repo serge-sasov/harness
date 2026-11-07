@@ -27,8 +27,8 @@
 | T-008 | Sub-agent `coder` | coder | T-005 | done | `harness/agents/coder.md` | e4a4686 |
 | T-009 | Sub-agent `qa` | qa | T-005 | done | `harness/agents/qa.md` | 95b3949 |
 | T-010 | Sub-agent `doc-writer` | doc-writer | T-005 | done | `harness/agents/doc-writer.md` | 876e943 |
-| T-011 | Sub-agent `orchestrator` | orchestrator | T-005 | done | `harness/agents/orchestrator.md` | см. T-012 |
-| T-012 | Команды opencode | orchestrator | T-006..T-011 | pending | `harness/commands/` | — |
+| T-011 | Sub-agent `orchestrator` | orchestrator | T-005 | done | `harness/agents/orchestrator.md` | e021349 |
+| T-012 | Команды opencode | orchestrator | T-006..T-011 | done | `harness/commands/` | см. T-013 |
 | T-013 | Smoke-test полного цикла | qa | T-012 | pending | `docs/qa/`, пилотные артефакты | — |
 
 ## Правила ведения board

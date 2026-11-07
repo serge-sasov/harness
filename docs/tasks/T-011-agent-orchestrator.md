@@ -8,7 +8,7 @@
 | status | done |
 | depends_on | T-005 |
 | artifacts | `harness/agents/orchestrator.md` |
-| commit | записан в T-012 |
+| commit | e021349 |
 
 ## Acceptance
 
