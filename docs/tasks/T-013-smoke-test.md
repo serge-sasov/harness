@@ -8,7 +8,7 @@
 | status | done |
 | depends_on | T-012 |
 | artifacts | `docs/analysis/`, `docs/architecture/`, `docs/qa/` (пилот) |
-| commit | см. финальный коммит T-013 |
+| commit | fb145b6 |
 
 ## Acceptance
 
