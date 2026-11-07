@@ -24,7 +24,7 @@ fork again
   fork again
     #90EE90:T-010 Sub-agent doc-writer;
   fork again
-    #D3D3D3:T-011 Sub-agent orchestrator;
+    #90EE90:T-011 Sub-agent orchestrator;
   end fork
 end fork
 #D3D3D3:T-012 Команды opencode\nrole-run, board-update, board-report;

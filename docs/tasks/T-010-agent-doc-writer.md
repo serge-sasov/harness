@@ -8,7 +8,7 @@
 | status | done |
 | depends_on | T-005 |
 | artifacts | `harness/agents/doc-writer.md` |
-| commit | записан в T-011 |
+| commit | 876e943 |
 
 ## Acceptance
 
