@@ -8,7 +8,7 @@
 | status | done |
 | depends_on | T-006, T-007, T-008, T-009, T-010, T-011 |
 | artifacts | `harness/commands/role-run.md`, `harness/commands/board-update.md`, `harness/commands/board-report.md` |
-| commit | записан в T-013 |
+| commit | cbf393f |
 
 ## Acceptance
 

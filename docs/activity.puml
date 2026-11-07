@@ -6,29 +6,29 @@ skinparam ArrowColor #555555
 title Локальный harness — план задач T-001..T-013
 
 start
-#90EE90:T-001 Git bootstrap\n.gitignore, README;
-#90EE90:T-002 Единый регламент\nharness/process.md;
+:T-001 Git bootstrap\n.gitignore, README; <<#90EE90>>
+:T-002 Единый регламент\nharness/process.md; <<#90EE90>>
 fork
-  #90EE90:T-003 Board + карточки задач\ndocs/plan.md, docs/tasks/;
-  #90EE90:T-004 Activity-диаграмма + SVG\nцветовые статусы задач;
+  :T-003 Board + карточки задач\ndocs/plan.md, docs/tasks/; <<#90EE90>>
+  :T-004 Activity-диаграмма + SVG\nцветовые статусы задач; <<#90EE90>>
 fork again
-  #90EE90:T-005 Шаблоны артефактов\nharness/templates/;
+  :T-005 Шаблоны артефактов\nharness/templates/; <<#90EE90>>
   fork
-    #90EE90:T-006 Sub-agent analyst;
+    :T-006 Sub-agent analyst; <<#90EE90>>
   fork again
-    #90EE90:T-007 Sub-agent architect;
+    :T-007 Sub-agent architect; <<#90EE90>>
   fork again
-    #90EE90:T-008 Sub-agent coder;
+    :T-008 Sub-agent coder; <<#90EE90>>
   fork again
-    #90EE90:T-009 Sub-agent qa;
+    :T-009 Sub-agent qa; <<#90EE90>>
   fork again
-    #90EE90:T-010 Sub-agent doc-writer;
+    :T-010 Sub-agent doc-writer; <<#90EE90>>
   fork again
-    #90EE90:T-011 Sub-agent orchestrator;
+    :T-011 Sub-agent orchestrator; <<#90EE90>>
   end fork
 end fork
-#90EE90:T-012 Команды opencode\nrole-run, board-update, board-report;
-#D3D3D3:T-013 Smoke-test полного цикла\nпилотная задача;
+:T-012 Команды opencode\nrole-run, board-update, board-report; <<#90EE90>>
+:T-013 Smoke-test полного цикла\nпилотная задача; <<#90EE90>>
 stop
 
 legend right

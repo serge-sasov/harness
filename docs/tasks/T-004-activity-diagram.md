@@ -20,3 +20,4 @@
 ## Log
 
 - 2026-11-07: создан `docs/activity.puml` (все 13 задач, fork-ветки T-003/T-004 и T-005→T-006..T-011, легенда цветов); `check_syntax` — valid; отрендерен `docs/activity.svg` (19740 байт).
+- 2026-11-07 (fix, T-013): синтаксис `#COLOR:activity;` устарел в PlantUML 1.2026.6 (в SVG попадал deprecation-баннер) — переведено на `:activity; <<#COLOR>>`; повторный рендер без warning, цвета применены.
