@@ -8,7 +8,7 @@
 | status | done |
 | depends_on | T-005 |
 | artifacts | `harness/agents/architect.md` |
-| commit | записан в T-008 |
+| commit | 061f8e5 |
 
 ## Acceptance
 
