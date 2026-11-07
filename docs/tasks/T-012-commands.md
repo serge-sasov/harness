@@ -1,0 +1,22 @@
+# T-012: Команды opencode
+
+| Поле | Значение |
+|---|---|
+| id | T-012 |
+| title | Команды harness: role-run, board-update, board-report |
+| role | orchestrator |
+| status | pending |
+| depends_on | T-006, T-007, T-008, T-009, T-010, T-011 |
+| artifacts | `harness/commands/role-run.md`, `harness/commands/board-update.md`, `harness/commands/board-report.md` |
+| commit | — |
+
+## Acceptance
+
+- [ ] Каждая команда — MD-файл с frontmatter (`description`, при необходимости `agent`/`model`) и телом-шаблоном.
+- [ ] `role-run` принимает ID задачи (`$ARGUMENTS`), проверяет depends_on, ставит in_progress.
+- [ ] `board-update` обновляет plan.md, карточку, activity.puml, перерендеривает SVG, коммитит.
+- [ ] `board-report` выводит сводку статусов и блокеров.
+
+## Log
+
+- 2026-11-07: задача создана.

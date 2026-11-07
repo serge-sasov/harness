@@ -1,0 +1,22 @@
+# T-011: Sub-agent orchestrator
+
+| Поле | Значение |
+|---|---|
+| id | T-011 |
+| title | Ролевой sub-agent `orchestrator` (план, зависимости, board, приёмка) |
+| role | orchestrator |
+| status | pending |
+| depends_on | T-005 |
+| artifacts | `harness/agents/orchestrator.md` |
+| commit | — |
+
+## Acceptance
+
+- [ ] Frontmatter: `mode: subagent`, `model: ollama-metrics/qwen3.8:27b-64k`, `temperature: 0.1`.
+- [ ] Permission: edit `docs/**` и `README.md`; `task: deny` (сам не вызывает под-агентов; эскалирует пользователю).
+- [ ] Промпт ссылается на регламент `harness/process.md` п. 3–7.
+- [ ] Описаны алгоритм ведения board, проверка depends_on, retry-политика, эскалация.
+
+## Log
+
+- 2026-11-07: задача создана.
