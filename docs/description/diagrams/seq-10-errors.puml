@@ -1,0 +1,31 @@
+@startuml
+autonumber
+skinparam defaultFontName Segoe UI
+title S-10 Ошибки, retry <= 3 и блокировки
+
+participant "harness\nprimary lead" as primary
+participant "harness-orchestrator" as orch
+participant "harness-*\nроль-исполнитель" as role
+participant "TaskCard\ndocs/tasks" as card
+actor "Пользователь" as user
+
+primary -> orch : результат задачи
+orch -> orch : приёмка по acceptance
+alt приёмка пройдена
+  orch -> card : status = done\nлог задачи
+  orch --> primary : done
+else приёмка провалена
+  orch -> card : status = failed\nчто упало, вывод, гипотеза
+  loop до 3 попыток исправления
+    orch -> role : исправление\nпричина и критерии
+    role --> orch : новый результат
+    orch -> orch : повторная приёмка
+  end
+  alt попытки исчерпаны
+    orch -> card : status = blocked\nэскалация
+    orch --> user : требуется решение\nвнешняя блокировка
+  else исправлено
+    orch -> card : status = done\nистория ошибок сохранена
+  end
+end
+@enduml

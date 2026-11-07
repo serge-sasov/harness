@@ -1,0 +1,27 @@
+@startuml
+autonumber
+skinparam defaultFontName Segoe UI
+title S-09 Отчёт по board (harness-board-report)
+
+actor "Пользователь" as user
+participant "harness\nprimary lead" as lead
+participant "harness-orchestrator" as orch
+participant "PlanBoard\ndocs/plan.md" as board
+participant "TaskCards\ndocs/tasks" as cards
+participant "Report\n(только чтение)" as report
+
+user -> lead : /harness-board-report
+lead -> orch : read-only сводка по board
+orch -> board : статусы, зависимости, коммиты
+board --> orch : строки board
+orch -> cards : блокеры и логи
+cards --> orch : причины failed / blocked
+orch -> orch : проверка консистентности\n%done, висячие depends_on
+orch --> report : таблица статусов\nготовые к старту, блокеры
+report --> lead : сводка + 1..3 рекомендации
+lead --> user : отчёт
+note right of report
+  Ничего не изменяется
+  и не коммитится
+end note
+@enduml

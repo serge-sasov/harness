@@ -1,0 +1,139 @@
+@startuml
+skinparam defaultFontName Segoe UI
+skinparam classAttributeIconSize 0
+title Harness — концептуальная модель классов
+
+enum TaskStatus {
+  pending
+  in_progress
+  done
+  failed
+  blocked
+}
+
+enum Verdict {
+  accept
+  reject
+}
+
+class PlanBoard {
+  +source : docs/plan.md
+  +load() : TaskCard[]
+  +updateStatus(id, status)
+  +recordCommit(id, hash)
+}
+
+class TaskCard {
+  +id : String
+  +title : String
+  +role : Role
+  +status : TaskStatus
+  +dependsOn : TaskCard[]
+  +acceptance : String[]
+  +artifacts : Path[]
+  +blockers : String[]
+  +log : LogEntry[]
+  +canStart() : Boolean
+  +accept() : Boolean
+}
+
+abstract class Role {
+  +name : String
+  +model : ModelProfile
+  +writeZones : Path[]
+  +permissions : PermissionSet
+  +execute(task) : RoleResult
+}
+
+class Orchestrator
+class Analyst
+class Architect
+class Coder
+class QA
+class DocWriter
+
+class ModelProfile {
+  +name : String
+  +thinking : String
+  +purpose : String
+}
+
+class Artifact {
+  +path : Path
+  +kind : ArtifactKind
+  +producer : Role
+}
+
+class Diagram {
+  +pumlSource : Path
+  +svgRender : Path
+  +checkSyntax() : Boolean
+  +render() : Path
+}
+
+class Review {
+  +verdict : Verdict
+  +findings : Finding[]
+}
+
+class Commit {
+  +hash : String
+  +message : String
+}
+
+class Command {
+  +name : String
+  +arguments : String
+  +run() : Report
+}
+
+class HarnessLead {
+  +mode : primary
+  +checkProject() : Boolean
+  +dispatch(role) : RoleResult
+}
+
+class LogEntry {
+  +date : Date
+  +text : String
+}
+
+class RoleResult {
+  +status : String
+  +files : Path[]
+  +summary : String
+}
+
+class Finding {
+  +id : String
+  +severity : String
+  +text : String
+}
+
+Role <|-- Orchestrator
+Role <|-- Analyst
+Role <|-- Architect
+Role <|-- Coder
+Role <|-- QA
+Role <|-- DocWriter
+Role --> ModelProfile
+Role ..> RoleResult : returns
+TaskCard --> Role
+TaskCard --> TaskStatus
+TaskCard "0..*" --> "0..*" TaskCard : dependsOn
+TaskCard *-- "0..*" LogEntry
+PlanBoard "1" *-- "0..*" TaskCard
+Role "1" --> "0..*" Artifact : produces
+Artifact <|-- Diagram
+Artifact <|-- Review
+Review --> Verdict
+Review *-- "0..*" Finding
+Orchestrator --> PlanBoard : updates
+Orchestrator --> Commit : creates
+Command --> HarnessLead : selects
+HarnessLead --> Role : dispatches
+HarnessLead --> PlanBoard : reads
+HarnessLead --> TaskCard : reads
+QA --> Review : produces
+Diagram ..> Command : rendered by
+@enduml

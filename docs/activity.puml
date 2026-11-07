@@ -27,7 +27,7 @@ fork again
     :T-011 Sub-agent orchestrator; <<#90EE90>>
   end fork
 end fork
-:T-012 Команды opencode\nrole-run, board-update, board-report; <<#90EE90>>
+:T-012 Команды opencode\nharness-run, harness-board-*; <<#90EE90>>
 :T-013 Smoke-test полного цикла\nпилотная задача; <<#90EE90>>
 stop
 

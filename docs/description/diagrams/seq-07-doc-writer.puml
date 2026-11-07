@@ -1,0 +1,21 @@
+@startuml
+autonumber
+skinparam defaultFontName Segoe UI
+title S-07 Документирование (doc-writer)
+
+participant "harness\nprimary lead" as primary
+participant "harness-doc-writer" as writer
+participant "README.md\ndocs/guides" as guides
+participant "ADR\ndocs/architecture" as adr
+participant "harness-orchestrator" as orch
+
+primary -> writer : задача: документация
+writer -> adr : прочитать ADR и контракты
+writer -> guides : README, runbook, гайды\nотносительные ссылки
+writer -> adr : финализация по шаблону\nбез изменения смысла
+writer --> orch : файлы, изменения, ссылки
+note right of writer
+  Код, тесты и CI/CD
+  не изменяются
+end note
+@enduml

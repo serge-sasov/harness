@@ -1,0 +1,27 @@
+@startuml
+autonumber
+skinparam defaultFontName Segoe UI
+title S-03 Анализ требований (analyst)
+
+participant "harness\nprimary lead" as primary
+participant "harness-analyst" as analyst
+participant "local-rag\nFTS5 + LanceDB" as rag
+participant "docs/analysis" as docs
+participant "harness-orchestrator" as orch
+
+primary -> analyst : задача: требования по теме
+analyst -> rag : rag_context / rag_search
+rag --> analyst : указатели: файл + строки
+analyst -> analyst : Read и проверка источников
+alt данных достаточно
+  analyst -> docs : requirements-*.md\nR-001.., NFR-1..
+else есть пробелы
+  analyst -> docs : questions-*.md\nвопросы + допущения
+end
+analyst -> docs : glossary.md
+analyst --> orch : требования, вопросы, риски,\nпути артефактов, блокеры
+note right of analyst
+  Требования атомарные
+  и проверяемые, с ID R-NNN
+end note
+@enduml

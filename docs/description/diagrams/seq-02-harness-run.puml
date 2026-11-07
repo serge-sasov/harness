@@ -1,0 +1,41 @@
+@startuml
+autonumber
+skinparam defaultFontName Segoe UI
+title S-02 Полный цикл задачи (harness-run T-XXX)
+
+actor "Пользователь" as user
+participant "Команда\nharness-run" as cmd
+participant "harness\nprimary lead" as lead
+participant "harness-orchestrator" as orch
+participant "Роль задачи\nharness-*" as role
+participant "Board +\nActivityDiagram" as board
+participant "Git" as git
+
+user -> cmd : /harness-run T-XXX
+cmd -> lead : agent: harness
+lead -> board : plan.md + карточка задачи
+board --> lead : depends_on, acceptance, артефакты
+lead -> lead : проверить marker\nharness/process.md
+alt marker или зависимости не выполнены
+  lead --> cmd : стоп: проект не инициализирован\nили зависимость не done
+  cmd --> user : отчёт о блокировке
+else всё готово
+  lead -> orch : in_progress\nplan + карточка + activity + SVG
+  orch -> board : обновить статус и цвет
+  lead -> role : task harness-*\nкарточка, acceptance, артефакты
+  role -> role : выполнить работу\nв границах зоны записи
+  role --> lead : результат, файлы, лог
+  lead -> orch : приёмка по acceptance\nи закрытие задачи
+  alt acceptance пройдена
+    orch -> board : done + артефакты + лог
+    orch -> git : add + commit "T-XXX: ..."
+    git --> orch : hash коммита
+    orch --> lead : done, hash
+  else acceptance провалена
+    orch -> board : failed, причина в Blockers
+    orch --> lead : failed, причина
+  end
+end
+lead --> cmd : статус
+cmd --> user : статус, коммит,\nразблокированные задачи
+@enduml

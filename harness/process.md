@@ -2,6 +2,30 @@
 
 Регламент обязателен для всех ролей harness. Нарушение регламента — блокер задачи.
 
+## 0. Глобальная установка и активация
+
+- Harness устанавливается глобально для пользователя в `~/.config/opencode/`:
+  агенты `harness-*`, команды `/harness-*`, skill `harness`, шаблоны и скрипты.
+- В проект harness попадает только через `/harness-init`: создаёт
+  `harness/process.md`, `harness/version.json`, `harness/templates/`,
+  `docs/plan.md`, `docs/activity.puml` и каркас каталогов.
+- Активация — только явная. `default_agent` не переключается на harness.
+- `harness` primary-агент перед работой проверяет наличие `harness/process.md`
+  и `docs/plan.md`; без них работа останавливается с предложением
+  выполнить `/harness-init`.
+- Глобальные permission-правила запрещают обычным агентам вызывать
+  `harness-*` субагентов; это разрешено только primary-агенту `harness`.
+- Версия установки фиксируется в `harness/version.json` проекта; `/harness-doctor`
+  предупреждает о расхождении с глобальной версией.
+
+| Команда | Назначение |
+|---|---|
+| `/harness-init` | инициализация harness в текущем проекте |
+| `/harness-run T-XXX` | выполнение задачи, приёмка, обновление board, коммит |
+| `/harness-board-update all / T-XXX` | синхронизация board, карточек, activity и SVG |
+| `/harness-board-report` | read-only сводка по board |
+| `/harness-doctor` | проверка глобальной установки и текущего проекта |
+
 ## 1. Общие положения
 
 - Harness = роли-под-агенты + общий план выполнения. Все задачи выполняются
@@ -15,6 +39,7 @@
 
 | Роль | Модель (Ollama) | Обоснование |
 |---|---|---|
+| harness (lead) | `qwen3.8:27b-64k` (thinking: xhigh) | primary lead, маршрутизация и отчёт |
 | orchestrator | `qwen3.8:27b-64k` (thinking: xhigh) | dense 27B, планирование и сборка контекста |
 | analyst | `qwen3.8:27b-64k` (thinking: medium) | dense, анализ требований, RAG |
 | architect | `qwen3.8:27b-64k` (thinking: xhigh) | dense, deep-reasoning, проектирование |
@@ -72,6 +97,7 @@
 
 | Роль | Куда пишет |
 |---|---|
+| harness (primary lead) | не пишет файлы; читает board/карточки и маршрутизирует роли |
 | orchestrator | `docs/plan.md`, `docs/tasks/`, `docs/activity.puml`, README |
 | analyst | `docs/analysis/` (требования, вопросы, глоссарий) |
 | architect | `docs/architecture/` (ADR, PlantUML, контракты интерфейсов) |
@@ -84,5 +110,5 @@
 - Правка `~/.config/opencode/**` и системных конфигов.
 - Prod-действия: `git push`, `docker push`, деплой вне local/staging, миграции prod-данных.
 - Секреты, токены, ключи в коде, логах, коммитах.
-- Вложенный вызов под-агентов (`task: deny` у всех ролей).
+- Вложенный вызов под-агентов (`task: deny` у ролевых sub-agent'ов; primary `harness` имеет task allow только для harness-ролей).
 - Выход за пределы диска `C:` (см. permissions агентов).

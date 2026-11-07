@@ -1,0 +1,59 @@
+@startuml
+skinparam defaultFontName Segoe UI
+skinparam classAttributeIconSize 0
+title Пилотный CRUD — модель классов (ADR-001)
+
+class Note {
+  +id : UUID
+  +title : String
+  +body : String
+  +createdAt : datetime
+}
+
+class NoteCreate {
+  +title : String
+  +body : String
+}
+
+class NoteUpdate {
+  +title : String
+  +body : String
+}
+
+class NoteRead {
+  +id : UUID
+  +title : String
+  +body : String
+  +createdAt : datetime
+}
+
+class NoteService {
+  +create(data : NoteCreate) : NoteRead
+  +list() : NoteRead[]
+  +get(id : UUID) : NoteRead
+  +update(id : UUID, data : NoteUpdate) : NoteRead
+  +delete(id : UUID) : void
+}
+
+class NoteRepository {
+  +insert(note : Note) : Note
+  +findAll() : Note[]
+  +findById(id : UUID) : Note
+  +update(id : UUID, data : NoteUpdate) : Note
+  +delete(id : UUID) : Boolean
+}
+
+class NoteNotFound
+
+class "SQLite\nvolume /data" as db <<database>>
+
+NoteService --> NoteRepository
+NoteRepository --> db : SQLAlchemy
+NoteService ..> NoteCreate
+NoteService ..> NoteUpdate
+NoteService ..> NoteRead
+NoteService ..> NoteNotFound : 404
+NoteCreate ..> Note
+NoteUpdate ..> Note
+Note --> NoteRead : map
+@enduml

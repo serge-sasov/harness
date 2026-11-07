@@ -1,0 +1,23 @@
+@startmindmap
+skinparam defaultFontName Segoe UI
+title Карта сценариев harness (S-01..S-11)
+
+* Локальный harness
+** Подготовка
+*** S-01 Установка\n+ /harness-init
+** Цикл задачи
+*** S-02 /harness-run\nполный цикл
+** Ошибки
+*** S-10 Ошибки,\nretry <= 3, blocked
+** Роли
+*** S-03 Анализ\nтребований
+*** S-04 Архитектура\nADR + схемы
+*** S-05 Реализация\nкод + тесты
+*** S-06 QA-приёмка\nverdict
+*** S-07 Документирование\nREADME + guides
+** Сервисные команды
+*** S-08 /harness-board-update\nсинхронизация
+*** S-09 /harness-board-report\nсводка read-only
+** Пилот
+*** S-11 T-013\nend-to-end
+@endmindmap

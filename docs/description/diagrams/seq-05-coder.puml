@@ -1,0 +1,28 @@
+@startuml
+autonumber
+skinparam defaultFontName Segoe UI
+title S-05 Реализация и тесты (coder)
+
+participant "harness\nprimary lead" as primary
+participant "harness-coder" as coder
+participant "src / tests /\nscripts" as code
+participant "TestRunner\npytest / lint" as tests
+participant "Docker\nlocal" as docker
+participant "harness-orchestrator" as orch
+
+primary -> coder : задача: реализовать по ADR
+coder -> code : минимальный дифф\nодин модуль за шаг
+coder -> tests : pytest + ruff / mypy
+tests --> coder : pass / fail
+alt тесты или lint упали
+  coder -> code : исправление\nбез ослабления assert
+  coder -> tests : повторный прогон
+end
+coder -> docker : docker compose build / up
+docker --> coder : сервис доступен :8080
+coder --> orch : файлы, команды, pass/fail,\nотклонения от контракта
+note right of coder
+  Сеть и prod-действия запрещены;
+  секреты — только через env
+end note
+@enduml

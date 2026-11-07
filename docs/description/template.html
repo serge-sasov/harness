@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>%%TITLE%%</title>
+<style>
+:root {
+  --ink: #17212b;
+  --muted: #5b6b7c;
+  --line: #dbe3ec;
+  --line-strong: #c3ceda;
+  --accent: #1d4ed8;
+  --bg: #f3f6fa;
+  --panel: #ffffff;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.6;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: #fff;
+  color: #000;
+  padding: .5rem .8rem;
+  z-index: 2000;
+  border-radius: 0 0 8px 0;
+}
+.skip-link:focus { left: 0; }
+.page-header {
+  background: radial-gradient(circle at 15% 20%, #1e3a8a 0%, #0f172a 55%, #070d1a 100%);
+  color: #fff;
+  padding: 3rem 0 2.5rem;
+  border-bottom: 4px solid #2563eb;
+}
+.wrap { width: min(1440px, calc(100% - 2rem)); margin-inline: auto; }
+.page-header .eyebrow {
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  font-size: .78rem;
+  color: #bfdbfe;
+  font-weight: 600;
+}
+.page-header h1 {
+  margin: .35rem 0 .5rem;
+  font-size: clamp(1.8rem, 3vw, 2.7rem);
+  line-height: 1.15;
+}
+.subtitle { margin: 0; color: #dbeafe; }
+.meta { margin: .5rem 0 0; color: #93c5fd; font-size: .85rem; }
+.layout {
+  display: grid;
+  grid-template-columns: 290px minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+  padding: 2rem 0 3rem;
+}
+.sidebar {
+  position: sticky;
+  top: 1rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem 1rem .5rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .05);
+}
+.toc-title {
+  font-weight: 700;
+  font-size: .9rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  margin-bottom: .5rem;
+}
+.sidebar .toc { font-size: .92rem; }
+.sidebar .toc ul { list-style: none; margin: 0; padding-left: 0; }
+.sidebar .toc ul ul {
+  padding-left: .9rem;
+  border-left: 1px solid var(--line);
+  margin: .25rem 0 .25rem .25rem;
+}
+.sidebar .toc li { margin: .18rem 0; }
+.sidebar .toc a {
+  color: #334155;
+  display: block;
+  padding: .12rem .25rem;
+  border-radius: 6px;
+}
+.sidebar .toc a:hover { background: #eff6ff; color: var(--accent); text-decoration: none; }
+.content {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: clamp(1.2rem, 3vw, 3rem);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, .06);
+  min-width: 0;
+}
+.content > :first-child { margin-top: 0; }
+h2 {
+  margin: 2.4rem 0 .8rem;
+  padding-bottom: .45rem;
+  border-bottom: 2px solid var(--line);
+  font-size: 1.55rem;
+  scroll-margin-top: 1rem;
+}
+h3 { margin: 1.8rem 0 .6rem; font-size: 1.18rem; color: #1e3a8a; scroll-margin-top: 1rem; }
+h4 { margin: 1.2rem 0 .4rem; font-size: 1.02rem; }
+p { margin: .65rem 0; }
+ul, ol { padding-left: 1.35rem; }
+li { margin: .2rem 0; }
+blockquote {
+  margin: 1rem 0;
+  padding: .6rem 1rem;
+  border-left: 4px solid #93c5fd;
+  background: #eff6ff;
+  color: #1e3a8a;
+  border-radius: 0 8px 8px 0;
+}
+code {
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: .88em;
+  background: #eef2f7;
+  color: #0f172a;
+  padding: .12em .35em;
+  border-radius: 5px;
+}
+pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 1rem 1.1rem;
+  border-radius: 10px;
+  overflow: auto;
+  line-height: 1.45;
+}
+pre code { background: transparent; color: inherit; padding: 0; font-size: .86rem; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: .92rem;
+}
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+.table-scroll table { margin: 0; }
+table th, table td {
+  border: 1px solid var(--line-strong);
+  padding: .45rem .6rem;
+  vertical-align: top;
+  text-align: left;
+}
+table th { background: #eef4fb; font-weight: 600; color: #1e293b; }
+table tr:nth-child(even) td { background: #f8fafc; }
+hr { border: none; border-top: 1px solid var(--line); margin: 2rem 0; }
+.diagram {
+  margin: 1.6rem 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  padding: .55rem;
+  cursor: zoom-in;
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+  outline: none;
+}
+.diagram:hover, .diagram:focus-visible {
+  border-color: #93c5fd;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, .14);
+}
+.diagram:focus-visible { outline: 3px solid #bfdbfe; outline-offset: 2px; }
+.diagram-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #fff;
+}
+.diagram-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 68vh;
+  object-fit: contain;
+}
+.zoom-hint {
+  position: absolute;
+  right: .6rem;
+  bottom: .6rem;
+  background: rgba(15, 23, 42, .86);
+  color: #fff;
+  padding: .3rem .6rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .18s, transform .18s;
+  pointer-events: none;
+}
+.diagram:hover .zoom-hint, .diagram:focus-visible .zoom-hint { opacity: 1; transform: none; }
+.diagram figcaption {
+  margin: .55rem .2rem .1rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: .86rem;
+}
+.page-footer { padding: 0 0 3rem; color: var(--muted); font-size: .9rem; }
+.lightbox[hidden] { display: none !important; }
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 15, 30, .84);
+  backdrop-filter: blur(5px);
+  padding: 2vh 1.5vw;
+}
+.lightbox-dialog {
+  width: min(1600px, 97vw);
+  height: min(1100px, 94vh);
+  display: flex;
+  flex-direction: column;
+  background: #0b1220;
+  border: 1px solid #24324a;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .55);
+}
+.lightbox-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .6rem .8rem;
+  background: #111c33;
+  border-bottom: 1px solid #24324a;
+  color: #e2e8f0;
+  flex: 0 0 auto;
+}
+.lightbox-title {
+  font-weight: 600;
+  font-size: .95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lightbox-actions {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.lightbox-actions button, .lightbox-actions .button-link {
+  background: #1e2a44;
+  border: 1px solid #334155;
+  color: #e2e8f0;
+  border-radius: 8px;
+  min-height: 34px;
+  padding: .28rem .62rem;
+  font: inherit;
+  font-size: .88rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.lightbox-actions button:hover, .lightbox-actions .button-link:hover {
+  background: #27406b;
+  border-color: #60a5fa;
+  color: #fff;
+  text-decoration: none;
+}
+.lightbox-actions .close { font-size: 1.25rem; line-height: 1; padding: .1rem .55rem; }
+.zoom-level {
+  min-width: 3.6em;
+  text-align: center;
+  color: #bfdbfe;
+  font-variant-numeric: tabular-nums;
+  font-size: .85rem;
+}
+.lightbox-viewport {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, #16233d 0%, #0b1220 70%);
+  cursor: grab;
+  touch-action: none;
+}
+.lightbox-viewport.dragging { cursor: grabbing; }
+.lightbox-viewport img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .5);
+}
+.lightbox-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, .8);
+  color: #93c5fd;
+  border: 1px solid #1e3a5f;
+  padding: .3rem .75rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  pointer-events: none;
+  white-space: nowrap;
+}
+@media (max-width: 1050px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; max-height: none; }
+  .content { padding: 1.1rem; }
+}
+@media (max-width: 640px) {
+  .page-header { padding: 2rem 0 1.6rem; }
+  .lightbox { padding: 0; }
+  .lightbox-dialog { width: 100vw; height: 100vh; border-radius: 0; }
+  .lightbox-bar { align-items: flex-start; flex-direction: column; }
+  .lightbox-actions { justify-content: flex-start; }
+  .lightbox-hint { display: none; }
+  .diagram-frame img { max-height: 55vh; }
+}
+@media print {
+  body { background: #fff; }
+  .page-header { background: #fff; color: #000; border-bottom: 2px solid #000; padding: 1rem 0; }
+  .page-header .eyebrow, .subtitle, .meta { color: #333; }
+  .layout { display: block; padding: 0; }
+  .sidebar, .zoom-hint, .lightbox, .page-footer { display: none !important; }
+  .content { border: none; box-shadow: none; padding: 0; }
+  .diagram { break-inside: avoid; cursor: default; }
+  .diagram-frame img { max-height: none; }
+  a { color: #000; text-decoration: underline; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#content">К содержанию</a>
+<header class="page-header">
+  <div class="wrap">
+    <div class="eyebrow">Локальный harness · описание решения</div>
+    <h1>%%TITLE%%</h1>
+    <p class="subtitle">Архитектура, сценарии, модель классов и пилотный кейс</p>
+    <p class="meta">Сгенерировано из README.md · %%DATE%% · диаграмм: %%DIAGRAM_COUNT%% · офлайн-версия</p>
+  </div>
+</header>
+<div class="layout wrap">
+  <aside class="sidebar" aria-label="Содержание">
+    <div class="toc-title">Содержание</div>
+    %%TOC%%
+  </aside>
+  <main id="content" class="content">
+    %%CONTENT%%
+  </main>
+</div>
+<footer class="page-footer wrap">
+  <p>Все схемы — PlantUML, встроены как SVG. Клик по диаграмме открывает полноэкранный просмотр: колесо — масштаб, перетаскивание — панорама, Esc — закрыть.</p>
+</footer>
+<div class="lightbox" id="lightbox" hidden>
+  <div class="lightbox-dialog" role="dialog" aria-modal="true" aria-labelledby="lightbox-title">
+    <div class="lightbox-bar">
+      <div class="lightbox-title" id="lightbox-title">Схема</div>
+      <div class="lightbox-actions">
+        <button type="button" data-action="zoom-out" title="Уменьшить">&minus;</button>
+        <span class="zoom-level" id="zoom-level">100%</span>
+        <button type="button" data-action="zoom-in" title="Увеличить">+</button>
+        <button type="button" data-action="fit" title="Вписать в экран">Fit</button>
+        <button type="button" data-action="reset" title="Масштаб 100%">100%</button>
+        <a class="button-link" id="download-link" download="diagram.svg">Скачать SVG</a>
+        <button type="button" class="close" data-action="close" title="Закрыть (Esc)" aria-label="Закрыть">&times;</button>
+      </div>
+    </div>
+    <div class="lightbox-viewport" id="lightbox-viewport">
+      <img id="lightbox-image" alt="">
+      <div class="lightbox-hint">Колесо — масштаб · перетаскивание — панорама · Esc — закрыть</div>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const lightbox = document.getElementById('lightbox');
+  const viewport = document.getElementById('lightbox-viewport');
+  const image = document.getElementById('lightbox-image');
+  const titleEl = document.getElementById('lightbox-title');
+  const zoomLabel = document.getElementById('zoom-level');
+  const download = document.getElementById('download-link');
+  const closeBtn = lightbox.querySelector('[data-action="close"]');
+  let scale = 1;
+  let tx = 0;
+  let ty = 0;
+  let open = false;
+  let lastFocus = null;
+  let dragging = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let startTx = 0;
+  let startTy = 0;
+
+  function naturalSize() {
+    return {
+      nw: image.naturalWidth || 1200,
+      nh: image.naturalHeight || 800
+    };
+  }
+  function apply() {
+    image.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + scale + ')';
+    zoomLabel.textContent = Math.round(scale * 100) + '%';
+  }
+  function fit() {
+    const rect = viewport.getBoundingClientRect();
+    const size = naturalSize();
+    const s = Math.min(rect.width / size.nw, rect.height / size.nh) * 0.94;
+    scale = Math.max(0.05, Math.min(s, 20));
+    tx = (rect.width - size.nw * scale) / 2;
+    ty = (rect.height - size.nh * scale) / 2;
+    apply();
+  }
+  function zoomAt(mx, my, factor) {
+    const next = Math.max(0.05, Math.min(20, scale * factor));
+    const k = next / scale;
+    tx = mx - (mx - tx) * k;
+    ty = my - (my - ty) * k;
+    scale = next;
+    apply();
+  }
+  function zoomCenter(factor) {
+    const rect = viewport.getBoundingClientRect();
+    zoomAt(rect.width / 2, rect.height / 2, factor);
+  }
+  function reset100() {
+    const rect = viewport.getBoundingClientRect();
+    const size = naturalSize();
+    scale = 1;
+    tx = (rect.width - size.nw) / 2;
+    ty = (rect.height - size.nh) / 2;
+    apply();
+  }
+  function openViewer(src, title) {
+    lastFocus = document.activeElement;
+    const label = title || 'Схема';
+    titleEl.textContent = label;
+    image.alt = label;
+    image.src = src;
+    download.href = src;
+    const safe = label.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, '-').slice(0, 80);
+    download.download = (safe || 'diagram') + '.svg';
+    lightbox.hidden = false;
+    open = true;
+    document.body.style.overflow = 'hidden';
+    const doFit = () => requestAnimationFrame(() => { if (open) fit(); });
+    if (image.complete && image.naturalWidth) doFit();
+    else image.addEventListener('load', doFit, { once: true });
+    closeBtn.focus();
+  }
+  function closeViewer() {
+    if (!open) return;
+    open = false;
+    lightbox.hidden = true;
+    image.removeAttribute('src');
+    document.body.style.overflow = '';
+    if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+  }
+  document.querySelectorAll('figure.diagram').forEach((figure) => {
+    const img = figure.querySelector('img');
+    if (!img) return;
+    const label = figure.dataset.title || img.alt;
+    figure.addEventListener('click', () => openViewer(img.src, label));
+    figure.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openViewer(img.src, label);
+      }
+    });
+  });
+  lightbox.addEventListener('click', (event) => {
+    if (event.target === lightbox) closeViewer();
+  });
+  lightbox.querySelectorAll('[data-action]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const action = button.dataset.action;
+      if (action === 'zoom-in') zoomCenter(1.25);
+      else if (action === 'zoom-out') zoomCenter(1 / 1.25);
+      else if (action === 'fit') fit();
+      else if (action === 'reset') reset100();
+      else if (action === 'close') closeViewer();
+    });
+  });
+  viewport.addEventListener('wheel', (event) => {
+    if (!open) return;
+    event.preventDefault();
+    const rect = viewport.getBoundingClientRect();
+    const factor = event.deltaY < 0 ? 1.15 : 1 / 1.15;
+    zoomAt(event.clientX - rect.left, event.clientY - rect.top, factor);
+  }, { passive: false });
+  viewport.addEventListener('pointerdown', (event) => {
+    if (!open || event.button !== 0) return;
+    dragging = true;
+    viewport.classList.add('dragging');
+    viewport.setPointerCapture(event.pointerId);
+    dragStartX = event.clientX;
+    dragStartY = event.clientY;
+    startTx = tx;
+    startTy = ty;
+  });
+  viewport.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    tx = startTx + (event.clientX - dragStartX);
+    ty = startTy + (event.clientY - dragStartY);
+    apply();
+  });
+  function endDrag(event) {
+    if (!dragging) return;
+    dragging = false;
+    viewport.classList.remove('dragging');
+    if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
+  }
+  viewport.addEventListener('pointerup', endDrag);
+  viewport.addEventListener('pointercancel', endDrag);
+  viewport.addEventListener('dblclick', (event) => {
+    if (!open) return;
+    const rect = viewport.getBoundingClientRect();
+    zoomAt(event.clientX - rect.left, event.clientY - rect.top, 1.5);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (!open) return;
+    if (event.key === 'Escape') { event.preventDefault(); closeViewer(); }
+    else if (event.key === '+' || event.key === '=') { event.preventDefault(); zoomCenter(1.25); }
+    else if (event.key === '-') { event.preventDefault(); zoomCenter(1 / 1.25); }
+    else if (event.key === '0') { event.preventDefault(); fit(); }
+  });
+  window.addEventListener('resize', () => { if (open) fit(); });
+})();
+</script>
+</body>
+</html>

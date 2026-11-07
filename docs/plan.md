@@ -28,7 +28,7 @@
 | T-009 | Sub-agent `qa` | qa | T-005 | done | `harness/agents/qa.md` | 95b3949 |
 | T-010 | Sub-agent `doc-writer` | doc-writer | T-005 | done | `harness/agents/doc-writer.md` | 876e943 |
 | T-011 | Sub-agent `orchestrator` | orchestrator | T-005 | done | `harness/agents/orchestrator.md` | e021349 |
-| T-012 | Команды opencode | orchestrator | T-006..T-011 | done | `harness/commands/` | cbf393f |
+| T-012 | Команды opencode | orchestrator | T-006..T-011 | done | `harness/commands/harness-*.md` | cbf393f |
 | T-013 | Smoke-test полного цикла | qa | T-012 | done | `docs/analysis/`, `docs/architecture/`, `docs/qa/` | fb145b6 |
 
 ## Правила ведения board
