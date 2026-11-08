@@ -16,8 +16,10 @@ cmd -> lead : agent: harness
 lead -> board : plan.md + карточка задачи
 board --> lead : depends_on, acceptance, артефакты
 lead -> lead : проверить marker\nharness/process.md
-alt marker или зависимости не выполнены
-  lead --> cmd : стоп: проект не инициализирован\nили зависимость не done
+lead -> board : проверить, что нет другой\nзадачи в in_progress
+board --> lead : ok / ID активной задачи
+alt marker, зависимости или другая in_progress
+  lead --> cmd : стоп: marker, зависимость\nили параллельный запуск
   cmd --> user : отчёт о блокировке
 else всё готово
   lead -> orch : in_progress\nplan + карточка + activity + SVG
