@@ -105,6 +105,7 @@
 - Любой провал приёмки → статус `failed`, блок в карточке: что упало, вывод, гипотеза.
 - Зависимые задачи не стартуют, пока задача не переведена в `done`.
 - Максимум 3 попытки исправления на задачу; далее — `blocked` и эскалация пользователю.
+- Пустой результат субагента (`task_result` пуст) или завершение генерации по лимиту (`finish=length`) считается провалом попытки: orchestrator сразу фиксирует это в логе карточки, не оставляя задачу в `in_progress`.
 - Причина ошибки фиксируется в логе карточки, не удаляется при исправлении.
 
 ## 8. Артефакты ролей
@@ -115,7 +116,7 @@
 | orchestrator | `docs/plan.md`, `docs/tasks/`, `docs/activity.puml`, `README.md`, `.gitignore` |
 | analyst | `docs/analysis/` (требования, вопросы, глоссарий) |
 | architect | `docs/architecture/` (ADR, PlantUML, контракты интерфейсов) |
-| coder | `src/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore` |
+| coder | `src/`, `backend/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore`, `requirements.txt`, `pyproject.toml`, `.env.example`, `alembic.ini`, `sources.yaml` |
 | qa | `docs/qa/` (отчёты ревью, результаты прогонов) |
 | doc-writer | `docs/guides/`, `README.md`, финализация ADR |
 

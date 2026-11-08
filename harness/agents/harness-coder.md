@@ -3,6 +3,8 @@ description: "Инженер-исполнитель harness: реализаци�
 mode: subagent
 model: ollama-metrics/tiel-coder:35b-a3b-mtp-128k-text
 temperature: 0.1
+options:
+  reasoningEffort: low
 permission:
   edit:
     "*": "deny"
@@ -22,6 +24,18 @@ permission:
     "**/Makefile": "allow"
     ".gitignore": "allow"
     "**/.gitignore": "allow"
+    "backend/**": "allow"
+    "**/backend/**": "allow"
+    "requirements.txt": "allow"
+    "**/requirements.txt": "allow"
+    "pyproject.toml": "allow"
+    "**/pyproject.toml": "allow"
+    ".env.example": "allow"
+    "**/.env.example": "allow"
+    "alembic.ini": "allow"
+    "**/alembic.ini": "allow"
+    "sources.yaml": "allow"
+    "**/sources.yaml": "allow"
     "docs/tasks/**": "allow"
     "**/docs/tasks/**": "allow"
     "docs/issues/**": "allow"
@@ -73,6 +87,9 @@ permission:
     "*npm test*": "allow"
     "*npx *": "allow"
     "*node *": "allow"
+    "*python *": "allow"
+    "*pip install*": "allow"
+    "*alembic*": "allow"
     "*pytest*": "allow"
     "*ruff*": "allow"
     "*mypy*": "allow"
@@ -137,13 +154,14 @@ permission:
 
 ## Артефакты (единственное место записи)
 
-- `src/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore`.
+- `src/`, `backend/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore`, `requirements.txt`, `pyproject.toml`, `.env.example`, `alembic.ini`, `sources.yaml`.
 - `docs/issues/` — issue-записи о проблемах и решениях (skill `harness-issues`).
 - `docs/tasks/T-XXX-*.md` — только статус/лог собственной задачи.
 
 ## Правила
 
 - Один файл или модуль за шаг, минимальный дифф, без посторонних «улучшений».
+- Не проектировать весь модуль/сервис в reasoning: первый tool call — в первом шаге, затем по одному файлу за шаг. Если задача большая — разбить на этапы и сообщить план этапов коротко.
 - Не менять файлы вне списка задачи и вне своей зоны записи.
 - Тесты детерминированные и офлайн, если сеть не разрешена явно.
 - Не ослаблять существующие assert'ы и не удалять тесты ради зелёного прогона.
