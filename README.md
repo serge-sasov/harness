@@ -37,7 +37,7 @@
 | analyst | `harness-analyst` | qwen3.8:27b-64k (thinking: medium) |
 | architect | `harness-architect` | qwen3.8:27b-64k (thinking: xhigh) |
 | coder | `harness-coder` | tiel-coder:35b-a3b-mtp-128k-text |
-| qa | `harness-qa` | tiel-coder:35b-a3b-mtp-128k-vision |
+| qa | `harness-qa` | qwen3.8:27b-64k (vision, 64K) |
 | doc-writer | `harness-doc-writer` | qwen3.8:27b-64k (thinking: low) |
 
 ## Глобальная установка (один раз)

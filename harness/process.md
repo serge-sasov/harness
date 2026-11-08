@@ -54,7 +54,7 @@
 | analyst | `qwen3.8:27b-64k` (thinking: medium) | dense, анализ требований, RAG |
 | architect | `qwen3.8:27b-64k` (thinking: xhigh) | dense, deep-reasoning, проектирование |
 | coder | `tiel-coder:35b-a3b-mtp-128k-text` | MoE A3B, быстрый на код/тестах |
-| qa | `tiel-coder:35b-a3b-mtp-128k-vision` | vision — чтение схем и скриншотов |
+| qa | `qwen3.8:27b-64k` | vision — чтение схем и скриншотов; 64K контекст |
 | doc-writer | `qwen3.8:27b-64k` (thinking: low) | плотный текст без deep-reasoning |
 
 ## 3. План и board

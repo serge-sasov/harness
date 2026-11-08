@@ -64,7 +64,7 @@ sequence-диаграммы каждого сценария, концептуа�
 |---|---|---|
 | Управление | opencode, primary-агент `harness`, команды `/harness-*`, глобальная установка | явный запуск, маршрутизация ролей, синхронизация артефактов |
 | Роли | `harness-orchestrator`, `harness-analyst`, `harness-architect`, `harness-coder`, `harness-qa`, `harness-doc-writer` | выполнение работ по зонам ответственности |
-| Модели | `qwen3.8:27b-64k`, `tiel-coder:35b-a3b-mtp-128k` (text/vision) | локальный инференс без внешних API |
+| Модели | `qwen3.8:27b-64k`, `tiel-coder:35b-a3b-mtp-128k-text` | локальный инференс без внешних API |
 | Источники истины | `docs/plan.md`, `docs/tasks/*.md` | состав работ, статусы, зависимости, acceptance |
 | Артефакты | `docs/analysis`, `docs/architecture`, `docs/qa`, `docs/guides`, `docs/issues`, `src`, `tests` | результаты ролей |
 | Инструменты | MCP `plantuml-render`, `local-rag`, Git | проверка/рендер схем, поиск по источникам, версионирование |
@@ -84,7 +84,7 @@ sequence-диаграммы каждого сценария, концептуа�
 | analyst | `qwen3.8:27b-64k` | medium | требования, RAG-анализ, вопросы, глоссарий |
 | architect | `qwen3.8:27b-64k` | xhigh | ADR, схемы PlantUML, контракты |
 | coder | `tiel-coder:35b-a3b-mtp-128k-text` | — | код, тесты, CI/CD, локальный деплой |
-| qa | `tiel-coder:35b-a3b-mtp-128k-vision` | — | ревью, визуальная проверка схем, вердикт |
+| qa | `qwen3.8:27b-64k` | — | ревью, визуальная проверка схем (64K), вердикт |
 | doc-writer | `qwen3.8:27b-64k` | low | README, runbook, гайды, финализация ADR |
 
 Агенты установлены глобально как `harness`, `harness-orchestrator`,

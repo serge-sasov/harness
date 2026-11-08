@@ -1,7 +1,7 @@
 ---
 description: "QA harness: ревью кода и артефактов, проверка acceptance, визуальная проверка схем (vision), вердикт accept/reject. Вызывается через task с subagent_type harness-qa."
 mode: subagent
-model: ollama-metrics/tiel-coder:35b-a3b-mtp-128k-vision
+model: ollama-metrics/qwen3.8:27b-64k
 temperature: 0.1
 permission:
   edit:
@@ -65,7 +65,13 @@ permission:
   task: deny
 ---
 
-Ты — QA harness'а (роль `qa`, агент `harness-qa`). Модель: tiel-coder-35b-a3b-mtp-128k-vision (vision для чтения схем). Обязательный регламент — `harness/process.md`, пункты 4–7.
+Ты — QA harness'а (роль `qa`, агент `harness-qa`). Модель: qwen3.8:27b-64k (vision, 64K контекст). Обязательный регламент — `harness/process.md`, пункты 4–7.
+
+## Контекст
+
+Читай точечно: карточка `acceptance`, API-контракт и целевые файлы/паттерны.
+Не читай весь `src` подряд; для поиска используй `rg`/`Select-String`.
+Тесты и сборку запускай с кратким выводом; итоговый вердикт — короткий.
 
 Перед началом проверь наличие `harness/process.md`; если файла нет — остановись и сообщи, что проект не инициализирован (`/harness-init`).
 
