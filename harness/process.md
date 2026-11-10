@@ -54,7 +54,7 @@
 | analyst | `qwen3.8:27b-64k` (thinking: medium) | dense, анализ требований, RAG |
 | architect | `qwen3.8:27b-64k` (thinking: xhigh) | dense, deep-reasoning, проектирование |
 | coder | `tiel-coder:35b-a3b-mtp-128k-text` | MoE A3B, быстрый на код/тестах |
-| qa | `qwen3.8:27b-64k` | vision — чтение схем и скриншотов; 64K контекст |
+| qa | `qwen3.8:27b-64k` (thinking: low) | vision — чтение схем и скриншотов; 64K контекст; отчёт пишется в файл инкрементально |
 | doc-writer | `qwen3.8:27b-64k` (thinking: low) | плотный текст без deep-reasoning |
 
 ## 3. План и board
@@ -106,6 +106,7 @@
 - Зависимые задачи не стартуют, пока задача не переведена в `done`.
 - Максимум 3 попытки исправления на задачу; далее — `blocked` и эскалация пользователю.
 - Пустой результат субагента (`task_result` пуст) или завершение генерации по лимиту (`finish=length`) считается провалом попытки: orchestrator сразу фиксирует это в логе карточки, не оставляя задачу в `in_progress`.
+- Для QA (`limit.output=16384`): отчёт пишется в файл инкрементально через `write`, финальный ответ — не более 10 строк; длинный ответ в одном сообщении при `finish=length` — провал попытки.
 - Причина ошибки фиксируется в логе карточки, не удаляется при исправлении.
 
 ## 8. Артефакты ролей
@@ -117,7 +118,7 @@
 | analyst | `docs/analysis/` (требования, вопросы, глоссарий) |
 | architect | `docs/architecture/` (ADR, PlantUML, контракты интерфейсов) |
 | coder | `src/`, `backend/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore`, `requirements.txt`, `pyproject.toml`, `.env.example`, `alembic.ini`, `sources.yaml` |
-| qa | `docs/qa/` (отчёты ревью, результаты прогонов) |
+| qa | `docs/qa/` (отчёты `review-T-XXX.md`, результаты прогонов, PNG-ассеты для vision) |
 | doc-writer | `docs/guides/`, `README.md`, финализация ADR |
 
 Все роли могут создавать issue-файлы в `docs/issues/`; индекс
