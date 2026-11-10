@@ -30,6 +30,7 @@ $globalFiles = @(
     (Join-Path $GlobalRoot "agents\harness-architect.md"),
     (Join-Path $GlobalRoot "agents\harness-coder.md"),
     (Join-Path $GlobalRoot "agents\harness-qa.md"),
+    (Join-Path $GlobalRoot "agents\harness-qa-vision.md"),
     (Join-Path $GlobalRoot "agents\harness-doc-writer.md"),
     (Join-Path $GlobalRoot "commands\harness-init.md"),
     (Join-Path $GlobalRoot "commands\harness-run.md"),
@@ -65,6 +66,7 @@ $harnessIds = @(
     "harness-architect",
     "harness-coder",
     "harness-qa",
+    "harness-qa-vision",
     "harness-doc-writer"
 )
 if (Test-Path -LiteralPath $configPath) {

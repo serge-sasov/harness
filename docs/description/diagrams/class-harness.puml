@@ -50,6 +50,7 @@ class Analyst
 class Architect
 class Coder
 class QA
+class QAVision
 class DocWriter
 
 class ModelProfile {
@@ -115,6 +116,7 @@ Role <|-- Analyst
 Role <|-- Architect
 Role <|-- Coder
 Role <|-- QA
+Role <|-- QAVision
 Role <|-- DocWriter
 Role --> ModelProfile
 Role ..> RoleResult : returns
@@ -135,5 +137,6 @@ HarnessLead --> Role : dispatches
 HarnessLead --> PlanBoard : reads
 HarnessLead --> TaskCard : reads
 QA --> Review : produces
+QAVision ..> Review : adds visual findings
 Diagram ..> Command : rendered by
 @enduml

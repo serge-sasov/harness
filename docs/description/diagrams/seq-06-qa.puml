@@ -1,10 +1,11 @@
 @startuml
 autonumber
 skinparam defaultFontName Segoe UI
-title S-06 QA acceptance (qa)
+title S-06 QA acceptance (qa + qa-vision)
 
 participant "harness\nprimary lead" as primary
 participant "harness-qa" as qa
+participant "harness-qa-vision" as qavision
 participant "Artifacts\ncode + docs" as store
 participant "TestRunner" as tests
 participant "Vision\nSVG / PNG" as vision
@@ -14,9 +15,12 @@ primary -> qa : task: review against acceptance
 qa -> store : read criteria and artifacts
 qa -> tests : independent test run
 tests --> qa : results (read-only)
-qa -> vision : inspect diagrams
-vision --> qa : readability and ADR compliance
-qa -> qa : verdict accept / reject
+qa -> qavision : inspect diagrams and screenshots
+qavision -> vision : read PNG / SVG
+vision --> qavision : pixels, text, layout
+qavision -> store : docs/qa/vision-review-T-XXX.md
+qavision --> qa : visual findings + verdict
+qa -> qa : combined verdict accept / reject
 qa -> store : docs/qa/review-T-XXX.md\ncriteria, findings, verdict
 qa --> orch : verdict + finding severity
 alt reject

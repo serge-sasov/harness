@@ -49,6 +49,7 @@ $BackupRoot = Join-Path $GlobalRoot "backups\harness-install-$Timestamp"
 $requiredSource = @(
     (Join-Path $SourceRoot "agents\harness.md"),
     (Join-Path $SourceRoot "agents\harness-orchestrator.md"),
+    (Join-Path $SourceRoot "agents\harness-qa-vision.md"),
     (Join-Path $SourceRoot "commands\harness-run.md"),
     (Join-Path $SourceRoot "skills\harness\SKILL.md"),
     (Join-Path $SourceRoot "skills\harness-issues\SKILL.md"),
@@ -118,6 +119,7 @@ $harnessIds = @(
     "harness-architect",
     "harness-coder",
     "harness-qa",
+    "harness-qa-vision",
     "harness-doc-writer"
 )
 

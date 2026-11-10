@@ -17,7 +17,7 @@ Mandatory for all harness roles. A violation is a task blocker.
 
 - Harness = role subagents + shared plan. All tasks use local Ollama models; no external APIs.
 - `docs/plan.md` is the single source of work scope; this file is the single source of process rules.
-- Each task is performed by exactly one role within its task/artifact boundaries.
+- Each task is performed by exactly one role within its task/artifact boundaries. Exception: QA may use a text pass (`harness-qa`) and a vision pass (`harness-qa-vision`); the orchestrator combines both into one verdict.
 - Tasks run strictly sequentially: at most one `in_progress`; no parallel `/harness-run`, multiple IDs, or concurrent role calls.
 
 ## 2. Role models
@@ -29,7 +29,8 @@ Mandatory for all harness roles. A violation is a task blocker.
 | analyst | `qwen3.8:27b-64k` (medium) | requirements/RAG |
 | architect | `qwen3.8:27b-64k` (xhigh) | design |
 | coder | `tiel-coder:35b-a3b-mtp-128k-text` | code/tests |
-| qa | `qwen3.8:27b-64k` (low) | vision/QA; incremental report |
+| qa | `qwen3.8:27b-64k` (low) | text/code QA; incremental report |
+| qa-vision | `tiel-coder:35b-a3b-mtp-128k-vision` | image/visual QA |
 | doc-writer | `qwen3.8:27b-64k` (low) | docs |
 
 ## 3. Plan and board
@@ -46,7 +47,7 @@ Mandatory for all harness roles. A violation is a task blocker.
 2. Check `depends_on`: all predecessors must be `done`.
 3. Set `in_progress` in plan, card, diagram.
 4. The role performs the task per the card's `acceptance`.
-5. Verify acceptance; on failure set `failed` (section 7).
+5. Verify acceptance; on failure set `failed` (section 7). For diagrams/screenshots, the orchestrator also calls `harness-qa-vision`; include its findings in the single verdict.
 6. Set `done`; log what was done, files, commands, results.
 
 ## 5. Artifact updates (mandatory order)
@@ -84,6 +85,7 @@ Mandatory for all harness roles. A violation is a task blocker.
 | architect | `docs/architecture/` |
 | coder | `src/`, `backend/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore`, `requirements.txt`, `pyproject.toml`, `.env.example`, `alembic.ini`, `sources.yaml` |
 | qa | `docs/qa/` |
+| qa-vision | `docs/qa/` |
 | doc-writer | `docs/guides/`, `README.md`, ADR finalization |
 
 All roles may create `docs/issues/` records; the orchestrator verifies the index.

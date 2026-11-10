@@ -37,6 +37,7 @@ The script:
     "harness-architect": "allow",
     "harness-coder": "allow",
     "harness-qa": "allow",
+    "harness-qa-vision": "allow",
     "harness-doc-writer": "allow"
   }
 }
@@ -113,7 +114,7 @@ Run flow:
   -> primary agent harness (marker and depends_on checks)
   -> harness-orchestrator (in_progress, board, activity, SVG)
   -> harness-analyst | harness-architect | harness-coder |
-    harness-qa | harness-doc-writer
+    harness-qa | harness-qa-vision | harness-doc-writer
   -> harness-orchestrator (acceptance, done/failed, commit)
 ```
 

@@ -35,7 +35,8 @@ Before any action:
 | `harness-analyst` | requirements, RAG, questions, glossary |
 | `harness-architect` | ADRs, PlantUML, contracts |
 | `harness-coder` | code, tests, CI/CD, local runs |
-| `harness-qa` | review, vision, accept/reject verdict |
+| `harness-qa` | text/code review, accept/reject verdict |
+| `harness-qa-vision` | visual review of diagrams and screenshots |
 | `harness-doc-writer` | README, runbook, guides, ADR finalization |
 
 The lead does not edit files itself; the orchestrator handles the board and commits.

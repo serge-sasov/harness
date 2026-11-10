@@ -63,8 +63,8 @@ Solution layers:
 | Layer | Components | Purpose |
 |---|---|---|
 | Control | opencode, primary agent `harness`, `/harness-*` commands, global installation | explicit start, role routing, artifact sync |
-| Roles | `harness-orchestrator`, `harness-analyst`, `harness-architect`, `harness-coder`, `harness-qa`, `harness-doc-writer` | work within responsibility areas |
-| Models | `qwen3.8:27b-64k`, `tiel-coder:35b-a3b-mtp-128k-text` | local inference without external APIs |
+| Roles | `harness-orchestrator`, `harness-analyst`, `harness-architect`, `harness-coder`, `harness-qa`, `harness-qa-vision`, `harness-doc-writer` | work within responsibility areas |
+| Models | `qwen3.8:27b-64k`, `tiel-coder:35b-a3b-mtp-128k-text`, `tiel-coder:35b-a3b-mtp-128k-vision` | local inference without external APIs |
 | Sources of truth | `docs/plan.md`, `docs/tasks/*.md` | work scope, statuses, dependencies, acceptance |
 | Artifacts | `docs/analysis`, `docs/architecture`, `docs/qa`, `docs/guides`, `docs/issues`, `src`, `tests` | role results |
 | Tools | MCP `plantuml-render`, `local-rag`, Git | diagram validation/rendering, source search, versioning |
@@ -85,12 +85,15 @@ and commits.
 | analyst | `qwen3.8:27b-64k` | medium | requirements, RAG analysis, questions, glossary |
 | architect | `qwen3.8:27b-64k` | xhigh | ADR, PlantUML diagrams, contracts |
 | coder | `tiel-coder:35b-a3b-mtp-128k-text` | - | code, tests, CI/CD, local deployment |
-| qa | `qwen3.8:27b-64k` | - | review, visual diagram checks (64K), verdict |
+| qa | `qwen3.8:27b-64k` | low | text/code review, verdict |
+| qa-vision | `tiel-coder:35b-a3b-mtp-128k-vision` | - | visual checks of diagrams/screenshots |
 | doc-writer | `qwen3.8:27b-64k` | low | README, runbook, guides, ADR finalization |
 
 Agents are installed globally as `harness`, `harness-orchestrator`,
 `harness-analyst`, `harness-architect`, `harness-coder`, `harness-qa`,
-`harness-doc-writer`; the lead calls them via `task`.
+`harness-qa-vision`, `harness-doc-writer`; the lead calls them via `task`.
+For visual artifacts, the orchestrator calls both QA agents and combines their
+findings into one verdict.
 
 ### 2.3 Permissions and write areas
 
@@ -102,6 +105,7 @@ Agents are installed globally as `harness`, `harness-orchestrator`,
 | architect | `docs/architecture/**`, `docs/tasks/**` | code, tests, editing `docs/analysis` |
 | coder | `src/**`, `tests/**`, `scripts/**`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore` | prod actions, `git commit`, `docker push`, cloud CLIs |
 | qa | `docs/qa/**`, `docs/tasks/**` | fixing code/artifacts, commits, deployment |
+| qa-vision | `docs/qa/**` | code/docs edits, commits, deployment |
 | doc-writer | `README.md`, `docs/guides/**`, `docs/architecture/adr-*.md` (editing) | code, tests, CI/CD, changing ADR meaning |
 
 Permissions include both relative and `**/...` pattern variants: opencode
@@ -146,7 +150,7 @@ Source: [`diagrams/scenario-map.puml`](diagrams/scenario-map.puml).
 | S-03 | Requirements analysis | analyst task | analyst, local-rag | requirements, questions, glossary |
 | S-04 | Architecture and diagrams | architect task | architect, MCP PlantUML | ADR, `.puml`/`.svg`, contracts, decomposition |
 | S-05 | Implementation and tests | coder task | coder, test runner, Docker | code, tests, CI/CD, local run |
-| S-06 | QA acceptance | qa task | qa, test runner, vision | review report and `accept`/`reject` verdict |
+| S-06 | QA acceptance | qa task | qa, qa-vision, test runner, vision | review report and `accept`/`reject` verdict |
 | S-07 | Documentation | doc-writer task | doc-writer | README, runbook, guides, ADR finalization |
 | S-08 | Board sync | `harness-board-update all / T-XXX` | orchestrator, MCP, Git | statuses, commits, SVG, chore commit |
 | S-09 | Board report | `harness-board-report` | orchestrator | summary and recommendations (read-only) |
@@ -571,7 +575,7 @@ are required.
 | S-03 | requirements, questions, glossary | [`harness/agents/harness-analyst.md`](../../harness/agents/harness-analyst.md) |
 | S-04 | ADR, diagrams, contracts | [`harness/agents/harness-architect.md`](../../harness/agents/harness-architect.md) |
 | S-05 | code, tests, CI/CD | [`harness/agents/harness-coder.md`](../../harness/agents/harness-coder.md) |
-| S-06 | review report | [`harness/agents/harness-qa.md`](../../harness/agents/harness-qa.md) |
+| S-06 | review report, visual findings | [`harness/agents/harness-qa.md`](../../harness/agents/harness-qa.md), [`harness/agents/harness-qa-vision.md`](../../harness/agents/harness-qa-vision.md) |
 | S-07 | README, guides, ADR | [`harness/agents/harness-doc-writer.md`](../../harness/agents/harness-doc-writer.md) |
 | S-08 | board, cards, activity | [`harness/commands/harness-board-update.md`](../../harness/commands/harness-board-update.md) |
 | S-09 | board summary | [`harness/commands/harness-board-report.md`](../../harness/commands/harness-board-report.md) |

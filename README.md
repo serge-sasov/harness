@@ -12,7 +12,7 @@ Detailed guide: [`docs/guides/harness-global.md`](docs/guides/harness-global.md)
 - `harness/process.md` - unified production process requirements (rules)
 - `harness/agents/` - primary agent `harness` and role subagents
   (`harness-orchestrator`, `harness-analyst`, `harness-architect`,
-  `harness-coder`, `harness-qa`, `harness-doc-writer`)
+  `harness-coder`, `harness-qa`, `harness-qa-vision`, `harness-doc-writer`)
 - `harness/commands/` - opencode commands: `/harness-run`,
   `/harness-board-update`, `/harness-board-report`, `/harness-init`,
   `/harness-doctor`
@@ -37,7 +37,8 @@ Detailed guide: [`docs/guides/harness-global.md`](docs/guides/harness-global.md)
 | analyst | `harness-analyst` | qwen3.8:27b-64k (thinking: medium) |
 | architect | `harness-architect` | qwen3.8:27b-64k (thinking: xhigh) |
 | coder | `harness-coder` | tiel-coder:35b-a3b-mtp-128k-text |
-| qa | `harness-qa` | qwen3.8:27b-64k (vision, 64K) |
+| qa | `harness-qa` | qwen3.8:27b-64k (thinking: low, 64K) |
+| qa-vision | `harness-qa-vision` | tiel-coder:35b-a3b-mtp-128k-vision |
 | doc-writer | `harness-doc-writer` | qwen3.8:27b-64k (thinking: low) |
 
 ## Global installation (once)

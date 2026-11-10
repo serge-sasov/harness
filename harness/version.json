@@ -12,6 +12,7 @@
     "harness-architect",
     "harness-coder",
     "harness-qa",
+    "harness-qa-vision",
     "harness-doc-writer"
   ],
   "commands": [

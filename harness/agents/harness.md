@@ -61,6 +61,7 @@ permission:
     "harness-architect": "allow"
     "harness-coder": "allow"
     "harness-qa": "allow"
+    "harness-qa-vision": "allow"
     "harness-doc-writer": "allow"
   skill:
     "*": "deny"

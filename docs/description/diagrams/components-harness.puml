@@ -17,12 +17,13 @@ package "Harness roles (subagents)" {
   component "harness-architect" as architect
   component "harness-coder" as coder
   component "harness-qa" as qa
+  component "harness-qa-vision" as qavision
   component "harness-doc-writer" as docwriter
 }
 
 package "Local models (Ollama)" {
-  component "qwen3.8:27b-64k\nharness / orchestrator /\nanalyst / architect / doc-writer" as qwen
-  component "tiel-coder:35b-a3b-mtp-128k\ntext / vision\ncoder / qa" as tiel
+  component "qwen3.8:27b-64k\nharness / orchestrator / analyst /\narchitect / qa / doc-writer" as qwen
+  component "tiel-coder:35b-a3b-mtp-128k\ntext / vision\ncoder / qa-vision" as tiel
 }
 
 package "Sources of truth" {
@@ -60,6 +61,7 @@ registry --> analyst
 registry --> architect
 registry --> coder
 registry --> qa
+registry --> qavision
 registry --> docwriter
 
 orch --> qwen
@@ -67,7 +69,7 @@ analyst --> qwen
 architect --> qwen
 docwriter --> qwen
 coder --> tiel
-qa --> tiel
+qavision --> tiel
 
 orch --> board : statuses and commits
 orch --> cards : acceptance / blockers
@@ -79,7 +81,8 @@ orch --> git : add + commit
 analyst --> rag : source search
 analyst --> docs : requirements
 architect --> docs : ADR and diagrams
-qa --> docs : review reports
+qa --> docs : text review reports
+qavision --> docs : visual review reports
 docwriter --> docs : guides and README
 
 coder --> code : implementation and tests
