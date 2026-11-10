@@ -1,94 +1,72 @@
 ---
 name: Local Harness
-description: "Локальный multi-agent harness: роли, board, задачи, приёмка, артефакты. Использовать только по явному запросу пользователя и только в проекте с harness/process.md. Не применять к обычным задачам кодинга."
+description: "Local multi-agent harness: roles, board, tasks, acceptance, artifacts. Use only on explicit user request and only in a project with harness/process.md. Do not use for ordinary coding tasks."
 metadata:
   opencode/autoinvoke: false
 ---
 
 # Local Harness
 
-## Когда использовать
+## When to use
 
-Только если пользователь явно просит запустить harness или выполнить
-`/harness-run`, `/harness-board-update`, `/harness-board-report` в проекте,
-где есть `harness/process.md` и `docs/plan.md`.
+Only when the user explicitly asks to run harness or execute `/harness-run`, `/harness-board-update`, `/harness-board-report` in a project that has `harness/process.md` and `docs/plan.md`.
 
-Не использовать для обычных задач разработки, анализа или документации.
+Do not use for ordinary development, analysis, or documentation tasks.
 
-## Проверка проекта
+## Project check
 
-Перед любым действием:
+Before any action:
 
-1. Убедись, что существуют `harness/process.md` и `docs/plan.md`.
-2. Если их нет — остановись и предложи `/harness-init`.
-3. Прочитай `harness/process.md`: это источник правил процесса.
-4. Прочитай `docs/plan.md` и карточку задачи `docs/tasks/T-XXX-*.md`.
+1. Verify that `harness/process.md` and `docs/plan.md` exist.
+2. If not, stop and suggest `/harness-init`.
+3. Read `harness/process.md`; it is the source of process rules.
+4. Read `docs/plan.md` and the task card `docs/tasks/T-XXX-*.md`.
 
-## Команды
+## Commands
 
-| Команда | Назначение |
+`/harness-init`, `/harness-run T-XXX`, `/harness-board-update all|T-XXX`, `/harness-board-report`, `/harness-doctor`. Explicit only; `default_agent` is never switched to harness.
+
+## Roles
+
+| Agent | Role |
 |---|---|
-| `/harness-init` | создать в проекте `harness/`, `docs/plan.md`, каркас каталогов |
-| `/harness-run T-XXX` | выполнить задачу по регламенту, с приёмкой и коммитом |
-| `/harness-board-update all / T-XXX` | синхронизировать board, карточки, activity и SVG |
-| `/harness-board-report` | read-only сводка по board |
-| `/harness-doctor` | проверить глобальную установку и текущий проект |
+| `harness` | primary lead: routing, marker checks, reporting |
+| `harness-orchestrator` | board, dependencies, acceptance, activity, commits |
+| `harness-analyst` | requirements, RAG, questions, glossary |
+| `harness-architect` | ADRs, PlantUML, contracts |
+| `harness-coder` | code, tests, CI/CD, local runs |
+| `harness-qa` | review, vision, accept/reject verdict |
+| `harness-doc-writer` | README, runbook, guides, ADR finalization |
 
-Все команды запускаются только явно. `default_agent` не переключается на harness.
+The lead does not edit files itself; the orchestrator handles the board and commits.
 
-## Роли
+## Artifacts
 
-| Агент | Роль |
-|---|---|
-| `harness` | primary lead: маршрутизация, проверка marker, отчёт |
-| `harness-orchestrator` | board, зависимости, приёмка, activity, коммиты |
-| `harness-analyst` | требования, RAG, вопросы, глоссарий |
-| `harness-architect` | ADR, PlantUML, контракты |
-| `harness-coder` | код, тесты, CI/CD, локальный запуск |
-| `harness-qa` | ревью, vision, вердикт accept/reject |
-| `harness-doc-writer` | README, runbook, гайды, финализация ADR |
+- `docs/plan.md`: board, the single source of truth for work scope;
+- `docs/tasks/T-XXX-*.md`: task cards;
+- `docs/activity.puml` / `.svg`: task statuses;
+- `docs/analysis/`, `docs/architecture/`, `docs/qa/`, `docs/guides/`: role artifacts;
+- `docs/issues/`: problem and solution log (skill `harness-issues`);
+- `src/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`: code and CI/CD.
 
-Lead не редактирует файлы сам: board и коммиты делает orchestrator.
+## Statuses and acceptance
 
-## Артефакты
+`pending -> in_progress -> done`; `in_progress -> failed`; `failed -> in_progress`; `* -> blocked` on an external blocker.
 
-- `docs/plan.md` — board, единственный источник истины по составу работ;
-- `docs/tasks/T-XXX-*.md` — карточки задач;
-- `docs/activity.puml` / `.svg` — статусы задач;
-- `docs/analysis/`, `docs/architecture/`, `docs/qa/`, `docs/guides/` — артефакты ролей;
-- `docs/issues/` — журнал проблем и решений (skill `harness-issues`);
-- `src/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile` — код и CI/CD.
+Tasks run strictly sequentially: at most one `in_progress`; parallel task execution is forbidden. `/harness-run` accepts exactly one task ID.
 
-## Статусы и приёмка
+A task is closed only by the card's `acceptance` criteria. On failure, set `failed` with the cause in `Blockers`; up to 3 attempts, then `blocked`.
 
-`pending → in_progress → done`; `in_progress → failed`;
-`failed → in_progress`; `* → blocked` при внешней блокировке.
+For any problem, blocker, or workaround, use the `harness-issues` skill and create a record in `docs/issues/`; the orchestrator updates the index and includes the issue in the task commit.
 
-Задачи выполняются строго последовательно: одновременно не более одной
-`in_progress`; параллельный запуск нескольких задач запрещён. `/harness-run`
-принимает ровно один ID задачи.
+## Global installation and versions
 
-Задача закрывается только по критериям `acceptance` из карточки. При провале —
-`failed` с причиной в `Blockers`, до 3 попыток, затем `blocked`.
+- Agents/commands live in `~/.config/opencode/`; `/harness-init` copies `process.md`, templates, and `version.json` into the project.
+- `version.json` records the project version; `doctor` warns on mismatch. Global updates affect all projects; use a project-local vendor copy to freeze (if enabled).
 
-При любой проблеме, блокировке или найденном workaround используй skill
-`harness-issues` и создай запись в `docs/issues/`; orchestrator обновит индекс
-и включит issue в коммит задачи.
+## Security
 
-## Глобальная установка и версии
-
-- Агенты и команды установлены в `~/.config/opencode/`.
-- Проект получает `harness/process.md`, шаблоны и `harness/version.json`
-  через `/harness-init`.
-- `harness/version.json` фиксирует версию, с которой инициализирован проект;
-  `doctor` предупреждает о расхождении с глобальной версией.
-- Глобальное обновление меняет harness во всех проектах. Для «заморозки»
-  версии в конкретном проекте используйте отдельную vendor-копию агентов
-  и команд в `.opencode/` (если такая практика включена).
-
-## Безопасность
-
-- Не добавляй harness-правила в глобальный `AGENTS.md`.
-- Не работай вне текущего проекта (`external_directory` запрещён).
-- Не делай `git push`, `git tag`, правку истории.
-- Секреты — только через переменные окружения.
+- Do not add harness rules to the global `AGENTS.md`.
+- Do not work outside the current project (`external_directory` is forbidden).
+- Do not run `git push`, `git tag`, or rewrite history.
+- Secrets only via environment variables.

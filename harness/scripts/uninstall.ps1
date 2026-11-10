@@ -1,13 +1,13 @@
 ﻿#requires -Version 5.1
 <#
 .SYNOPSIS
-  Удаление глобальной установки harness для текущего пользователя.
+  Remove the global harness installation for the current user.
 
 .DESCRIPTION
-  Делает backup и удаляет только глобальные harness-файлы:
-  агентов harness-*, команды harness-*, skill harness и каталог harness.
-  Проектные harness/ и docs/ не затрагиваются.
-  Правила permission.task в opencode.jsonc нужно удалить вручную (скрипт печатает напоминание).
+  Backs up and removes only global harness files:
+  harness-* agents, harness-* commands, harness skills, and the harness directory.
+  Project harness/ and docs/ are not touched.
+  permission.task rules in opencode.jsonc must be removed manually (the script prints a reminder).
 #>
 [CmdletBinding()]
 param(
@@ -17,9 +17,9 @@ param(
 $ErrorActionPreference = "Stop"
 
 if (-not $Force) {
-    $answer = Read-Host "Удалить глобальную установку harness? Проектные файлы не затрагиваются. [y/N]"
-    if ($answer -notmatch '^(y|yes|д|да)$') {
-        Write-Host "Отменено."
+    $answer = Read-Host "Remove the global harness installation? Project files are not touched. [y/N]"
+    if ($answer -notmatch '^(y|yes)$') {
+        Write-Host "Cancelled."
         exit 0
     }
 }
@@ -40,7 +40,7 @@ $targets += Get-ChildItem -LiteralPath (Join-Path $GlobalRoot "commands") -Filte
 foreach ($target in $targets) {
     Copy-Item -LiteralPath $target.FullName -Destination (Join-Path $BackupRoot $target.Name) -Force
     Remove-Item -LiteralPath $target.FullName -Force
-    Write-Host "Удалён $($target.FullName)"
+    Write-Host "Removed $($target.FullName)"
 }
 
 $skillsRoot = Join-Path $GlobalRoot "skills"
@@ -49,21 +49,21 @@ if (Test-Path -LiteralPath $skillsRoot) {
     Get-ChildItem -LiteralPath $skillsRoot -Directory -Filter "harness*" -ErrorAction SilentlyContinue | ForEach-Object {
         Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $BackupRoot "skills") -Recurse -Force
         Remove-Item -LiteralPath $_.FullName -Recurse -Force
-        Write-Host "Удалён $($_.FullName)"
+        Write-Host "Removed $($_.FullName)"
     }
 }
 
 if (Test-Path -LiteralPath $GlobalHarness) {
     Copy-Item -LiteralPath $GlobalHarness -Destination (Join-Path $BackupRoot "harness") -Recurse -Force
     Remove-Item -LiteralPath $GlobalHarness -Recurse -Force
-    Write-Host "Удалён $GlobalHarness"
+    Write-Host "Removed $GlobalHarness"
 }
 
 Write-Host ""
 Write-Host "Backup: $BackupRoot"
-Write-Host "Проектные harness/ и docs/ не изменялись."
+Write-Host "Project harness/ and docs/ were not modified."
 Write-Host ""
-Write-Host "Не забудьте удалить из ~/.config/opencode/opencode.jsonc блок permission.task:"
+Write-Host "Do not forget to remove the permission.task block from ~/.config/opencode/opencode.jsonc:"
 Write-Host '  "task": {'
 Write-Host '    "harness-orchestrator": "deny",'
 Write-Host '    "harness-analyst": "deny",'

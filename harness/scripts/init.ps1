@@ -1,15 +1,15 @@
 ﻿#requires -Version 5.1
 <#
 .SYNOPSIS
-  Инициализация harness в текущем проекте.
+  Initialize the harness in the current project.
 
 .DESCRIPTION
-  Создаёт harness/process.md, harness/templates, harness/version.json,
-  docs/plan.md, docs/activity.puml и каркас каталогов docs/.
-  Глобальные агенты и команды не копируются: используется глобальная установка.
+  Creates harness/process.md, harness/templates, harness/version.json,
+  docs/plan.md, docs/activity.puml, and the docs/ directory skeleton.
+  Global agents and commands are not copied: the global installation is used.
 
 .PARAMETER Force
-  Перезаписать существующие файлы harness (с backup).
+  Overwrite existing harness files (with backup).
 #>
 [CmdletBinding()]
 param(
@@ -49,12 +49,12 @@ $requiredGlobal = @(
 )
 foreach ($item in $requiredGlobal) {
     if (-not (Test-Path -LiteralPath $item)) {
-        throw "Глобальная установка harness неполная: не найден $item. Сначала выполните harness/scripts/install.ps1."
+        throw "Global harness installation is incomplete: $item not found. Run harness/scripts/install.ps1 first."
     }
 }
 
 if ((Test-Path -LiteralPath $Marker) -and -not $Force) {
-    throw "Harness уже инициализирован в $Project. Используйте -Force для перезаписи (с backup)."
+    throw "Harness is already initialized in $Project. Use -Force to overwrite (with backup)."
 }
 
 $Timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
@@ -68,7 +68,7 @@ if ($Force -and (Test-Path -LiteralPath $HarnessDir)) {
     if (Test-Path -LiteralPath $ActivityPath) {
         Copy-Item -LiteralPath $ActivityPath -Destination (Join-Path $backup "activity.puml") -Force
     }
-    Write-Host "Backup существующих файлов: $backup"
+    Write-Host "Backup of existing files: $backup"
 }
 
 New-Item -ItemType Directory -Force -Path $HarnessDir | Out-Null
@@ -87,7 +87,7 @@ if (-not (Test-Path -LiteralPath $issuesIndex)) {
     $issuesHeader = @'
 # Issues
 
-| ID | Кратко | Severity | Status | Location | Source | Updated |
+| ID | Summary | Severity | Status | Location | Source | Updated |
 |---|---|---|---|---|---|---|
 '@
     Write-Utf8NoBom -Path $issuesIndex -Text ($issuesHeader + "`r`n")
@@ -100,24 +100,24 @@ Write-Utf8NoBom -Path (Join-Path $HarnessDir "version.json") -Text (($version | 
 
 if (-not (Test-Path -LiteralPath $PlanPath)) {
     $plan = @'
-# Общий план (board)
+# Plan (board)
 
-Источник правил процесса: `harness/process.md`.
-Диаграмма: `docs/activity.puml`. Обновляется после каждой задачи.
+Process rules: `harness/process.md`.
+Diagram: `docs/activity.puml`. Updated after every task.
 
-## Легенда статусов
+## Status legend
 
-| Статус | Цвет в диаграмме | Значение |
+| Status | Diagram color | Meaning |
 |---|---|---|
-| `pending` | серый `#D3D3D3` | не начата |
-| `in_progress` | жёлтый `#FFE082` | в работе |
-| `done` | зелёный `#90EE90` | выполнена |
-| `failed` | красный `#FF9090` | ошибка, требуется исправление |
-| `blocked` | оранжевый `#FFB347` | внешняя блокировка |
+| `pending` | gray `#D3D3D3` | not started |
+| `in_progress` | yellow `#FFE082` | in progress |
+| `done` | green `#90EE90` | completed |
+| `failed` | red `#FF9090` | error, fix required |
+| `blocked` | orange `#FFB347` | external blocker |
 
 ## Board
 
-| ID | Задача | Роль | Зависимости | Статус | Артефакты | Коммит |
+| ID | Task | Role | Dependencies | Status | Artifacts | Commit |
 |---|---|---|---|---|---|---|
 '@
     Write-Utf8NoBom -Path $PlanPath -Text ($plan + "`r`n")
@@ -130,14 +130,14 @@ skinparam defaultFontName Segoe UI
 skinparam ActivityBackgroundColor #FFFFFF
 skinparam ActivityBorderColor #555555
 skinparam ArrowColor #555555
-title Локальный harness — план задач
+title Local harness - task plan
 
 start
-:Нет задач;
+:No tasks;
 stop
 
 legend right
-|= Цвет |= Статус |
+|= Color |= Status |
 |<#90EE90>| done |
 |<#FFE082>| in_progress |
 |<#D3D3D3>| pending |
@@ -152,10 +152,10 @@ endlegend
 $tasksReadme = Join-Path $DocsDir "tasks\README.md"
 if (-not (Test-Path -LiteralPath $tasksReadme)) {
     $text = @'
-# Задачи
+# Tasks
 
-Карточки задач создаются по шаблону `harness/templates/task-card.md`.
-Имя файла: `T-XXX-<slug>.md`. Статус и лог ведутся в карточке.
+Task cards are created from `harness/templates/task-card.md`.
+File name: `T-XXX-<slug>.md`. Status and log live in the card.
 '@
     Write-Utf8NoBom -Path $tasksReadme -Text ($text + "`r`n")
 }
@@ -168,12 +168,12 @@ foreach ($sub in @("analysis", "architecture", "qa", "guides")) {
 }
 
 Write-Host ""
-Write-Host "Harness инициализирован в проекте: $Project"
+Write-Host "Harness initialized in project: $Project"
 Write-Host "  process:  $Marker"
 Write-Host "  board:    $PlanPath"
 Write-Host "  activity: $ActivityPath"
 Write-Host "  issues:   $issuesIndex"
 Write-Host "  version:  $(Join-Path $HarnessDir 'version.json')"
 Write-Host ""
-Write-Host "Дальше: заполните docs/plan.md, создайте карточку по шаблону"
-Write-Host "harness/templates/task-card.md и выполните /harness-run T-XXX."
+Write-Host "Next: fill in docs/plan.md, create a card from"
+Write-Host "harness/templates/task-card.md, and run /harness-run T-XXX."

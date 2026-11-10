@@ -1,101 +1,72 @@
 ---
 name: Harness Issues
-description: "Учёт проблем и решений harness: фиксируй ошибки, блокировки, permission deny, сбои MCP/RAG/моделей, git/board и найденные workaround в docs/issues/*.md с индексом. Использовать при любой проблеме во время работы harness; не для обычных задач вне harness."
+description: "Harness problem and solution tracking: record errors, blockers, permission denies, MCP/RAG/model failures, git/board issues, and workarounds in docs/issues/*.md with an index. Use whenever a problem occurs during harness work; not for ordinary tasks outside harness."
 ---
 
 # Harness Issues
 
-## Когда использовать
+## When to use
 
-Загружай этот skill, если во время работы harness возникла проблема, которую
-пришлось диагностировать, обходить или исправлять:
+Load this skill when a problem occurred during harness work and had to be diagnosed, worked around, or fixed:
 
-- permission denied, несовпадение абсолютных путей, `task: deny`;
-- ошибка Ollama/модели, недоступность MCP `plantuml-render` или `local-rag`;
-- сбой git, board, activity, шаблонов или агентов;
-- неожиданное поведение ролей, команд или `/harness-*`;
-- найден workaround или исправление, которое нужно сохранить для анализа.
+- permission denied, absolute path mismatch, `task: deny`;
+- Ollama/model error, MCP `plantuml-render` or `local-rag` unavailable;
+- git, board, activity, template, or agent failure;
+- unexpected behavior of roles, commands, or `/harness-*`;
+- a workaround or fix was found that should be kept for analysis.
 
-Не создавай issue на каждый успешный шаг и не дублируй карточку задачи.
-Issue — это журнал проблемы, её причины и решения.
+Do not create an issue for every successful step and do not duplicate the task card. An issue is a log of a problem, its cause, and its solution.
 
-## Жёсткая проверка
+## Hard check
 
-Перед записью убедись, что проект инициализирован:
+Verify `harness/process.md` and `docs/plan.md`; if missing, stop and suggest `/harness-init`.
 
-- существуют `harness/process.md` и `docs/plan.md`;
-- если их нет — остановись и предложи `/harness-init`.
+## Where to store
 
-## Где хранить
-
-```
-docs/issues/
-  README.md                              # индекс-перечень
-  ISSUE-YYYYMMDD-HHMMSS-<slug>.md        # одна проблема — один файл
-```
-
-Шаблон: `harness/templates/issue.md`.
-Хелпер: `harness/scripts/new-issue.ps1` (копируется в проект через init).
-При совпадении timestamp к ID добавляется `-2`, `-3`.
+Store `docs/issues/ISSUE-YYYYMMDD-HHMMSS-<slug>.md` (one problem per file); index `docs/issues/README.md`; template `harness/templates/issue.md`; helper `harness/scripts/new-issue.ps1` (init copies it). On timestamp collision, append `-2`, `-3`.
 
 ## Workflow
 
-1. Зафиксируй контекст **до** исправления:
+1. Record the context **before** fixing:
    - source: `S-xx`, `T-xxx`, `/harness-*`, `build`;
-   - роль/агент и cwd;
-   - абсолютный `location` (файл:строка, команда, конфиг);
-   - текст ошибки и ожидаемое/фактическое поведение.
-2. Создай запись:
+   - role/agent and cwd;
+   - absolute `location` (file:line, command, config);
+   - error text and expected/actual behavior.
+2. Create the record:
 
-   ```powershell
-   powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/new-issue.ps1 `
-     -Title "Краткое название" `
-     -Severity major `
-     -Status open `
-     -Type permission `
-     -Source "T-001" `
-     -Role "harness-analyst" `
-     -Location "C:\path\to\file:line"
-   ```
+   `powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/new-issue.ps1 -Title "Short title" -Severity major -Status open -Type permission -Source "T-001" -Role "harness-analyst" -Location "C:\path\to\file:line"`
 
-   Если скрипта нет — создай файл вручную по `harness/templates/issue.md`.
-3. Заполни разделы: симптомы, воспроизведение, причина, решение/workaround,
-   проверка, prevention/follow-up, ссылки.
-4. Если проблема решена — поставь `status: resolved` и заполни «Проверка».
-   Если остался обходной путь — `status: workaround`.
-5. Передай ID issue в `harness-orchestrator`: он сверяет индекс
-   `docs/issues/README.md` и включает issue-файлы в коммит задачи.
-6. Свяжи issue с карточкой задачи (`T-XXX`) и артефактами/коммитом.
+   If the script is missing, create the file manually from `harness/templates/issue.md`.
+3. Fill the sections: symptoms, reproduction, cause, solution/workaround, verification, prevention/follow-up, links.
+4. If the problem is resolved, set `status: resolved` and fill "Verification". If a workaround remains, set `status: workaround`.
+5. Pass the issue ID to `harness-orchestrator`: it verifies the index `docs/issues/README.md` and includes issue files in the task commit.
+6. Link the issue to the task card (`T-XXX`) and the artifacts/commit.
 
-## Статусы
+## Statuses
 
-| Статус | Значение |
+| Status | Meaning |
 |---|---|
-| `open` | проблема зафиксирована, причина не найдена |
-| `investigating` | идёт диагностика |
-| `workaround` | есть обходной путь, корень не устранён |
-| `resolved` | причина устранена, проверка пройдена |
-| `wontfix` | решение не требуется/невозможно, причина указана |
+| `open` | problem recorded, cause not found |
+| `investigating` | diagnosis in progress |
+| `workaround` | a workaround exists, root cause not fixed |
+| `resolved` | root cause fixed, verification passed |
+| `wontfix` | no fix required/possible, reason stated |
 
 `severity`: `blocker`, `major`, `minor`, `info`.
 `type`: `permission`, `tool`, `model`, `mcp`, `rag`, `path`, `git`, `process`, `other`.
 
-## Индекс
+## Index
 
-`docs/issues/README.md` — перечень всех проблем:
+`docs/issues/README.md` is the list of all problems:
 
-| ID | Кратко | Severity | Status | Location | Source | Updated |
+| ID | Summary | Severity | Status | Location | Source | Updated |
 |---|---|---|---|---|---|---|
 
-Скрипт добавляет строку в индекс. Orchestrator проверяет консистентность и
-исправляет расхождения. Не удаляй историю issue-файлов.
+The script appends a row to the index. The orchestrator checks consistency and fixes mismatches. Do not delete issue file history.
 
-## Правила
+## Rules
 
-- Один файл — одна проблема; не перезаписывай существующие issue.
-- Не записывай секреты, токены, ключи и содержимое `.env`; редактируй значения.
-- Указывай абсолютный путь: относительные пути часто не совпадают с правилами
-  permission и затрудняют анализ.
-- Issue фиксирует проблему и решение, но не заменяет задачу board.
-- Если проблема требует изменения правил/процесса, добавь это в
-  «Предупреждение / follow-up» и предложи отдельную задачу.
+- One file per problem; never overwrite.
+- Never write secrets/tokens/keys/`.env`; redact.
+- Use absolute paths; relative paths may not match permissions.
+- An issue does not replace a task. Process changes go to "Prevention / follow-up" and a separate task.

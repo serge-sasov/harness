@@ -1,34 +1,34 @@
-# ADR-XXXX: Краткое название решения
+# ADR-XXXX: Short decision title
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
-| Статус | proposed / accepted / rejected / superseded |
-| Дата | YYYY-MM-DD |
-| Задача | T-XXX |
-| Связанные ADR | ADR-YYYY |
+| Status | proposed / accepted / rejected / superseded |
+| Date | YYYY-MM-DD |
+| Task | T-XXX |
+| Related ADRs | ADR-YYYY |
 
-## Контекст
+## Context
 
-Что вынуждает принять решение: требования (ссылки на `docs/analysis/`),
-ограничения, текущее состояние системы.
+What forces this decision: requirements (links to `docs/analysis/`),
+constraints, current system state.
 
-## Решение
+## Decision
 
-Одно-два предложения по существу. Ниже — детали реализации контрактов.
+One or two sentences with the essence. Implementation contract details follow.
 
-## Альтернативы
+## Alternatives
 
-| Вариант | Плюсы | Минусы | Почему отклонён |
+| Option | Pros | Cons | Why rejected |
 |---|---|---|---|
-| Альтернатива A | | | |
+| Alternative A | | | |
 
-## Последствия
+## Consequences
 
-- Положительные:
-- Отрицательные / риски:
-- Что потребуется изменить (компоненты, интерфейсы, данные):
+- Positive:
+- Negative / risks:
+- What must change (components, interfaces, data):
 
-## Контракты и схемы
+## Contracts and diagrams
 
-- Компонентная схема: `docs/architecture/*.puml` (ссылка).
-- Интерфейсы/API: сигнатуры, форматы, ошибки.
+- Component diagram: `docs/architecture/*.puml` (link).
+- Interfaces/API: signatures, formats, errors.

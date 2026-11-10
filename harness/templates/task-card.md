@@ -1,26 +1,26 @@
-# T-XXX: Краткое название задачи
+# T-XXX: Short task title
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
 | id | T-XXX |
-| title | Полное название задачи |
+| title | Full task title |
 | role | orchestrator / analyst / architect / coder / qa / doc-writer |
 | status | pending |
 | depends_on | T-YYY, T-ZZZ |
-| artifacts | пути к артефактам через запятую |
-| issues | ISSUE-... (ссылки на docs/issues/, если были проблемы) |
-| commit | хэш коммита после выполнения |
+| artifacts | comma-separated artifact paths |
+| issues | ISSUE-... (links to docs/issues/ if problems occurred) |
+| commit | commit hash after completion |
 
 ## Acceptance
 
-- [ ] Критерий 1 (проверяемый).
-- [ ] Критерий 2.
-- [ ] Критерий 3.
+- [ ] Criterion 1 (verifiable).
+- [ ] Criterion 2.
+- [ ] Criterion 3.
 
 ## Blockers
 
-- (заполняется при status=failed|blocked: причина, вывод, что нужно для разблокировки)
+- (filled on status=failed|blocked: cause, output, what is needed to unblock)
 
 ## Log
 
-- YYYY-MM-DD: что сделано, какие файлы, команды, результаты.
+- YYYY-MM-DD: what was done, files, commands, results.

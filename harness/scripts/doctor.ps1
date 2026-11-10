@@ -1,7 +1,7 @@
 ﻿#requires -Version 5.1
 <#
 .SYNOPSIS
-  Проверка глобальной установки harness и текущего проекта.
+  Check the global harness installation and the current project.
 #>
 [CmdletBinding()]
 param()
@@ -51,10 +51,10 @@ foreach ($file in $globalFiles) {
     if (-not (Test-Path -LiteralPath $file)) { $missingGlobal += $file }
 }
 if ($missingGlobal.Count -eq 0) {
-    Write-Ok "глобальные агенты, команды, skill и шаблоны на месте"
+    Write-Ok "global agents, commands, skills, and templates are present"
 }
 else {
-    Write-Err "не хватает глобальных файлов harness:"
+    Write-Err "missing global harness files:"
     $missingGlobal | ForEach-Object { Write-Host "       $_" }
 }
 
@@ -74,66 +74,66 @@ if (Test-Path -LiteralPath $configPath) {
             $config -notmatch ('"' + [regex]::Escape($_) + '"\s*:\s*"allow"')
         })
         if ($notAllowed.Count -eq 0) {
-            Write-Ok "permission.task разрешает все harness-роли"
+            Write-Ok "permission.task allows all harness roles"
         }
         else {
-            Write-Warn "permission.task не даёт allow для: $($notAllowed -join ', ')"
+            Write-Warn "permission.task does not allow: $($notAllowed -join ', ')"
         }
     }
     else {
-        Write-Warn "в opencode.jsonc нет блока permission.task; выполните install.ps1 для явных allow-правил"
+        Write-Warn "no permission.task block in opencode.jsonc; run install.ps1 for explicit allow rules"
     }
-    if ($config -match '"plantuml-render"') { Write-Ok "MCP plantuml-render настроен" } else { Write-Warn "MCP plantuml-render не найден в конфиге" }
-    if ($config -match '"local-rag"') { Write-Ok "MCP local-rag настроен" } else { Write-Warn "MCP local-rag не найден в конфиге" }
-    if ($config -match 'qwen3\.8:27b-64k') { Write-Ok "модель qwen3.8:27b-64k объявлена" } else { Write-Warn "модель qwen3.8:27b-64k не найдена в конфиге" }
-    if ($config -match 'tiel-coder:35b-a3b-mtp-128k-text') { Write-Ok "модель tiel-coder text объявлена" } else { Write-Warn "модель tiel-coder text не найдена в конфиге" }
-    if ($config -match 'tiel-coder:35b-a3b-mtp-128k-vision') { Write-Ok "модель tiel-coder vision объявлена" } else { Write-Warn "модель tiel-coder vision не найдена в конфиге" }
+    if ($config -match '"plantuml-render"') { Write-Ok "MCP plantuml-render configured" } else { Write-Warn "MCP plantuml-render not found in config" }
+    if ($config -match '"local-rag"') { Write-Ok "MCP local-rag configured" } else { Write-Warn "MCP local-rag not found in config" }
+    if ($config -match 'qwen3\.8:27b-64k') { Write-Ok "model qwen3.8:27b-64k declared" } else { Write-Warn "model qwen3.8:27b-64k not found in config" }
+    if ($config -match 'tiel-coder:35b-a3b-mtp-128k-text') { Write-Ok "tiel-coder text model declared" } else { Write-Warn "tiel-coder text model not found in config" }
+    if ($config -match 'tiel-coder:35b-a3b-mtp-128k-vision') { Write-Ok "tiel-coder vision model declared" } else { Write-Warn "tiel-coder vision model not found in config" }
 }
 else {
-    Write-Warn "не найден $configPath; allow-правила harness не настроены"
+    Write-Warn "$configPath not found; harness allow rules are not configured"
 }
 
 $marker = Join-Path $Project "harness\process.md"
 $plan = Join-Path $Project "docs\plan.md"
 $projectVersionPath = Join-Path $Project "harness\version.json"
 if ((Test-Path -LiteralPath $marker) -and (Test-Path -LiteralPath $plan)) {
-    Write-Ok "проект инициализирован как harness"
+    Write-Ok "project initialized as harness"
     if (Test-Path -LiteralPath $projectVersionPath) {
         try {
             $globalVersion = Get-Content -LiteralPath (Join-Path $GlobalHarness "version.json") -Raw | ConvertFrom-Json
             $projectVersion = Get-Content -LiteralPath $projectVersionPath -Raw | ConvertFrom-Json
             if ($globalVersion.version -eq $projectVersion.version) {
-                Write-Ok "версия проекта совпадает с глобальной ($($projectVersion.version))"
+                Write-Ok "project version matches global ($($projectVersion.version))"
             }
             else {
-                Write-Warn "версия проекта $($projectVersion.version) отличается от глобальной $($globalVersion.version)"
+                Write-Warn "project version $($projectVersion.version) differs from global $($globalVersion.version)"
             }
         }
         catch {
-            Write-Warn "не удалось прочитать версии: $_"
+            Write-Warn "failed to read versions: $_"
         }
     }
     else {
-        Write-Warn "нет harness/version.json; выполните /harness-init -Force или добавьте файл"
+        Write-Warn "no harness/version.json; run /harness-init -Force or add the file"
     }
     $issuesIndex = Join-Path $Project "docs\issues\README.md"
     $issueTemplate = Join-Path $Project "harness\templates\issue.md"
     $issueScript = Join-Path $Project "harness\scripts\new-issue.ps1"
     if (Test-Path -LiteralPath $issuesIndex) {
-        Write-Ok "журнал проблем docs/issues/README.md существует"
+        Write-Ok "issue log docs/issues/README.md exists"
     }
     else {
-        Write-Warn "docs/issues/README.md ещё не создан; появится при первом issue"
+        Write-Warn "docs/issues/README.md not created yet; it will appear with the first issue"
     }
     if ((Test-Path -LiteralPath $issueTemplate) -and (Test-Path -LiteralPath $issueScript)) {
-        Write-Ok "issue-шаблон и new-issue.ps1 доступны в проекте"
+        Write-Ok "issue template and new-issue.ps1 available in the project"
     }
     else {
-        Write-Warn "нет harness/templates/issue.md или harness/scripts/new-issue.ps1; выполните /harness-init -Force"
+        Write-Warn "missing harness/templates/issue.md or harness/scripts/new-issue.ps1; run /harness-init -Force"
     }
 }
 else {
-    Write-Warn "текущий проект не инициализирован: нет harness/process.md или docs/plan.md; выполните /harness-init"
+    Write-Warn "current project is not initialized: no harness/process.md or docs/plan.md; run /harness-init"
 }
 
 $oldIds = @("analyst.md", "architect.md", "coder.md", "qa.md", "doc-writer.md", "orchestrator.md")
@@ -143,20 +143,20 @@ foreach ($name in $oldIds) {
     if (Test-Path -LiteralPath $path) { $oldFiles += $path }
 }
 if ($oldFiles.Count -eq 0) {
-    Write-Ok "в проекте нет старых копий агентов с ID без префикса harness-"
+    Write-Ok "no old project agent copies with IDs without the harness- prefix"
 }
 else {
-    Write-Warn "найдены старые проектные копии агентов (могут обходить gating):"
+    Write-Warn "found old project agent copies (may bypass gating):"
     $oldFiles | ForEach-Object { Write-Host "       $_" }
 }
 
-if (Get-Command opencode -ErrorAction SilentlyContinue) { Write-Ok "opencode найден в PATH" } else { Write-Warn "opencode не найден в PATH" }
-if (Get-Command ollama -ErrorAction SilentlyContinue) { Write-Ok "ollama найден в PATH" } else { Write-Warn "ollama не найден в PATH; проверьте локальные модели" }
+if (Get-Command opencode -ErrorAction SilentlyContinue) { Write-Ok "opencode found in PATH" } else { Write-Warn "opencode not found in PATH" }
+if (Get-Command ollama -ErrorAction SilentlyContinue) { Write-Ok "ollama found in PATH" } else { Write-Warn "ollama not found in PATH; check local models" }
 
 Write-Host ""
 if ($script:critical) {
-    Write-Host "Итог: есть критические проблемы установки harness." -ForegroundColor Red
+    Write-Host "Result: critical harness installation problems." -ForegroundColor Red
     exit 1
 }
-Write-Host "Итог: критических проблем нет; проверьте предупреждения выше." -ForegroundColor Green
+Write-Host "Result: no critical problems; review warnings above." -ForegroundColor Green
 exit 0

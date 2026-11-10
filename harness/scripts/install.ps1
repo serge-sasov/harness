@@ -1,15 +1,15 @@
 ﻿#requires -Version 5.1
 <#
 .SYNOPSIS
-  Глобальная установка локального harness для текущего пользователя.
+  Global installation of the local harness for the current user.
 
 .DESCRIPTION
-  Копирует агентов, команды, skill и шаблоны в ~/.config/opencode,
-  делает backup изменяемых файлов и добавляет permission-правила
-  для harness-агентов в opencode.jsonc (если файл без комментариев).
+  Copies agents, commands, skill, and templates to ~/.config/opencode,
+  backs up changed files, and adds permission rules for harness agents
+  to opencode.jsonc (if the file has no comments).
 
 .PARAMETER SkipConfig
-  Не изменять opencode.jsonc, только вывести готовый JSON-сниппет.
+  Do not modify opencode.jsonc; only print the ready JSON snippet.
 #>
 [CmdletBinding()]
 param(
@@ -59,13 +59,13 @@ $requiredSource = @(
 )
 foreach ($item in $requiredSource) {
     if (-not (Test-Path -LiteralPath $item)) {
-        throw "Не найден обязательный файл harness: $item"
+        throw "Required harness file not found: $item"
     }
 }
 
 $sourceSkills = @(Get-ChildItem -LiteralPath (Join-Path $SourceRoot "skills") -Directory)
 if ($sourceSkills.Count -eq 0) {
-    throw "В $SourceRoot\skills нет ни одного skill."
+    throw "No skills found in $SourceRoot\skills."
 }
 
 New-Item -ItemType Directory -Force -Path $BackupRoot | Out-Null
@@ -74,7 +74,7 @@ New-Item -ItemType Directory -Force -Path (Join-Path $GlobalRoot "commands") | O
 New-Item -ItemType Directory -Force -Path (Join-Path $GlobalRoot "skills") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $GlobalRoot "harness") | Out-Null
 
-# Backup существующих глобальных файлов harness
+# Backup existing global harness files
 foreach ($pattern in @("harness*.md")) {
     Get-ChildItem -LiteralPath (Join-Path $GlobalRoot "agents") -Filter $pattern -File -ErrorAction SilentlyContinue |
         ForEach-Object { Backup-IfExists -Path $_.FullName -BackupRoot (Join-Path $BackupRoot "agents") }
@@ -98,7 +98,7 @@ if (Test-Path -LiteralPath (Join-Path $GlobalRoot "opencode.jsonc")) {
     Copy-Item -LiteralPath (Join-Path $GlobalRoot "opencode.jsonc") -Destination (Join-Path $BackupRoot "opencode.jsonc") -Force
 }
 
-# Копирование агентов, команд, skills и общих файлов
+# Copy agents, commands, skills, and shared files
 Copy-Item -Path (Join-Path $SourceRoot "agents\*.md") -Destination (Join-Path $GlobalRoot "agents") -Force
 Copy-Item -Path (Join-Path $SourceRoot "commands\*.md") -Destination (Join-Path $GlobalRoot "commands") -Force
 foreach ($skill in $sourceSkills) {
@@ -135,13 +135,13 @@ if (-not $SkipConfig) {
         }
         $lines += @("    }", "  }", "}")
         Write-Utf8NoBom -Path $configPath -Text (($lines -join "`r`n") + "`r`n")
-        Write-Host "Создан $configPath с allow-правилами harness."
+        Write-Host "Created $configPath with harness allow rules."
     }
     else {
         $raw = Get-Content -LiteralPath $configPath -Raw
         if ($raw -match '(?m)^\s*//' -or $raw -match '(?m)^\s*/\*') {
-            Write-Warning "opencode.jsonc содержит комментарии; автоматическая правка пропущена."
-            Write-Host "Добавьте вручную в объект `"permission`":"
+            Write-Warning "opencode.jsonc contains comments; automatic edit skipped."
+            Write-Host "Add manually to the `"permission`" object:"
             Write-Host '  "task": {'
             foreach ($id in $harnessIds) {
                 Write-Host "    `"$id`": `"allow`","
@@ -165,11 +165,11 @@ if (-not $SkipConfig) {
                 Write-Utf8NoBom -Path $configPath -Text $newRaw
                 try {
                     Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json | Out-Null
-                    Write-Host "permission.task: harness-роли переведены в allow."
+                    Write-Host "permission.task: harness roles set to allow."
                 }
                 catch {
                     Copy-Item -LiteralPath (Join-Path $BackupRoot "opencode.jsonc") -Destination $configPath -Force
-                    throw "Ошибка валидации opencode.jsonc; файл восстановлен из backup. $_"
+                    throw "opencode.jsonc validation failed; file restored from backup. $_"
                 }
             }
             else {
@@ -177,11 +177,11 @@ if (-not $SkipConfig) {
                     $newRaw -notmatch ('"' + [regex]::Escape($_) + '"\s*:\s*"allow"')
                 })
                 if ($missing.Count -eq 0) {
-                    Write-Host "permission.task уже разрешает все harness-роли."
+                    Write-Host "permission.task already allows all harness roles."
                 }
                 else {
-                    Write-Warning "В permission.task не хватает allow-правил: $($missing -join ', ')"
-                    Write-Host "Добавьте вручную:"
+                    Write-Warning "Missing allow rules in permission.task: $($missing -join ', ')"
+                    Write-Host "Add manually:"
                     foreach ($id in $missing) {
                         Write-Host "  `"$id`": `"allow`""
                     }
@@ -191,7 +191,7 @@ if (-not $SkipConfig) {
         else {
             $match = [regex]::Match($raw, '("permission"\s*:\s*\{)')
             if (-not $match.Success) {
-                Write-Warning "В opencode.jsonc не найден объект permission; добавьте правила вручную."
+                Write-Warning "No permission object found in opencode.jsonc; add rules manually."
             }
             else {
                 $lines = @('    "task": {')
@@ -205,18 +205,18 @@ if (-not $SkipConfig) {
                 Write-Utf8NoBom -Path $configPath -Text $newRaw
                 try {
                     Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json | Out-Null
-                    Write-Host "В opencode.jsonc добавлены allow-правила harness."
+                    Write-Host "Added harness allow rules to opencode.jsonc."
                 }
                 catch {
                     Copy-Item -LiteralPath (Join-Path $BackupRoot "opencode.jsonc") -Destination $configPath -Force
-                    throw "Ошибка валидации opencode.jsonc; файл восстановлен из backup. $_"
+                    throw "opencode.jsonc validation failed; file restored from backup. $_"
                 }
             }
         }
     }
 }
 else {
-    Write-Host "SkipConfig: добавьте в объект permission вручную:"
+    Write-Host "SkipConfig: add manually to the permission object:"
     Write-Host '  "task": {'
     foreach ($id in $harnessIds) {
         Write-Host "    `"$id`": `"allow`","
@@ -225,11 +225,11 @@ else {
 }
 
 Write-Host ""
-Write-Host "Harness установлен глобально для пользователя $UserProfile"
+Write-Host "Harness installed globally for user $UserProfile"
 Write-Host "  agents:   $(Join-Path $GlobalRoot 'agents')"
 Write-Host "  commands: $(Join-Path $GlobalRoot 'commands')"
 Write-Host "  skills:   $($sourceSkills.Name -join ', ')"
 Write-Host "  support:  $globalHarness"
 Write-Host "  backup:   $BackupRoot"
 Write-Host ""
-Write-Host "Перезапустите opencode, затем в проекте выполните /harness-init."
+Write-Host "Restart opencode, then run /harness-init in the project."

@@ -1,12 +1,12 @@
 ﻿#requires -Version 5.1
 <#
 .SYNOPSIS
-  Создаёт запись о проблеме harness в docs/issues и обновляет индекс.
+  Create a harness issue record in docs/issues and update the index.
 
 .DESCRIPTION
-  Один вызов создаёт один MD-файл ISSUE-<timestamp>-<slug>.md по шаблону
-  harness/templates/issue.md и добавляет строку в docs/issues/README.md.
-  Требует инициализированный harness-проект (harness/process.md или docs/plan.md).
+  One call creates one MD file ISSUE-<timestamp>-<slug>.md from the
+  harness/templates/issue.md template and adds a row to docs/issues/README.md.
+  Requires an initialized harness project (harness/process.md or docs/plan.md).
 #>
 [CmdletBinding()]
 param(
@@ -16,13 +16,13 @@ param(
     [ValidateSet("permission", "tool", "model", "mcp", "rag", "path", "git", "process", "other")][string]$Type = "other",
     [string]$Source = "unknown",
     [string]$Role = "unknown",
-    [string]$Location = "не указано",
-    [string]$Symptom = "Опишите симптомы, текст ошибки и контекст.",
-    [string]$RootCause = "Не определена.",
-    [string]$Solution = "Не найдено.",
-    [string]$Verification = "Не проверено.",
-    [string]$Prevention = "Не определено.",
-    [string]$Links = "Карточка задачи, артефакты, коммит — заполнить.",
+    [string]$Location = "not specified",
+    [string]$Symptom = "Describe the symptoms, error text, and context.",
+    [string]$RootCause = "Not identified.",
+    [string]$Solution = "Not found.",
+    [string]$Verification = "Not verified.",
+    [string]$Prevention = "Not defined.",
+    [string]$Links = "Task card, artifacts, commit - to be filled.",
     [string]$Environment = "",
     [switch]$NoIndex
 )
@@ -48,7 +48,7 @@ $Project = (Get-Location).Path
 $ProcessPath = Join-Path $Project "harness\process.md"
 $PlanPath = Join-Path $Project "docs\plan.md"
 if (-not (Test-Path -LiteralPath $ProcessPath) -and -not (Test-Path -LiteralPath $PlanPath)) {
-    throw "Проект не инициализирован как harness: нет harness/process.md или docs/plan.md. Выполните /harness-init."
+    throw "Project is not initialized as harness: no harness/process.md or docs/plan.md. Run /harness-init."
 }
 
 $IssuesDir = Join-Path $Project "docs\issues"
@@ -90,7 +90,7 @@ else {
     $Template = @'
 # {{ID}}: {{TITLE}}
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
 | id | {{ID}} |
 | status | {{STATUS}} |
@@ -102,44 +102,44 @@ else {
 | location | {{LOCATION}} |
 | environment | {{ENVIRONMENT}} |
 
-## Симптомы
+## Symptoms
 
 {{SYMPTOM}}
 
-## Воспроизведение
+## Reproduction
 
 1. 
 2. 
 3. 
 
-## Ожидаемое / фактическое поведение
+## Expected / actual behavior
 
-- Ожидалось:
-- Фактически:
+- Expected:
+- Actual:
 
-## Причина
+## Cause
 
 {{ROOT_CAUSE}}
 
-## Решение / workaround
+## Solution / workaround
 
 {{SOLUTION}}
 
-## Проверка
+## Verification
 
 {{VERIFICATION}}
 
-## Предупреждение / follow-up
+## Prevention / follow-up
 
 {{PREVENTION}}
 
-## Ссылки
+## Links
 
 {{LINKS}}
 
 ## Timeline
 
-- {{DETECTED_AT}}: обнаружено
+- {{DETECTED_AT}}: detected
 '@
 }
 
@@ -168,7 +168,7 @@ if (-not (Test-Path -LiteralPath $IndexPath)) {
     $header = @'
 # Issues
 
-| ID | Кратко | Severity | Status | Location | Source | Updated |
+| ID | Summary | Severity | Status | Location | Source | Updated |
 |---|---|---|---|---|---|---|
 '@
     Write-Utf8NoBom -Path $IndexPath -Text ($header + "`r`n")
@@ -181,8 +181,8 @@ if (-not $NoIndex) {
     [System.IO.File]::AppendAllText($IndexPath, $row + "`r`n", $encoding)
 }
 
-Write-Host "Создан issue: $IssuePath"
-if (-not $NoIndex) { Write-Host "Индекс:       $IndexPath" }
+Write-Host "Created issue: $IssuePath"
+if (-not $NoIndex) { Write-Host "Index:         $IndexPath" }
 Write-Host ""
-Write-Host "Заполните причину, решение, проверку и prevention;"
-Write-Host "передайте ID $Id в harness-orchestrator для сверки индекса и коммита."
+Write-Host "Fill in cause, solution, verification, and prevention;"
+Write-Host "pass ID $Id to harness-orchestrator for index and commit reconciliation."

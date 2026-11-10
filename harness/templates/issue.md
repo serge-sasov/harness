@@ -1,6 +1,6 @@
 # {{ID}}: {{TITLE}}
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
 | id | {{ID}} |
 | status | {{STATUS}} |
@@ -12,41 +12,41 @@
 | location | {{LOCATION}} |
 | environment | {{ENVIRONMENT}} |
 
-## Симптомы
+## Symptoms
 
 {{SYMPTOM}}
 
-## Воспроизведение
+## Reproduction
 
 1. 
 2. 
 3. 
 
-## Ожидаемое / фактическое поведение
+## Expected / actual behavior
 
-- Ожидалось:
-- Фактически:
+- Expected:
+- Actual:
 
-## Причина
+## Cause
 
 {{ROOT_CAUSE}}
 
-## Решение / workaround
+## Solution / workaround
 
 {{SOLUTION}}
 
-## Проверка
+## Verification
 
 {{VERIFICATION}}
 
-## Предупреждение / follow-up
+## Prevention / follow-up
 
 {{PREVENTION}}
 
-## Ссылки
+## Links
 
 {{LINKS}}
 
 ## Timeline
 
-- {{DETECTED_AT}}: обнаружено
+- {{DETECTED_AT}}: detected

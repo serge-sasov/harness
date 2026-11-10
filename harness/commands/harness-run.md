@@ -1,40 +1,10 @@
 ---
-description: "Явный запуск задачи harness T-XXX (только при наличии harness/process.md)"
+description: "Explicit harness task run T-XXX (only with harness/process.md)"
 agent: harness
 ---
 
-Выполни задачу `$ARGUMENTS` по регламенту `harness/process.md`.
+Execute task `$ARGUMENTS` per `harness/process.md`.
 
-Сначала проверь наличие `harness/process.md` и `docs/plan.md`. Если их нет —
-остановись и предложи выполнить `/harness-init`.
+Verify `harness/process.md` and `docs/plan.md`; if missing, stop and suggest `/harness-init`. `$ARGUMENTS` must be exactly one task ID (`T-XXX`); multiple IDs, a range, or `all` -> stop without changes.
 
-`$ARGUMENTS` должен содержать ровно один ID задачи (`T-XXX`). Несколько ID,
-диапазон или `all` — стоп без изменений.
-
-Алгоритм:
-
-1. Прочитай `docs/plan.md` и карточку `docs/tasks/$ARGUMENTS-*.md`.
-2. Проверь `depends_on`: все предшествующие задачи должны быть `done`.
-   Дополнительно проверь board: если другая задача находится в `in_progress`,
-   старт запрещён. При любом нарушении — стоп, отчёт, статусы не менять.
-3. Делегируй `harness-orchestrator`: перевод задачи в `in_progress`, обновление
-   `docs/plan.md`, карточки, `docs/activity.puml`, перерендер
-   `docs/activity.svg` через MCP `plantuml-render`. Коммит на этом шаге не делать.
-4. Определи роль из карточки и вызови соответствующего субагента через `task`:
-   `harness-orchestrator` | `harness-analyst` | `harness-architect` |
-   `harness-coder` | `harness-qa` | `harness-doc-writer`.
-   В промпте передай: ID задачи, путь к карточке, критерии `acceptance`, ссылки
-   на входные артефакты, требования регламента пп. 4–7.
-   Вызывай строго одного субагента за раз: один вызов `task` в сообщении,
-   дождись результата перед следующим шагом.
-5. Делегируй `harness-orchestrator` приёмку и закрытие задачи:
-   - при успехе — `done`, обновление артефактов, `git add` + `git commit`;
-   - при провале — `failed`, причина в `Blockers`; до 3 попыток исправления,
-     затем `blocked` и эскалация пользователю.
-6. Отчёт: статус, коммит, разблокированные задачи, блокеры. Не запускай
-   следующую задачу автоматически.
-
-Ограничения: не редактируй файлы сам; не вызывай роли вне списка harness;
-не выполняй несколько задач или вызовов `task` параллельно; не запускай
-`board-update` одновременно с активной задачей; не делай `git push`,
-`git tag`, `git reset`, `git rebase`.
+Use the harness task cycle: check dependencies and board, delegate status updates and closure to `harness-orchestrator`, call exactly one role, accept via `acceptance`, report status/commit/unblocked/blockers. Do not start the next task automatically. Do not edit files, call roles outside the harness list, run tasks in parallel, or use `git push`/`tag`/`reset`/`rebase`.

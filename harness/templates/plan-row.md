@@ -1,17 +1,13 @@
-# Шаблон строки board (`docs/plan.md`)
+# Board row template (`docs/plan.md`)
 
-| ID | Задача | Роль | Зависимости | Статус | Артефакты | Коммит |
+| ID | Task | Role | Dependencies | Status | Artifacts | Commit |
 |---|---|---|---|---|---|---|
-| T-XXX | Краткое название | role | T-YYY | pending | путь/к/артефактам | — |
+| T-XXX | Short title | role | T-YYY | pending | path/to/artifacts | - |
 
-## Правила заполнения
+## Filling rules
 
-- `ID` — по возрастанию, неизменяемый.
-- `Задача` — короткая формулировка, смысл раскрывается в карточке.
-- `Роль` — одна из: orchestrator, analyst, architect, coder, qa, doc-writer.
-- `Зависимости` — через запятую; `—` если нет. Все зависимости должны быть `done` до старта.
-- `Статус` — `pending` | `in_progress` | `done` | `failed` | `blocked`.
-- `Артефакты` — относительные пути от корня репозитория.
-- `Коммит` — хэш коммита задачи; до коммита фиксируется в следующей задаче
-  (во избежание переписывания истории).
-- Цветовые статусы дублируются в `docs/activity.puml` по регламенту п. 5.
+- `ID` ascending/immutable; `Task` short, details in the card.
+- `Role`: orchestrator, analyst, architect, coder, qa, or doc-writer.
+- `Dependencies`: comma-separated, `-` if none; all must be `done` before start.
+- `Status`: `pending` | `in_progress` | `done` | `failed` | `blocked`; colors mirror `docs/activity.puml` (process section 5).
+- `Artifacts`: relative to the repo root. `Commit`: task hash; record it in the next task to avoid history rewrite.

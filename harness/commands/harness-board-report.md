@@ -1,24 +1,21 @@
 ---
-description: "Сводка по board harness (read-only, только для harness-проекта)"
+description: "Harness board summary (read-only, harness project only)"
 agent: harness
 ---
 
-Сформируй сводку по состоянию плана harness'а.
+Produce a summary of the harness plan state.
 
-Сначала проверь наличие `harness/process.md` и `docs/plan.md`. Если их нет —
-остановись и предложи выполнить `/harness-init`.
+First verify that `harness/process.md` and `docs/plan.md` exist. If not, stop and suggest `/harness-init`.
 
-Передай `harness-orchestrator` задание только на чтение:
+Give `harness-orchestrator` a read-only task:
 
-1. Прочитать `docs/plan.md` и карточки `docs/tasks/T-*.md`.
-2. Вывести таблицу: ID, роль, статус, зависимости, блокеры (кратко).
-3. Отдельно перечислить:
-   - задачи, готовые к старту (`pending`, все `depends_on` — `done`);
-   - задачи `failed`/`blocked` с причиной из карточки;
-   - выполненные задачи и их коммиты.
-4. Проверить консистентность: %done, «висячие» зависимости, расхождения
-   план ↔ карточка.
-5. Ничего не изменять и не коммитить.
+1. Read `docs/plan.md` and the cards `docs/tasks/T-*.md`.
+2. Print a table: ID, role, status, dependencies, blockers (brief).
+3. List separately:
+   - tasks ready to start (`pending`, all `depends_on` are `done`);
+   - `failed`/`blocked` tasks with the cause from the card;
+   - completed tasks and their commits.
+4. Check consistency: %done, dangling dependencies, plan <-> card mismatches.
+5. Change and commit nothing.
 
-Формат: кратко, по-русски, таблицей; в конце — 1–3 рекомендации, какую задачу
-запускать следующей.
+Format: brief, in English, as a table; at the end, 1-3 recommendations for the next task to run.
