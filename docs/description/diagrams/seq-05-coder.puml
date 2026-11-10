@@ -1,7 +1,7 @@
 @startuml
 autonumber
 skinparam defaultFontName Segoe UI
-title S-05 Реализация и тесты (coder)
+title S-05 Implementation and tests (coder)
 
 participant "harness\nprimary lead" as primary
 participant "harness-coder" as coder
@@ -10,19 +10,19 @@ participant "TestRunner\npytest / lint" as tests
 participant "Docker\nlocal" as docker
 participant "harness-orchestrator" as orch
 
-primary -> coder : задача: реализовать по ADR
-coder -> code : минимальный дифф\nодин модуль за шаг
+primary -> coder : task: implement per ADR
+coder -> code : minimal diff\none module per step
 coder -> tests : pytest + ruff / mypy
 tests --> coder : pass / fail
-alt тесты или lint упали
-  coder -> code : исправление\nбез ослабления assert
-  coder -> tests : повторный прогон
+alt tests or lint failed
+  coder -> code : fix\nwithout weakening asserts
+  coder -> tests : rerun
 end
 coder -> docker : docker compose build / up
-docker --> coder : сервис доступен :8080
-coder --> orch : файлы, команды, pass/fail,\nотклонения от контракта
+docker --> coder : service available :8080
+coder --> orch : files, commands, pass/fail,\ndeviations from contract
 note right of coder
-  Сеть и prod-действия запрещены;
-  секреты — только через env
+  Network and prod actions are forbidden;
+  secrets only via env
 end note
 @enduml

@@ -1,34 +1,33 @@
-# Глобальный harness: установка и использование
+# Global harness: installation and usage
 
-Документ описывает, как один раз установить harness для текущего пользователя
-и включать его в проектах только по явной команде.
+This document describes how to install the harness once for the current user
+and enable it in projects only by explicit command.
 
-## 1. Что глобально, а что в проекте
+## 1. What is global and what is per project
 
-| Часть | Расположение | Содержимое |
+| Part | Location | Contents |
 |---|---|---|
-| Инструменты harness | `~/.config/opencode/` | агенты `harness-*`, команды `/harness-*`, skills `harness` и `harness-issues`, шаблоны, скрипты |
-| Состояние проекта | `<проект>/` | `harness/process.md`, `harness/version.json`, `docs/plan.md`, `docs/tasks/`, артефакты, git |
+| Harness tooling | `~/.config/opencode/` | `harness-*` agents, `/harness-*` commands, `harness` and `harness-issues` skills, templates, scripts |
+| Project state | `<project>/` | `harness/process.md`, `harness/version.json`, `docs/plan.md`, `docs/tasks/`, artifacts, git |
 
-Board, карточки задач и артефакты не могут быть глобальными: это состояние
-конкретного проекта. Глобальными являются только определения ролей, команды,
-шаблоны и скрипты.
+The board, task cards, and artifacts cannot be global: they are project state.
+Only role definitions, commands, templates, and scripts are global.
 
-## 2. Глобальная установка
+## 2. Global installation
 
-Из корня репозитория с исходниками harness:
+From the harness source repository root:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/install.ps1
 ```
 
-Скрипт:
+The script:
 
-1. копирует агентов, команды, skills, шаблоны и скрипты в
+1. copies agents, commands, skills, templates, and scripts to
    `~/.config/opencode/`;
-2. делает backup изменяемых файлов в
+2. backs up changed files to
    `~/.config/opencode/backups/harness-install-<timestamp>/`;
-3. добавляет или обновляет в `opencode.jsonc` разрешения:
+3. adds or updates permissions in `opencode.jsonc`:
 
 ```jsonc
 "permission": {
@@ -43,32 +42,32 @@ powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/install.ps1
 }
 ```
 
-Эти правила разрешают любому primary-агенту явно вызывать harness-роли.
-Роли не вызывают друг друга: у них остаётся `task: deny`. Primary-агент
-`harness` сохраняет собственные allow-правила.
+These rules allow any primary agent to explicitly call harness roles.
+Roles do not call each other: they keep `task: deny`. The primary `harness`
+agent keeps its own allow rules.
 
-Если в `opencode.jsonc` есть комментарии, скрипт не правит файл автоматически,
-а печатает готовый сниппет для ручного добавления.
+If `opencode.jsonc` contains comments, the script does not edit the file
+automatically; it prints a ready snippet for manual insertion.
 
-После установки **перезапустите opencode**: агенты и конфигурация читаются при
-старте. Проверка:
+After installation, **restart opencode**: agents and config are read at
+startup. Check:
 
 ```text
 /harness-doctor
 ```
 
-Установка выполняется только для текущего пользователя. System-wide вариант
-(`%ProgramData%\opencode`) не используется.
+Installation is per current user. The system-wide option
+(`%ProgramData%\opencode`) is not used.
 
-## 3. Инициализация проекта
+## 3. Project initialization
 
-В проекте:
+In the project:
 
 ```text
 /harness-init
 ```
 
-Создаются:
+Created:
 
 ```text
 harness/
@@ -88,50 +87,50 @@ docs/
   guides/
 ```
 
-`/harness-init` не копирует глобальных агентов и команд: используется
-глобальная установка. Повторный запуск без `-Force` останавливается; с `-Force`
-делает backup в `.harness-backup-<timestamp>/`.
+`/harness-init` does not copy global agents or commands: the global
+installation is used. A repeat run without `-Force` stops; with `-Force` it
+backs up to `.harness-backup-<timestamp>/`.
 
-`harness/process.md` и `docs/plan.md` — marker-файлы. Без них `harness`-агент
-останавливается, даже если его выбрали вручную.
+`harness/process.md` and `docs/plan.md` are marker files. Without them, the
+`harness` agent stops even if it was selected manually.
 
-## 4. Активация только по явной команде
+## 4. Explicit activation only
 
-`default_agent` не переключается на harness. Основные команды:
+`default_agent` is never switched to harness. Main commands:
 
-| Команда | Назначение |
+| Command | Purpose |
 |---|---|
-| `/harness-init` | инициализация проекта |
-| `/harness-run T-XXX` | выполнение задачи, приёмка, board, коммит |
-| `/harness-board-update all / T-XXX` | синхронизация board, карточек, activity и SVG |
-| `/harness-board-report` | read-only сводка по board |
-| `/harness-doctor` | проверка установки и проекта |
+| `/harness-init` | initialize the project |
+| `/harness-run T-XXX` | execute a task, accept it, update the board, commit |
+| `/harness-board-update all / T-XXX` | sync the board, cards, activity, and SVG |
+| `/harness-board-report` | read-only board summary |
+| `/harness-doctor` | check the installation and the project |
 
-Схема запуска:
+Run flow:
 
 ```text
 /harness-run T-XXX
-  → primary-агент harness (проверка marker и depends_on)
-  → harness-orchestrator (in_progress, board, activity, SVG)
-  → harness-analyst | harness-architect | harness-coder |
+  -> primary agent harness (marker and depends_on checks)
+  -> harness-orchestrator (in_progress, board, activity, SVG)
+  -> harness-analyst | harness-architect | harness-coder |
     harness-qa | harness-doc-writer
-  → harness-orchestrator (приёмка, done/failed, коммит)
+  -> harness-orchestrator (acceptance, done/failed, commit)
 ```
 
-Lead не редактирует файлы сам; board и коммиты выполняет orchestrator.
-Задачи выполняются строго последовательно: один ID за `/harness-run`, не более
-одной задачи в `in_progress`, без параллельных вызовов ролей через `task`.
+The lead does not edit files itself; the orchestrator handles the board and
+commits. Tasks run strictly sequentially: one ID per `/harness-run`, at most
+one task `in_progress`, no parallel role calls via `task`.
 
-## 5. Защита от случайного запуска
+## 5. Protection against accidental starts
 
-1. Явные команды `/harness-*`; harness не является агентом по умолчанию.
-2. Глобальный `permission.task` разрешает любому primary-агенту явно вызывать
-   `harness-*`; роли не вызывают друг друга (`task: deny`).
-3. Marker-файлы `harness/process.md` и `docs/plan.md` обязательны.
-4. Harness-инструкции не добавляются в глобальный `AGENTS.md`.
-5. Skill `harness` имеет явное описание и не предназначен для авто-применения.
+1. Explicit `/harness-*` commands; harness is not the default agent.
+2. Global `permission.task` allows any primary agent to explicitly call
+   `harness-*`; roles do not call each other (`task: deny`).
+3. Marker files `harness/process.md` and `docs/plan.md` are mandatory.
+4. Harness instructions are not added to the global `AGENTS.md`.
+5. The `harness` skill has an explicit description and is not auto-invoked.
 
-Дополнительно можно временно отключить harness в конкретном проекте (V1):
+Optionally, you can temporarily disable harness in a specific project (V1):
 
 ```jsonc
 {
@@ -141,13 +140,13 @@ Lead не редактирует файлы сам; board и коммиты вы
 }
 ```
 
-## 5.1. Права и абсолютные пути
+## 5.1. Permissions and absolute paths
 
-opencode сопоставляет `edit`/`write` с абсолютным путём (Windows-разделители
-нормализуются в `/`). Поэтому относительного шаблона `docs/**` недостаточно:
-он соответствует `docs/plan.md`, но не `C:/project/docs/plan.md`.
+opencode matches `edit`/`write` against the absolute path (Windows separators
+are normalized to `/`). Therefore the relative pattern `docs/**` is not enough:
+it matches `docs/plan.md` but not `C:/project/docs/plan.md`.
 
-В ролях harness поэтому продублированы оба варианта:
+Harness roles therefore include both variants:
 
 ```yaml
 edit:
@@ -158,23 +157,23 @@ edit:
   "**/.gitignore": "allow"
 ```
 
-`**/docs/**` и `**/.gitignore` матчатся на абсолютный путь при любом
-расположении проекта и при workspace root `/`. Не удаляйте абсолютные
-варианты: blanket deny `"*": "deny"` остаётся, а конкретные allow-правила
-должны совпасть с полным путём.
+`**/docs/**` and `**/.gitignore` match the absolute path wherever the project
+is located and when workspace root is `/`. Do not remove the absolute
+variants: the blanket deny `"*": "deny"` remains, and specific allow rules
+must match the full path.
 
-`.gitignore` разрешён ролям `harness-orchestrator` и `harness-coder`.
-Остальные роли его не правят — это осознанное ограничение.
+`.gitignore` is allowed for `harness-orchestrator` and `harness-coder`.
+Other roles do not edit it - an intentional restriction.
 
-Если opencode показывает workspace root `/`, запускайте его из каталога
-проекта и проверьте `git rev-parse --show-toplevel`: корень должен совпадать
-с проектом. Абсолютные варианты паттернов защищают от этой проблемы, но
-корректный workspace root всё равно предпочтителен.
+If opencode shows workspace root `/`, start it from the project directory and
+check `git rev-parse --show-toplevel`: the root must match the project.
+Absolute patterns protect against this, but a correct workspace root is still
+preferable.
 
-## 5.2. Журнал проблем (`harness-issues`)
+## 5.2. Problem log (`harness-issues`)
 
-Skill `harness-issues` фиксирует проблемы harness, их причину, место и
-решение. Один файл — одна проблема:
+The `harness-issues` skill records harness problems, their cause, location, and
+solution. One file per problem:
 
 ```text
 docs/issues/
@@ -182,11 +181,11 @@ docs/issues/
   ISSUE-20261107-230501-task-deny.md
 ```
 
-Создание записи:
+Create a record:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/new-issue.ps1 `
-  -Title "Краткое название" `
+  -Title "Short title" `
   -Severity major `
   -Status open `
   -Type permission `
@@ -195,94 +194,92 @@ powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/new-issue.ps
   -Location "C:\project\file:line"
 ```
 
-Скрипт создаёт issue-файл, добавляет строку в `docs/issues/README.md` и
-печатает путь. При совпадении timestamp к ID добавляется `-2`, `-3`.
-Обязательные разделы: симптомы, воспроизведение, причина,
-решение/workaround, проверка, prevention, ссылки, timeline.
+The script creates the issue file, adds a row to `docs/issues/README.md`, and
+prints the path. On timestamp collision, `-2`, `-3` is appended to the ID.
+Required sections: symptoms, reproduction, cause, solution/workaround,
+verification, prevention, links, timeline.
 
-Правила:
+Rules:
 
-- issue создают все harness-роли; индекс сверяет `harness-orchestrator`;
-- issue ID указывается в логе карточки задачи;
+- all harness roles create issues; `harness-orchestrator` verifies the index;
+- the issue ID is recorded in the task card log;
 - `status`: `open`, `investigating`, `workaround`, `resolved`, `wontfix`;
-- секреты в issue не записываются;
-- issue не заменяет карточку задачи и не удаляется после исправления.
+- never write secrets to an issue;
+- an issue does not replace a task card and is not deleted after a fix.
 
-Если `harness/scripts/new-issue.ps1` или `harness/templates/issue.md`
-отсутствуют в проекте, выполните `/harness-init -Force` (с backup) или
-создайте запись вручную по шаблону.
+If `harness/scripts/new-issue.ps1` or `harness/templates/issue.md` is missing
+in the project, run `/harness-init -Force` (with backup) or create the record
+manually from the template.
 
-## 6. Версии и pin-версии
+## 6. Versions and pins
 
-- Глобальная версия: `~/.config/opencode/harness/version.json`.
-- Версия проекта: `harness/version.json`, создаётся при `/harness-init`.
-- `/harness-doctor` предупреждает, если версии различаются.
+- Global version: `~/.config/opencode/harness/version.json`.
+- Project version: `harness/version.json`, created by `/harness-init`.
+- `/harness-doctor` warns when the versions differ.
 
-**Version record** (используется сейчас) фиксирует версию, но проект продолжает
-использовать глобальные файлы. Это удобно при одном пользователе и частых
-обновлениях.
+**Version record** (currently used) records the version, but the project keeps
+using global files. This is convenient for a single user and frequent updates.
 
-**Vendor pin** — если проект нужно «заморозить»:
+**Vendor pin** - if a project must be frozen:
 
-1. скопировать `harness-*` агентов и команды в `.opencode/agents/` и
-   `.opencode/commands/` проекта;
-2. зафиксировать версию в `harness/version.json`;
-3. обновлять копии только вручную.
+1. copy `harness-*` agents and commands to the project's `.opencode/agents/`
+   and `.opencode/commands/`;
+2. fix the version in `harness/version.json`;
+3. update the copies manually only.
 
-Project-файлы имеют приоритет над глобальными, поэтому vendor-копии перекрывают
-глобальную установку. Полноценный vendor-режим в `harness-init` пока не включён;
-его можно добавить отдельным флагом, если появится потребность.
+Project files take priority over global ones, so vendor copies override the
+global installation. Full vendor mode is not yet included in `harness-init`;
+it can be added as a separate flag if needed.
 
-## 7. Обновление и удаление
+## 7. Update and removal
 
-Обновление глобальной установки:
+Update the global installation:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/install.ps1
 ```
 
-Скрипт делает backup и перезаписывает глобальные файлы. После обновления
-перезапустите opencode.
+The script backs up and overwrites global files. Restart opencode after the
+update.
 
-Удаление:
+Removal:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/uninstall.ps1
 ```
 
-Скрипт удаляет только глобальные `harness-*` файлы, skill и каталог
-`~/.config/opencode/harness`; проектные `harness/` и `docs/` не затрагиваются.
-Правила `permission.task` в `opencode.jsonc` нужно удалить вручную (скрипт
-печатает напоминание).
+The script removes only global `harness-*` files, the skill, and
+`~/.config/opencode/harness`; project `harness/` and `docs/` are not touched.
+`permission.task` rules in `opencode.jsonc` must be removed manually (the
+script prints a reminder).
 
-## 8. Диагностика
+## 8. Troubleshooting
 
-| Симптом | Причина | Действие |
+| Symptom | Cause | Action |
 |---|---|---|
-| команда `/harness-*` не видна | opencode не перезапущен после установки | перезапустить opencode |
-| harness-агент не виден | файлы не попали в `~/.config/opencode/agents/` | проверить `/harness-doctor`, повторить install |
-| `build` может вызвать роли | `permission.task` содержит allow | штатное поведение; иначе запустить install и перезапустить opencode |
-| `build` не может вызвать роли | остался старый `deny`-блок | выполнить install.ps1, перезапустить opencode; проверить `opencode debug agent build` |
-| harness не вызывает роли | нет allow-правил у агента `harness` | проверить `opencode debug agent harness` |
-| проект не запускается | нет `harness/process.md` или `docs/plan.md` | выполнить `/harness-init` |
-| edit `docs/plan.md` заблокирован, хотя есть `docs/**` allow | путь абсолютный, относительный шаблон не совпал | обновить harness, перезапустить opencode; в ролях должны быть `**/docs/**` |
-| write `.gitignore` заблокирован | `.gitignore` не входит в зону роли | использовать `harness-orchestrator` или `harness-coder` |
-| workspace root `/` | opencode запущен не из корня проекта / неверный cwd | запустить из проекта, проверить `git rev-parse --show-toplevel` |
-| старые агенты обходят gating | остались `.opencode/agents/analyst.md` и т.п. | удалить старые копии или переименовать в `harness-*` |
-| конфиг не пропатчился | в `opencode.jsonc` есть комментарии | добавить `permission.task` с allow вручную |
-| `new-issue.ps1` не найден | проект инициализирован старой версией | выполнить `/harness-init -Force` с backup |
-| версия отличается | проект инициализирован старой версией | обновить проект осознанно; см. pin |
+| `/harness-*` command is not visible | opencode was not restarted after installation | restart opencode |
+| harness agent is not visible | files did not reach `~/.config/opencode/agents/` | check `/harness-doctor`, rerun install |
+| `build` can call roles | `permission.task` contains allow | expected; otherwise run install and restart opencode |
+| `build` cannot call roles | an old `deny` block remains | run install.ps1, restart opencode; check `opencode debug agent build` |
+| harness does not call roles | the `harness` agent lacks allow rules | check `opencode debug agent harness` |
+| project does not start | no `harness/process.md` or `docs/plan.md` | run `/harness-init` |
+| edit `docs/plan.md` is blocked despite a `docs/**` allow | the path is absolute; the relative pattern did not match | update harness, restart opencode; roles must include `**/docs/**` |
+| write `.gitignore` is blocked | `.gitignore` is outside the role's write area | use `harness-orchestrator` or `harness-coder` |
+| workspace root `/` | opencode was not started from the project root / wrong cwd | start from the project, check `git rev-parse --show-toplevel` |
+| old agents bypass gating | `.opencode/agents/analyst.md` etc. remain | remove old copies or rename to `harness-*` |
+| config was not patched | `opencode.jsonc` contains comments | add `permission.task` with allow manually |
+| `new-issue.ps1` is missing | the project was initialized by an older version | run `/harness-init -Force` with backup |
+| version differs | the project was initialized by an older version | update the project deliberately; see pin |
 
-## 9. Переход на opencode V2
+## 9. Migration to opencode V2
 
-Текущая установка — opencode 1.18.33 и V1-поля. При переходе на V2:
+Current installation uses opencode 1.18.33 and V1 fields. When migrating to V2:
 
-- `permission` → `permissions` (упорядоченный массив правил);
-- `task` → `subagent`;
-- `disable` → `disabled`;
-- `agent` map → `agents`;
-- `temperature`/`options` у агента переносятся в model variant.
+- `permission` -> `permissions` (ordered rule array);
+- `task` -> `subagent`;
+- `disable` -> `disabled`;
+- `agent` map -> `agents`;
+- agent `temperature`/`options` move to the model variant.
 
-Файловые расположения `.opencode/agents`, `.opencode/commands`,
-`.opencode/skills` сохраняются. Не смешивайте V1- и V2-поля в одном файле
-агента.
+File locations `.opencode/agents`, `.opencode/commands`, `.opencode/skills`
+stay the same. Do not mix V1 and V2 fields in one agent file.

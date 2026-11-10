@@ -1,7 +1,7 @@
 @startuml
 autonumber
 skinparam defaultFontName Segoe UI
-title S-03 Анализ требований (analyst)
+title S-03 Requirements analysis (analyst)
 
 participant "harness\nprimary lead" as primary
 participant "harness-analyst" as analyst
@@ -9,19 +9,19 @@ participant "local-rag\nFTS5 + LanceDB" as rag
 participant "docs/analysis" as docs
 participant "harness-orchestrator" as orch
 
-primary -> analyst : задача: требования по теме
+primary -> analyst : task: requirements for the topic
 analyst -> rag : rag_context / rag_search
-rag --> analyst : указатели: файл + строки
-analyst -> analyst : Read и проверка источников
-alt данных достаточно
+rag --> analyst : pointers: file + lines
+analyst -> analyst : Read and verify sources
+alt data is sufficient
   analyst -> docs : requirements-*.md\nR-001.., NFR-1..
-else есть пробелы
-  analyst -> docs : questions-*.md\nвопросы + допущения
+else gaps exist
+  analyst -> docs : questions-*.md\nquestions + assumptions
 end
 analyst -> docs : glossary.md
-analyst --> orch : требования, вопросы, риски,\nпути артефактов, блокеры
+analyst --> orch : requirements, questions, risks,\nartifact paths, blockers
 note right of analyst
-  Требования атомарные
-  и проверяемые, с ID R-NNN
+  Requirements are atomic
+  and verifiable, with IDs R-NNN
 end note
 @enduml

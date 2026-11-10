@@ -1,36 +1,36 @@
-# Локальный harness: архитектура + реализация
+# Local harness: architecture + implementation
 
-Локальный harness для разработки архитектуры решений и ПО с последующей
-реализацией. Весь процесс выполняется ролями-под-агентами на базе локальных
-моделей Ollama. Harness устанавливается глобально для текущего пользователя,
-но активируется в проекте только явно через `/harness-*`.
+A local harness for developing solution and software architecture followed by
+implementation. The entire process is performed by role subagents based on local
+Ollama models. The harness is installed globally for the current user but is
+activated in a project only explicitly via `/harness-*`.
 
-Подробный гайд: [`docs/guides/harness-global.md`](docs/guides/harness-global.md).
+Detailed guide: [`docs/guides/harness-global.md`](docs/guides/harness-global.md).
 
-## Состав
+## Contents
 
-- `harness/process.md` — единые требования к производственному процессу (регламент)
-- `harness/agents/` — primary-агент `harness` и ролевые sub-agent'ы
+- `harness/process.md` - unified production process requirements (rules)
+- `harness/agents/` - primary agent `harness` and role subagents
   (`harness-orchestrator`, `harness-analyst`, `harness-architect`,
   `harness-coder`, `harness-qa`, `harness-doc-writer`)
-- `harness/commands/` — команды opencode: `/harness-run`,
+- `harness/commands/` - opencode commands: `/harness-run`,
   `/harness-board-update`, `/harness-board-report`, `/harness-init`,
   `/harness-doctor`
-- `harness/skills/harness/SKILL.md` — глобальный skill с кратким workflow
-- `harness/skills/harness-issues/SKILL.md` — skill учёта проблем и решений
-- `harness/templates/` — шаблоны артефактов (task-card, adr, plan-row, issue)
-- `harness/scripts/` — `install.ps1`, `init.ps1`, `doctor.ps1`,
+- `harness/skills/harness/SKILL.md` - global skill with a short workflow
+- `harness/skills/harness-issues/SKILL.md` - issue and solution tracking skill
+- `harness/templates/` - artifact templates (task-card, adr, plan-row, issue)
+- `harness/scripts/` - `install.ps1`, `init.ps1`, `doctor.ps1`,
   `uninstall.ps1`, `new-issue.ps1`
-- `harness/version.json` — версия установки
-- `docs/issues/` — журнал проблем и решений (один MD на проблему + индекс)
-- `docs/plan.md` — общий план (board задач: статус, роль, зависимости)
-- `docs/tasks/` — карточки задач (по одной MD-файлу на задачу)
-- `docs/activity.puml` / `activity.svg` — диаграмма активности
-- `requirements/` — исходные требования
+- `harness/version.json` - installation version
+- `docs/issues/` - issue and solution log (one MD per issue + index)
+- `docs/plan.md` - shared plan (task board: status, role, dependencies)
+- `docs/tasks/` - task cards (one MD file per task)
+- `docs/activity.puml` / `activity.svg` - activity diagram
+- `requirements/` - initial requirements
 
-## Модели ролей
+## Role models
 
-| Роль | Агент | Модель (Ollama) |
+| Role | Agent | Model (Ollama) |
 |---|---|---|
 | harness lead | `harness` | qwen3.8:27b-64k (thinking: xhigh) |
 | orchestrator | `harness-orchestrator` | qwen3.8:27b-64k (thinking: xhigh) |
@@ -40,79 +40,79 @@
 | qa | `harness-qa` | qwen3.8:27b-64k (vision, 64K) |
 | doc-writer | `harness-doc-writer` | qwen3.8:27b-64k (thinking: low) |
 
-## Глобальная установка (один раз)
+## Global installation (once)
 
-Из корня репозитория:
+From the repository root:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/install.ps1
 ```
 
-Скрипт:
+The script:
 
-1. копирует агентов, команды, skills, шаблоны и скрипты в
+1. copies agents, commands, skills, templates, and scripts to
    `~/.config/opencode/`;
-2. делает backup изменяемых файлов в `~/.config/opencode/backups/`;
-3. добавляет или обновляет в `opencode.jsonc` разрешение
-   `permission.task` для `harness-*` ролей.
+2. backs up modified files to `~/.config/opencode/backups/`;
+3. adds or updates the `permission.task` allow rule for `harness-*` roles in
+   `opencode.jsonc`.
 
-После установки перезапустите opencode. Проверка:
+Restart opencode after installation. Check:
 
 ```text
 /harness-doctor
 ```
 
-## Активация в проекте
+## Project activation
 
-Harness не включается автоматически: `default_agent` остаётся обычным.
-В проекте выполните:
+Harness is not enabled automatically: `default_agent` stays unchanged. In the
+project, run:
 
-1. `/harness-init` — создаёт `harness/process.md`, `harness/version.json`,
-   `harness/templates/`, `docs/plan.md`, `docs/activity.puml` и каркас
-   каталогов.
-2. Заполните `docs/plan.md`, создайте карточку по
+1. `/harness-init` - creates `harness/process.md`, `harness/version.json`,
+   `harness/templates/`, `docs/plan.md`, `docs/activity.puml`, and the directory
+   skeleton.
+2. Fill in `docs/plan.md` and create a card from
    `harness/templates/task-card.md`.
-3. `/harness-run T-XXX` — выполнение задачи.
-4. `/harness-board-update all` — синхронизация board и activity.
-5. `/harness-board-report` — сводка без изменений.
+3. `/harness-run T-XXX` - execute the task.
+4. `/harness-board-update all` - sync the board and activity.
+5. `/harness-board-report` - summary without changes.
 
-Если `harness/process.md` или `docs/plan.md` отсутствуют, `harness`-агент
-останавливается и предлагает `/harness-init`.
+If `harness/process.md` or `docs/plan.md` is missing, the `harness` agent stops
+and suggests `/harness-init`.
 
-## Жизненный цикл задачи
+## Task lifecycle
 
-1. Harness lead проверяет marker проекта и `depends_on` (все — `done`).
-2. `harness-orchestrator` переводит задачу в `in_progress` и обновляет board.
-3. Роль выполняет задачу строго по `acceptance` из карточки.
-4. `harness-orchestrator` принимает результат.
-5. При успехе — `done`, обновление board/карточки/activity/SVG и коммит;
-   при провале — `failed`, до 3 попыток, затем `blocked` и эскалация.
+1. The harness lead checks the project marker and `depends_on` (all `done`).
+2. `harness-orchestrator` sets the task to `in_progress` and updates the board.
+3. The role performs the task strictly per the card's `acceptance`.
+4. `harness-orchestrator` accepts the result.
+5. On success - `done`, board/card/activity/SVG update, and commit; on failure -
+   `failed`, up to 3 attempts, then `blocked` and escalation.
 
-## Версии
+## Versions
 
-- Глобальная версия хранится в `~/.config/opencode/harness/version.json`.
-- Проект фиксирует версию в `harness/version.json` при `/harness-init`.
-- `/harness-doctor` предупреждает о расхождении версий.
-- Глобальное обновление действует на все проекты. Для «заморозки» версии
-  в отдельном проекте можно позже включить vendor-копию агентов и команд
-  в `.opencode/`.
+- The global version is stored in `~/.config/opencode/harness/version.json`.
+- A project records the version in `harness/version.json` during `/harness-init`.
+- `/harness-doctor` warns about version divergence.
+- A global update affects all projects. To freeze the version in a specific
+  project, a vendor copy of agents and commands can later be enabled in
+  `.opencode/`.
 
-## Журнал проблем
+## Issue log
 
-При любой проблеме, блокировке или найденном workaround harness-роль
-использует skill `harness-issues` и создаёт запись в `docs/issues/`:
+For any problem, blocker, or workaround found, a harness role uses the
+`harness-issues` skill and creates an entry in `docs/issues/`:
 
-- `docs/issues/ISSUE-YYYYMMDD-HHMMSS-<slug>.md` — одна проблема;
-- `docs/issues/README.md` — перечень и индекс.
+- `docs/issues/ISSUE-YYYYMMDD-HHMMSS-<slug>.md` - one issue;
+- `docs/issues/README.md` - list and index.
 
-Запись содержит симптомы, абсолютное место, причину, решение/workaround,
-проверку и prevention. Orchestrator сверяет индекс и включает issue-файлы
-в коммит задачи. Секреты в issue не записываются.
+An entry contains symptoms, absolute location, cause, solution/workaround,
+verification, and prevention. The orchestrator verifies the index and includes
+issue files in the task commit. Secrets are never written to issues.
 
-## Ограничения
+## Limitations
 
-- Установка только для текущего пользователя (`~/.config/opencode`).
-- Harness не используется в обычных задачах: активация только через
-  `/harness-run` и сервисные команды.
-- `git push`, `git tag`, правка истории и prod-деплой запрещены.
-- Модели и MCP (`plantuml-render`, `local-rag`) должны быть доступны локально.
+- Installation is per current user (`~/.config/opencode`).
+- Harness is not used for ordinary tasks: activation only via `/harness-run`
+  and service commands.
+- `git push`, `git tag`, history rewrite, and prod deployment are forbidden.
+- Models and MCP (`plantuml-render`, `local-rag`) must be available locally.

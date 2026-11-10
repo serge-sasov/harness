@@ -1,43 +1,43 @@
 @startuml
 autonumber
 skinparam defaultFontName Segoe UI
-title S-02 Полный цикл задачи (harness-run T-XXX)
+title S-02 Full task cycle (harness-run T-XXX)
 
-actor "Пользователь" as user
-participant "Команда\nharness-run" as cmd
+actor "User" as user
+participant "Command\nharness-run" as cmd
 participant "harness\nprimary lead" as lead
 participant "harness-orchestrator" as orch
-participant "Роль задачи\nharness-*" as role
+participant "Task role\nharness-*" as role
 participant "Board +\nActivityDiagram" as board
 participant "Git" as git
 
 user -> cmd : /harness-run T-XXX
 cmd -> lead : agent: harness
-lead -> board : plan.md + карточка задачи
-board --> lead : depends_on, acceptance, артефакты
-lead -> lead : проверить marker\nharness/process.md
-lead -> board : проверить, что нет другой\nзадачи в in_progress
-board --> lead : ok / ID активной задачи
-alt marker, зависимости или другая in_progress
-  lead --> cmd : стоп: marker, зависимость\nили параллельный запуск
-  cmd --> user : отчёт о блокировке
-else всё готово
-  lead -> orch : in_progress\nplan + карточка + activity + SVG
-  orch -> board : обновить статус и цвет
-  lead -> role : task harness-*\nкарточка, acceptance, артефакты
-  role -> role : выполнить работу\nв границах зоны записи
-  role --> lead : результат, файлы, лог
-  lead -> orch : приёмка по acceptance\nи закрытие задачи
-  alt acceptance пройдена
-    orch -> board : done + артефакты + лог
+lead -> board : plan.md + task card
+board --> lead : depends_on, acceptance, artifacts
+lead -> lead : check marker\nharness/process.md
+lead -> board : check that no other\ntask is in_progress
+board --> lead : ok / active task ID
+alt marker, dependencies, or another in_progress
+  lead --> cmd : stop: marker, dependency,\nor parallel start
+  cmd --> user : blocked report
+else all ready
+  lead -> orch : in_progress\nplan + card + activity + SVG
+  orch -> board : update status and color
+  lead -> role : task harness-*\ncard, acceptance, artifacts
+  role -> role : do the work\nwithin the write area
+  role --> lead : result, files, log
+  lead -> orch : acceptance per criteria\nand task closure
+  alt acceptance passed
+    orch -> board : done + artifacts + log
     orch -> git : add + commit "T-XXX: ..."
-    git --> orch : hash коммита
+    git --> orch : commit hash
     orch --> lead : done, hash
-  else acceptance провалена
-    orch -> board : failed, причина в Blockers
-    orch --> lead : failed, причина
+  else acceptance failed
+    orch -> board : failed, cause in Blockers
+    orch --> lead : failed, cause
   end
 end
-lead --> cmd : статус
-cmd --> user : статус, коммит,\nразблокированные задачи
+lead --> cmd : status
+cmd --> user : status, commit,\nunblocked tasks
 @enduml

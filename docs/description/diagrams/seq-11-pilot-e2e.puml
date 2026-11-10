@@ -1,9 +1,9 @@
 @startuml
 autonumber
 skinparam defaultFontName Segoe UI
-title S-11 Пилотный end-to-end цикл T-013
+title S-11 Pilot end-to-end cycle T-013
 
-actor "Пользователь" as user
+actor "User" as user
 participant "harness-orchestrator" as orch
 participant "harness-analyst" as analyst
 participant "harness-architect" as arch
@@ -13,22 +13,22 @@ participant "docs/analysis,\narchitecture, qa" as pilot
 participant "PlanBoard" as board
 participant "Git" as git
 
-user -> orch : T-013: smoke-test полного цикла
-orch -> analyst : требования пилота\n«Мини-CRUD сервис»
+user -> orch : T-013: full-cycle smoke test
+orch -> analyst : pilot requirements\n"Mini-CRUD service"
 analyst -> pilot : pilot-requirements.md\nR-001..R-006, NFR-1..3
-analyst --> orch : требования и риски
-orch -> arch : ADR + компонентная схема
+analyst --> orch : requirements and risks
+orch -> arch : ADR + component diagram
 arch -> mcp : check_syntax + render
 mcp --> arch : pilot-components.svg
 arch -> pilot : pilot-adr.md\npilot-components.puml/.svg
-arch --> orch : решение и контракт REST
-orch -> qa : приёмка артефактов пилота
-qa -> pilot : прочитать требования, ADR, схему
-qa -> qa : вердикт accept\n2 замечания minor
+arch --> orch : solution and REST contract
+orch -> qa : pilot artifact acceptance
+qa -> pilot : read requirements, ADR, diagram
+qa -> qa : verdict accept\n2 minor findings
 qa -> pilot : pilot-review.md
 qa --> orch : accept
 orch -> board : T-013 = done + hash
 orch -> git : commit "T-013: ..."
 git --> orch : hash
-orch --> user : пилотный цикл подтверждён
+orch --> user : pilot cycle confirmed
 @enduml

@@ -1,9 +1,9 @@
-# T-003: Board и карточки задач
+# T-003: Board and task cards
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
 | id | T-003 |
-| title | Общий план (board) + карточки всех задач |
+| title | Shared plan (board) + cards for all tasks |
 | role | orchestrator |
 | status | done |
 | depends_on | T-002 |
@@ -12,10 +12,10 @@
 
 ## Acceptance
 
-- [x] `docs/plan.md` содержит строки T-001..T-013 с колонками ID, задача, роль, зависимости, статус, артефакты, коммит.
-- [x] Для каждой задачи создана карточка с полями id, title, role, status, depends_on, acceptance, artifacts, blockers, log.
-- [x] Статусы в board согласованы с git log на момент приёмки.
+- [x] `docs/plan.md` contains T-001..T-013 rows with columns ID, task, role, dependencies, status, artifacts, commit.
+- [x] Each task has a card with fields id, title, role, status, depends_on, acceptance, artifacts, blockers, log.
+- [x] Board statuses match `git log` at acceptance time.
 
 ## Log
 
-- 2026-11-07: создан `docs/plan.md` (board, легенда, правила) и 13 карточек в `docs/tasks/`.
+- 2026-11-07: created `docs/plan.md` (board, legend, rules) and 13 cards in `docs/tasks/`.

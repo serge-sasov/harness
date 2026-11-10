@@ -1,9 +1,9 @@
-# T-012: Команды opencode
+# T-012: opencode commands
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
 | id | T-012 |
-| title | Команды harness: role-run, board-update, board-report |
+| title | Harness commands: role-run, board-update, board-report |
 | role | orchestrator |
 | status | done |
 | depends_on | T-006, T-007, T-008, T-009, T-010, T-011 |
@@ -12,12 +12,12 @@
 
 ## Acceptance
 
-- [x] Каждая команда — MD-файл с frontmatter (`description`, при необходимости `agent`/`model`) и телом-шаблоном.
-- [x] `role-run` принимает ID задачи (`$ARGUMENTS`), проверяет depends_on, ставит in_progress.
-- [x] `board-update` обновляет plan.md, карточку, activity.puml, перерендеривает SVG, коммитит.
-- [x] `board-report` выводит сводку статусов и блокеров.
+- [x] Each command is an MD file with frontmatter (`description`, optional `agent`/`model`) and a template body.
+- [x] `role-run` accepts a task ID (`$ARGUMENTS`), checks `depends_on`, and sets `in_progress`.
+- [x] `board-update` updates plan.md, the card, activity.puml, re-renders SVG, and commits.
+- [x] `board-report` prints a status and blocker summary.
 
 ## Log
 
-- 2026-11-07: созданы `harness/commands/role-run.md`, `board-update.md`, `board-report.md`.
-- 2026-11-07 (global harness): команды переименованы в `harness-run`, `harness-board-update`, `harness-board-report`; актуальные файлы — `harness/commands/harness-*.md`.
+- 2026-11-07: created `harness/commands/role-run.md`, `board-update.md`, `board-report.md`.
+- 2026-11-07 (global harness): commands renamed to `harness-run`, `harness-board-update`, `harness-board-report`; current files are `harness/commands/harness-*.md`.

@@ -1,9 +1,9 @@
 @startuml
 autonumber
 skinparam defaultFontName Segoe UI
-title S-08 Синхронизация board (harness-board-update)
+title S-08 Board sync (harness-board-update)
 
-actor "Пользователь" as user
+actor "User" as user
 participant "harness\nprimary lead" as lead
 participant "harness-orchestrator" as orch
 participant "TaskCards\ndocs/tasks" as cards
@@ -13,21 +13,21 @@ participant "MCP\nplantuml-render" as mcp
 participant "Git" as git
 
 user -> lead : /harness-board-update all | T-XXX
-lead -> orch : синхронизировать board\n(all или T-XXX)
-orch -> cards : прочитать статусы,\nблокеры, коммиты
-cards --> orch : фактические статусы
-orch -> board : сверить и обновить\nстатус, артефакты, hash
-orch -> activity : цвет блока задачи
+lead -> orch : sync board\n(all or T-XXX)
+orch -> cards : read statuses,\nblockers, commits
+cards --> orch : actual statuses
+orch -> board : reconcile and update\nstatus, artifacts, hash
+orch -> activity : task block color
 orch -> mcp : check_syntax
 mcp --> orch : valid
 orch -> mcp : render_file -> activity.svg
 mcp --> orch : SVG
 orch -> git : add + commit\n"chore: board update"
 git --> orch : hash
-orch --> lead : изменённые статусы,\nкоммиты, путь к SVG
-lead --> user : отчёт
+orch --> lead : changed statuses,\ncommits, SVG path
+lead --> user : report
 note right of orch
-  При расхождении истиной
-  считается карточка задачи
+  On divergence, the task card
+  is the source of truth
 end note
 @enduml

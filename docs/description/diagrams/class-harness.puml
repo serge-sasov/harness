@@ -1,7 +1,7 @@
 @startuml
 skinparam defaultFontName Segoe UI
 skinparam classAttributeIconSize 0
-title Harness — концептуальная модель классов
+title Harness - conceptual class model
 
 enum TaskStatus {
   pending

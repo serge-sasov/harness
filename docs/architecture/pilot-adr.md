@@ -1,50 +1,50 @@
-# ADR-001: Стек и структура пилотного «Мини-CRUD сервиса»
+# ADR-001: Stack and structure of the pilot "Mini-CRUD service"
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
-| Статус | accepted |
-| Дата | 2026-11-07 |
-| Задача | T-013 |
-| Связанные ADR | — |
+| Status | accepted |
+| Date | 2026-11-07 |
+| Task | T-013 |
+| Related ADRs | - |
 
-## Контекст
+## Context
 
-Требования `docs/analysis/pilot-requirements.md` (R-001..R-006, NFR-1..3):
-REST CRUD для заметок, SQLite, локальный Docker-запуск, детерминированные
-тесты. Один сервис, без auth и внешних интеграций.
+Requirements in `docs/analysis/pilot-requirements.md` (R-001..R-006, NFR-1..3):
+REST CRUD for notes, SQLite, local Docker run, deterministic tests. One service,
+no auth, no external integrations.
 
-## Решение
+## Decision
 
 Python 3.12 + FastAPI + SQLAlchemy 2.x (SQLite) + Pydantic v2.
-Структура: тонкий API-слой → сервисный слой (домен) → репозиторий (SQLite).
-Тесты — pytest + httpx (ASGI transport). Контейнеризация — python:3.12-slim,
-docker compose с volume для файла БД.
+Structure: thin API layer -> service layer (domain) -> repository (SQLite).
+Tests: pytest + httpx (ASGI transport). Container: python:3.12-slim,
+docker compose with a volume for the DB file.
 
-## Альтернативы
+## Alternatives
 
-| Вариант | Плюсы | Минусы | Почему отклонён |
+| Option | Pros | Cons | Why rejected |
 |---|---|---|---|
-| Flask + SQLite | проще, лёгкий | ручная валидация, меньше типизации | FastAPI даёт валидацию из коробки |
-| Node/Express + better-sqlite3 | быстрый старт | второй стек в окружении | стек Python уже используется локально |
-| Django + DRF | батарейки | избыточен для одного CRUD | превышает требования пилота |
+| Flask + SQLite | simpler, lightweight | manual validation, less typing | FastAPI provides validation out of the box |
+| Node/Express + better-sqlite3 | fast start | second stack in the environment | Python stack is already used locally |
+| Django + DRF | batteries included | overkill for one CRUD | exceeds pilot requirements |
 
-## Последствия
+## Consequences
 
-- Положительные: минимум кода, автодокументация OpenAPI, типизация контрактов.
-- Отрицательные/риски: SQLite не для конкурентной записи — принято для пилота.
-- Изменения: каталоги `src/`, `tests/`, `Dockerfile`, `docker-compose.yml`.
+- Positive: minimal code, OpenAPI autodoc, typed contracts.
+- Negative/risks: SQLite is not for concurrent writes - accepted for the pilot.
+- Changes: `src/`, `tests/`, `Dockerfile`, `docker-compose.yml`.
 
-## Контракты и схемы
+## Contracts and diagrams
 
-- Компонентная схема: `docs/architecture/pilot-components.puml` (SVG рядом).
-- REST-контракт:
+- Component diagram: `docs/architecture/pilot-components.puml` (SVG next to it).
+- REST contract:
 
-| Метод | Путь | Тело | Ответ |
+| Method | Path | Body | Response |
 |---|---|---|---|
 | POST | `/notes` | `{title, body}` | 201 `{id, title, body, created_at}` |
-| GET | `/notes` | — | 200 `[...]` |
-| GET | `/notes/{id}` | — | 200 / 404 |
+| GET | `/notes` | - | 200 `[...]` |
+| GET | `/notes/{id}` | - | 200 / 404 |
 | PUT | `/notes/{id}` | `{title, body}` | 200 / 404 |
-| DELETE | `/notes/{id}` | — | 204 / 404 |
+| DELETE | `/notes/{id}` | - | 204 / 404 |
 
-- Ошибки: `{"detail": "..."}`; валидация — 422 (Pydantic).
+- Errors: `{"detail": "..."}`; validation - 422 (Pydantic).

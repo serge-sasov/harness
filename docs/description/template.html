@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -354,18 +354,18 @@ hr { border: none; border-top: 1px solid var(--line); margin: 2rem 0; }
 </style>
 </head>
 <body>
-<a class="skip-link" href="#content">К содержанию</a>
+<a class="skip-link" href="#content">Skip to content</a>
 <header class="page-header">
   <div class="wrap">
-    <div class="eyebrow">Локальный harness · описание решения</div>
+    <div class="eyebrow">Local harness | solution description</div>
     <h1>%%TITLE%%</h1>
-    <p class="subtitle">Архитектура, сценарии, модель классов и пилотный кейс</p>
-    <p class="meta">Сгенерировано из README.md · %%DATE%% · диаграмм: %%DIAGRAM_COUNT%% · офлайн-версия</p>
+    <p class="subtitle">Architecture, scenarios, class model, and pilot case</p>
+    <p class="meta">Generated from README.md | %%DATE%% | diagrams: %%DIAGRAM_COUNT%% | offline version</p>
   </div>
 </header>
 <div class="layout wrap">
-  <aside class="sidebar" aria-label="Содержание">
-    <div class="toc-title">Содержание</div>
+  <aside class="sidebar" aria-label="Contents">
+    <div class="toc-title">Contents</div>
     %%TOC%%
   </aside>
   <main id="content" class="content">
@@ -373,25 +373,25 @@ hr { border: none; border-top: 1px solid var(--line); margin: 2rem 0; }
   </main>
 </div>
 <footer class="page-footer wrap">
-  <p>Все схемы — PlantUML, встроены как SVG. Клик по диаграмме открывает полноэкранный просмотр: колесо — масштаб, перетаскивание — панорама, Esc — закрыть.</p>
+  <p>All diagrams are PlantUML, embedded as SVG. Click a diagram to open full-screen view: wheel - zoom, drag - pan, Esc - close.</p>
 </footer>
 <div class="lightbox" id="lightbox" hidden>
   <div class="lightbox-dialog" role="dialog" aria-modal="true" aria-labelledby="lightbox-title">
     <div class="lightbox-bar">
-      <div class="lightbox-title" id="lightbox-title">Схема</div>
+      <div class="lightbox-title" id="lightbox-title">Diagram</div>
       <div class="lightbox-actions">
-        <button type="button" data-action="zoom-out" title="Уменьшить">&minus;</button>
+        <button type="button" data-action="zoom-out" title="Zoom out">&minus;</button>
         <span class="zoom-level" id="zoom-level">100%</span>
-        <button type="button" data-action="zoom-in" title="Увеличить">+</button>
-        <button type="button" data-action="fit" title="Вписать в экран">Fit</button>
-        <button type="button" data-action="reset" title="Масштаб 100%">100%</button>
-        <a class="button-link" id="download-link" download="diagram.svg">Скачать SVG</a>
-        <button type="button" class="close" data-action="close" title="Закрыть (Esc)" aria-label="Закрыть">&times;</button>
+        <button type="button" data-action="zoom-in" title="Zoom in">+</button>
+        <button type="button" data-action="fit" title="Fit to screen">Fit</button>
+        <button type="button" data-action="reset" title="Scale 100%">100%</button>
+        <a class="button-link" id="download-link" download="diagram.svg">Download SVG</a>
+        <button type="button" class="close" data-action="close" title="Close (Esc)" aria-label="Close">&times;</button>
       </div>
     </div>
     <div class="lightbox-viewport" id="lightbox-viewport">
       <img id="lightbox-image" alt="">
-      <div class="lightbox-hint">Колесо — масштаб · перетаскивание — панорама · Esc — закрыть</div>
+      <div class="lightbox-hint">Wheel - zoom | drag - pan | Esc - close</div>
     </div>
   </div>
 </div>
@@ -456,7 +456,7 @@ hr { border: none; border-top: 1px solid var(--line); margin: 2rem 0; }
   }
   function openViewer(src, title) {
     lastFocus = document.activeElement;
-    const label = title || 'Схема';
+    const label = title || 'Diagram';
     titleEl.textContent = label;
     image.alt = label;
     image.src = src;

@@ -1,6 +1,6 @@
-# ISSUE-20261108-170347-qa-subagent-incomplete-report: harness-qa возвращает незавершённый отчёт вместо вердикта accept/reject
+# ISSUE-20261108-170347-qa-subagent-incomplete-report: harness-qa returns an incomplete report instead of an accept/reject verdict
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
 | id | ISSUE-20261108-170347 |
 | status | resolved |
@@ -11,102 +11,101 @@
 | source | primary (harness lead) |
 | role | harness (lead) |
 | location | C:/study/ai/research/Qwen 3.8 27B Q4_K_M; C:/Users/sergey/.config/opencode/agents/harness-qa.md; C:/Users/sergey/.config/opencode/opencode.jsonc |
-| environment | opencode 1.18.33; QA-модель `qwen3.8:27b-64k` (vision, 64K); tiel-coder vision — фактический `num_ctx 32768` |
+| environment | opencode 1.18.33; QA model `qwen3.8:27b-64k` (vision, 64K); tiel-coder vision - actual `num_ctx 32768` |
 
-## Симптомы
+## Symptoms
 
-Вызов harness-qa (tiel-coder vision) для приёмки T-004 дважды возвращает
-незавершённый/пустой результат вместо структурированного вердикта accept/reject:
+Calling harness-qa (tiel-coder vision) for T-004 acceptance twice returns an
+incomplete/empty result instead of a structured accept/reject verdict:
 
-- `ses_e44984bbeffewKshJm8moo5jN3` — `finish=length`, total 32767, output 588;
-- `ses_e449259a4ffe7eJGQCoCbuhds4` — `finish=length`, total 32767, output 70.
+- `ses_e44984bbeffewKshJm8moo5jN3` - `finish=length`, total 32767, output 588;
+- `ses_e449259a4ffe7eJGQCoCbuhds4` - `finish=length`, total 32767, output 70.
 
-## Воспроизведение
+## Reproduction
 
-1. Запустить `harness-qa` для T-004 (web-фронтенд Vue.js).
-2. QA читает исходники и запускает тесты/build; контекст доходит до ~32K.
-3. Модель возвращает `finish=length` до финального вердикта.
-4. Повторный прогон на той же модели даёт тот же результат.
+1. Run `harness-qa` for T-004 (Vue.js web frontend).
+2. QA reads sources and runs tests/build; context reaches ~32K.
+3. The model returns `finish=length` before the final verdict.
+4. A repeat run on the same model gives the same result.
 
-## Ожидаемое / фактическое поведение
+## Expected / actual behavior
 
-- Ожидалось: структурированный вердикт accept/reject по 6 acceptance-критериям.
-- Фактически: обрыв генерации по лимиту контекста; вердикт не сформирован.
+- Expected: a structured accept/reject verdict against 6 acceptance criteria.
+- Actual: generation cut off by the context limit; no verdict formed.
 
-## Причина
+## Cause
 
-Причина не в глубине subagent и не в таймауте. У модели
-`tiel-coder:35b-a3b-mtp-128k-vision` фактический `num_ctx` равен **32768**
-(`ollama show`), а в `~/.config/opencode/opencode.jsonc` было указано
-`limit.context: 128000` (и в `ollama`, и в `ollama-metrics`). Opencode считал,
-что контекст 128K, и не запускал compaction; QA-сессия читала ~56–60K
-символов tool-output и упиралась в реальные 32K. Оба прогона завершились
-`finish=length` на 32767 токенах с малым output (588 и 70 токенов).
+The cause is not subagent depth and not a timeout. For model
+`tiel-coder:35b-a3b-mtp-128k-vision`, the actual `num_ctx` is **32768**
+(`ollama show`), while `~/.config/opencode/opencode.jsonc` specified
+`limit.context: 128000` (both in `ollama` and `ollama-metrics`). Opencode
+believed the context was 128K and did not run compaction; the QA session read
+~56-60K characters of tool output and hit the real 32K limit. Both runs ended
+with `finish=length` at 32767 tokens with small output (588 and 70 tokens).
 
-Для сравнения: `qwen3.8:27b-64k` имеет фактический `num_ctx 65536` и поддержку
-vision/tools; `tiel-coder:...-text` — фактический 131072.
+For comparison: `qwen3.8:27b-64k` has actual `num_ctx 65536` and supports
+vision/tools; `tiel-coder:...-text` has actual 131072.
 
-## Решение
+## Solution
 
-1. QA-модель harness переключена с `tiel-coder:35b-a3b-mtp-128k-vision` на
-   `qwen3.8:27b-64k` (vision, 64K):
-   - `harness/agents/harness-qa.md` (источник) и глобальная установка;
-   - `harness/process.md` §2, `README.md`, `docs/description/README.md`;
-   - версия harness 1.0.1 → 1.0.2; выполнен `install.ps1`.
-2. В роль QA добавлено правило контекста: читать точечно (карточка acceptance,
-   API-контракт, целевые файлы/паттерны), не читать весь `src`, тесты/build —
-   с кратким выводом, вердикт — короткий.
-3. В `~/.config/opencode/opencode.jsonc` исправлен `limit.context` для
-   `tiel-coder:35b-a3b-mtp-128k-vision` и `tiel-coder:35b-a3b-mtp-64k`
-   (оба провайдера): 128000/65536 → 32768, по фактическому `num_ctx`.
-4. T-004 остаётся принятым primary как временный workaround до появления
-   рабочего QA; QA-роль теперь работоспособна для T-006.
+1. The harness QA model was switched from `tiel-coder:35b-a3b-mtp-128k-vision`
+   to `qwen3.8:27b-64k` (vision, 64K):
+   - `harness/agents/harness-qa.md` (source) and the global installation;
+   - `harness/process.md` section 2, `README.md`, `docs/description/README.md`;
+   - harness version 1.0.1 -> 1.0.2; `install.ps1` was run.
+2. A context rule was added to the QA role: read selectively (card acceptance,
+   API contract, target files/patterns), do not read all of `src`; tests/build
+   with brief output; keep the verdict short.
+3. In `~/.config/opencode/opencode.jsonc`, `limit.context` was fixed for
+   `tiel-coder:35b-a3b-mtp-128k-vision` and `tiel-coder:35b-a3b-mtp-64k`
+   (both providers): 128000/65536 -> 32768, matching the actual `num_ctx`.
+4. T-004 remains accepted by primary as a temporary workaround until a working
+   QA is available; the QA role is now operational for T-006.
 
-## Проверка
+## Verification
 
-- `opencode debug agent harness-qa` показывает `modelID: qwen3.8:27b-64k`.
-- QA-прогон `ses_e43e52504ffev0LbLrSkUDutZz` (qwen3.8:27b-64k):
-  - прочитаны карточка T-004, API-контракт, views/stores/api/tests;
-  - `npm run test -- --run` → 10/10 passed;
-  - `npm run build` → success, 104 modules, dist/ создан;
-  - суммарно 38 837 токенов, `finish=length` отсутствует.
-- QA-модель qwen3.8 оказалась медленной: процесс был срезан 15-минутным
-  таймаутом до финального текста. Возобновление той же сессии (модель qwen3.8;
-  CLI использовал агента build на том же контексте) дало полный вердикт:
+- `opencode debug agent harness-qa` shows `modelID: qwen3.8:27b-64k`.
+- QA run `ses_e43e52504ffev0LbLrSkUDutZz` (qwen3.8:27b-64k):
+  - read the T-004 card, API contract, views/stores/api/tests;
+  - `npm run test -- --run` -> 10/10 passed;
+  - `npm run build` -> success, 104 modules, `dist/` created;
+  - 38,837 tokens total, no `finish=length`.
+- QA model qwen3.8 turned out to be slow: the process was cut by a 15-minute
+  timeout before the final text. Resuming the same session (qwen3.8 model; the
+  CLI used the build agent on the same context) produced the full verdict:
   **REJECT**.
-- Побочная находка T-004 (medium): `RunButton.vue` не показывает
-  пользователю ошибки запуска 409/500 (критерий 3 выполнен частично);
-  это отдельная проблема T-004, не проблема QA-роли. T-004 ранее принят
-  primary; требуется решение — вернуть T-004 на исправление или завести
-  отдельный issue.
+- Side finding for T-004 (medium): `RunButton.vue` does not show 409/500 launch
+  errors to the user (criterion 3 partially met); this is a separate T-004
+  problem, not a QA role problem. T-004 was previously accepted by primary; a
+  decision is needed - return T-004 for fixes or create a separate issue.
 
 ## Prevention
 
-- Сверять фактический `num_ctx` (`ollama show`) с `limit.context` в
-  `opencode.jsonc`; при расхождении — исправлять конфиг или модель.
-- Держать QA-контекст небольшим: точечные чтения, `rg`, краткий вывод.
-- Учитывать latency qwen3.8: для QA задавать достаточный таймаут или
-  разделять QA на text-приёмку и vision-проверку.
-- Не переводить issue в `resolved` без реального QA-прогона; фиксировать
-  session ID, модель, токены и `finish`.
+- Compare actual `num_ctx` (`ollama show`) with `limit.context` in
+  `opencode.jsonc`; on divergence, fix the config or the model.
+- Keep the QA context small: targeted reads, `rg`, brief output.
+- Account for qwen3.8 latency: give QA a sufficient timeout or split QA into
+  text acceptance and vision review.
+- Do not move an issue to `resolved` without a real QA run; record session ID,
+  model, tokens, and `finish`.
 
-## Ссылки
+## References
 
-- QA-сессии: `ses_e44984bbeffewKshJm8moo5jN3`, `ses_e449259a4ffe7eJGQCoCbuhds4`,
+- QA sessions: `ses_e44984bbeffewKshJm8moo5jN3`, `ses_e449259a4ffe7eJGQCoCbuhds4`,
   `ses_e43e52504ffev0LbLrSkUDutZz`.
 - `C:/Users/sergey/.config/opencode/agents/harness-qa.md`.
-- `C:/Users/sergey/.config/opencode/opencode.jsonc` (лимиты моделей).
-- `harness/process.md` §2, `harness/agents/harness-qa.md`.
+- `C:/Users/sergey/.config/opencode/opencode.jsonc` (model limits).
+- `harness/process.md` section 2, `harness/agents/harness-qa.md`.
 - `docs/tasks/T-004-web-vue.md` (Acceptance, Log).
 - `docs/issues/README.md`.
 
 ## Timeline
 
-- 2026-11-08T14:03:47Z: обнаружено; два прогона оборвались по 32767 токенов.
-- 2026-11-08T19:53:31+03:00: QA-модель переключена на qwen3.8:27b-64k,
-  выполнен install.ps1.
-- 2026-11-08T19:54:00+03:00: исправлены limit.context для vision/64k моделей.
-- 2026-11-08T20:00:39+03:00: QA-прогон qwen3.8 прочитал артефакты, тесты 10/10,
-  build success; 38 837 токенов, без finish=length.
-- 2026-11-08T20:16:03+03:00: получен полный вердикт REJECT (критерий 3 частично);
-  issue закрыт, T-004-находка зафиксирована отдельно.
+- 2026-11-08T14:03:47Z: detected; two runs cut off at 32767 tokens.
+- 2026-11-08T19:53:31+03:00: QA model switched to qwen3.8:27b-64k,
+  `install.ps1` run.
+- 2026-11-08T19:54:00+03:00: `limit.context` fixed for vision/64k models.
+- 2026-11-08T20:00:39+03:00: qwen3.8 QA run read artifacts, tests 10/10,
+  build success; 38,837 tokens, no `finish=length`.
+- 2026-11-08T20:16:03+03:00: full REJECT verdict received (criterion 3 partial);
+  issue closed, T-004 finding recorded separately.

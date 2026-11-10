@@ -1,17 +1,17 @@
 @startuml
 skinparam defaultFontName Segoe UI
 skinparam componentStyle rectangle
-title Локальный harness — компонентная схема решения
+title Local harness - solution component diagram
 
-actor "Пользователь" as user
+actor "User" as user
 
-package "opencode (primary + глобальные harness-агенты)" {
-  component "Команды\nharness-run / harness-board-*" as commands
+package "opencode (primary + global harness agents)" {
+  component "Commands\nharness-run / harness-board-*" as commands
   component "harness\nprimary lead" as lead
-  component "Реестр sub-agents\n~/.config/opencode/agents" as registry
+  component "Subagent registry\n~/.config/opencode/agents" as registry
 }
 
-package "Роли harness (sub-agents)" {
+package "Harness roles (subagents)" {
   component "harness-orchestrator" as orch
   component "harness-analyst" as analyst
   component "harness-architect" as architect
@@ -20,29 +20,29 @@ package "Роли harness (sub-agents)" {
   component "harness-doc-writer" as docwriter
 }
 
-package "Локальные модели (Ollama)" {
+package "Local models (Ollama)" {
   component "qwen3.8:27b-64k\nharness / orchestrator /\nanalyst / architect / doc-writer" as qwen
   component "tiel-coder:35b-a3b-mtp-128k\ntext / vision\ncoder / qa" as tiel
 }
 
-package "Источники истины" {
+package "Sources of truth" {
   component "board\ndocs/plan.md" as board
-  component "карточки задач\ndocs/tasks/*.md" as cards
+  component "task cards\ndocs/tasks/*.md" as cards
 }
 
-package "Артефакты" {
+package "Artifacts" {
   component "docs/analysis\ndocs/architecture\ndocs/qa\ndocs/guides\ndocs/issues" as docs
   component "src, tests, scripts\nDockerfile, compose" as code
   component "activity.puml / .svg" as activity
 }
 
-package "Инструменты" {
+package "Tools" {
   component "MCP plantuml-render" as puml
   component "local-rag\nSQLite FTS5 + LanceDB" as rag
   component "Git" as git
 }
 
-package "Пилотный сервис (T-013)" {
+package "Pilot service (T-013)" {
   component "REST API\nFastAPI + Pydantic" as api
   component "NoteService" as svc
   component "NoteRepository\nSQLAlchemy" as repo
@@ -52,8 +52,8 @@ package "Пилотный сервис (T-013)" {
 user --> commands : /harness-init / /harness-run
 commands --> lead : agent: harness
 lead --> registry : task harness-*
-lead --> board : читает board
-lead --> cards : читает карточки
+lead --> board : reads board
+lead --> cards : reads cards
 lead --> qwen
 registry --> orch
 registry --> analyst
@@ -69,30 +69,30 @@ docwriter --> qwen
 coder --> tiel
 qa --> tiel
 
-orch --> board : статусы и коммиты
-orch --> cards : acceptance / блокеры
-orch --> activity : цвет статуса
+orch --> board : statuses and commits
+orch --> cards : acceptance / blockers
+orch --> activity : status color
 orch --> docs : issue index
 orch --> puml : check_syntax / render
 orch --> git : add + commit
 
-analyst --> rag : поиск по источникам
-analyst --> docs : требования
-architect --> docs : ADR и схемы
-qa --> docs : отчёты ревью
-docwriter --> docs : гайды и README
+analyst --> rag : source search
+analyst --> docs : requirements
+architect --> docs : ADR and diagrams
+qa --> docs : review reports
+docwriter --> docs : guides and README
 
-coder --> code : реализация и тесты
+coder --> code : implementation and tests
 coder --> api : Docker local
 api --> svc
 svc --> repo
 repo --> db
 
-docs --> code : контракты для реализации
+docs --> code : implementation contracts
 
 note right of registry
-  Глобальная установка:
+  Global install:
   agents / commands / skills / harness
-  Проект активируется /harness-init
+  Project activation: /harness-init
 end note
 @enduml

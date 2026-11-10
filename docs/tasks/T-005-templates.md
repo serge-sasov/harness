@@ -1,22 +1,22 @@
-# T-005: Шаблоны артефактов
+# T-005: Artifact templates
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
 | id | T-005 |
-| title | Шаблоны task-card, adr, plan-row |
+| title | task-card, adr, plan-row templates |
 | role | orchestrator |
 | status | done |
 | depends_on | T-002 |
 | artifacts | `harness/templates/task-card.md`, `harness/templates/adr.md`, `harness/templates/plan-row.md` |
-| commit | записан в T-006 |
+| commit | recorded in T-006 |
 
 ## Acceptance
 
-- [x] `task-card.md` содержит все поля карточки из `harness/process.md` п. 3.
-- [x] `adr.md` — шаблон Architecture Decision Record (контекст, решение, альтернативы, последствия).
-- [x] `plan-row.md` — шаблон строки board и правила заполнения.
-- [x] Шаблоны не содержат placeholder-мусора, готовы к копированию.
+- [x] `task-card.md` contains all card fields from `harness/process.md` section 3.
+- [x] `adr.md` is an Architecture Decision Record template (context, decision, alternatives, consequences).
+- [x] `plan-row.md` is a board row template with filling rules.
+- [x] Templates contain no placeholder junk and are ready to copy.
 
 ## Log
 
-- 2026-11-07: созданы `harness/templates/task-card.md`, `adr.md`, `plan-row.md`.
+- 2026-11-07: created `harness/templates/task-card.md`, `adr.md`, `plan-row.md`.

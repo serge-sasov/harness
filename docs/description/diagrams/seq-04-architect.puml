@@ -1,7 +1,7 @@
 @startuml
 autonumber
 skinparam defaultFontName Segoe UI
-title S-04 Архитектура и схемы (architect)
+title S-04 Architecture and diagrams (architect)
 
 participant "harness\nprimary lead" as primary
 participant "harness-architect" as arch
@@ -9,18 +9,18 @@ participant "MCP\nplantuml-render" as mcp
 participant "docs/architecture" as docs
 participant "harness-orchestrator" as orch
 
-primary -> arch : задача: ADR + схемы + контракты
-arch -> docs : прочитать требования и ограничения
-arch -> arch : выбрать решение\nи альтернативы
+primary -> arch : task: ADR + diagrams + contracts
+arch -> docs : read requirements and constraints
+arch -> arch : choose the solution\nand alternatives
 arch -> docs : adr-NNN-*.md
 arch -> mcp : check_syntax (.puml)
-mcp --> arch : valid / ошибки
-alt ошибки синтаксиса
-  arch -> arch : исправить .puml
-  arch -> mcp : check_syntax повторно
+mcp --> arch : valid / errors
+alt syntax errors
+  arch -> arch : fix .puml
+  arch -> mcp : check_syntax again
 end
 arch -> mcp : render_file -> SVG
-mcp --> arch : .svg рядом с .puml
-arch -> docs : contracts-*.md\nAPI, форматы, ошибки
-arch --> orch : ADR, схемы, контракты,\nдекомпозиция для coder
+mcp --> arch : .svg next to .puml
+arch -> docs : contracts-*.md\nAPI, formats, errors
+arch --> orch : ADR, diagrams, contracts,\ndecomposition for coder
 @enduml

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Собрать самодостаточный HTML из README.md.
+"""Build a self-contained HTML file from README.md.
 
-- Markdown -> HTML (Python-Markdown, TOC, таблицы, fenced code).
-- Каждый SVG встраивается как data URI: index.html работает офлайн по file://.
-- Каждая диаграмма оборачивается в figure и открывается в полноэкранной
-  модалке с масштабированием колесом/кнопками, панорамированием и Fit.
+- Markdown -> HTML (Python-Markdown, TOC, tables, fenced code).
+- Each SVG is embedded as a data URI: index.html works offline via file://.
+- Each diagram is wrapped in a figure and opens in a full-screen modal with
+  wheel/button zoom, panning, and Fit.
 """
 
 from __future__ import annotations
@@ -26,8 +26,8 @@ IMAGE_RE = re.compile(r"<img\b(?P<attrs>[^>]*?)/?>", re.IGNORECASE)
 ATTR_RE = r'{name}\s*=\s*"([^"]*)"'
 
 
-def ru_slugify(value: str, separator: str, unicode: bool = False) -> str:
-    """Slug, сохраняющий кириллицу (для якорей TOC)."""
+def slugify(value: str, separator: str, unicode: bool = False) -> str:
+    """Slug that preserves Unicode letters (for TOC anchors)."""
     value = value.lower().strip()
     value = re.sub(r"[^\w\s-]", "", value, flags=re.UNICODE)
     value = re.sub(r"[%s\s]+" % re.escape(separator), separator, value)
@@ -50,17 +50,17 @@ def embed_images(body: str, base_dir: Path) -> tuple[str, list[str]]:
     def repl(match: re.Match[str]) -> str:
         attrs = match.group("attrs")
         src = attr(attrs, "src")
-        alt = attr(attrs, "alt") or "Диаграмма"
+        alt = attr(attrs, "alt") or "Diagram"
         if not src or src.startswith(("data:", "http://", "https://", "#")):
             return match.group(0)
 
         path = (base_dir / src).resolve()
         if not path.is_file():
-            raise FileNotFoundError(f"Не найден файл диаграммы: {path}")
+            raise FileNotFoundError(f"Diagram file not found: {path}")
 
         data = path.read_bytes()
         if not looks_like_svg(data):
-            raise ValueError(f"Файл не похож на SVG: {path}")
+            raise ValueError(f"File does not look like SVG: {path}")
 
         encoded = base64.b64encode(data).decode("ascii")
         plain_alt = html.unescape(alt)
@@ -69,11 +69,11 @@ def embed_images(body: str, base_dir: Path) -> tuple[str, list[str]]:
 
         return (
             f'<figure class="diagram" tabindex="0" role="button" '
-            f'aria-label="Открыть схему: {alt_esc}" data-title="{alt_esc}">'
+            f'aria-label="Open diagram: {alt_esc}" data-title="{alt_esc}">'
             f'<div class="diagram-frame">'
             f'<img src="data:image/svg+xml;base64,{encoded}" '
             f'alt="{alt_esc}" loading="lazy">'
-            f'<span class="zoom-hint">Клик — открыть схему</span>'
+            f'<span class="zoom-hint">Click to open diagram</span>'
             f"</div>"
             f"<figcaption>{alt_esc}</figcaption>"
             f"</figure>"
@@ -84,7 +84,7 @@ def embed_images(body: str, base_dir: Path) -> tuple[str, list[str]]:
 
 def build() -> int:
     if not SOURCE.is_file():
-        print(f"Ошибка: не найден {SOURCE}", file=sys.stderr)
+        print(f"Error: {SOURCE} not found", file=sys.stderr)
         return 1
 
     source = SOURCE.read_text(encoding="utf-8")
@@ -93,7 +93,7 @@ def build() -> int:
         extension_configs={
             "toc": {
                 "toc_depth": "2-3",
-                "slugify": ru_slugify,
+                "slugify": slugify,
                 "permalink": False,
             }
         },
@@ -105,7 +105,7 @@ def build() -> int:
         title = html.unescape(re.sub(r"<[^>]+>", "", h1.group(1))).strip()
         body = body[: h1.start()] + body[h1.end() :]
     else:
-        title = "Локальный harness: описание решения"
+        title = "Local harness: solution description"
 
     body, embedded = embed_images(body, ROOT)
     body = re.sub(
@@ -131,8 +131,8 @@ def build() -> int:
     )
     OUTPUT.write_text(document, encoding="utf-8")
 
-    print(f"Готово: {OUTPUT}")
-    print(f"Диаграмм встроено: {len(embedded)}")
+    print(f"Done: {OUTPUT}")
+    print(f"Diagrams embedded: {len(embedded)}")
     for item in embedded:
         print(f"  - {item}")
     return 0

@@ -1,9 +1,9 @@
 # T-009: Sub-agent qa
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
 | id | T-009 |
-| title | Ролевой sub-agent `qa` (ревью кода/схем, тесты) |
+| title | Role sub-agent `qa` (code/diagram review, tests) |
 | role | qa |
 | status | done |
 | depends_on | T-005 |
@@ -13,11 +13,11 @@
 ## Acceptance
 
 - [x] Frontmatter: `mode: subagent`, `model: ollama-metrics/tiel-coder:35b-a3b-mtp-128k-vision`, `temperature: 0.1`.
-- [x] Permission: edit только `docs/qa/**` и `docs/tasks/**`; read — весь проект; bash read-only (git status/diff/log, test-раннеры); `task: deny`.
-- [x] Промпт ссылается на регламент `harness/process.md` п. 4–7.
-- [x] Vision-сценарий: чтение PlantUML/SVG/скриншотов для проверки схем.
-- [x] Право вердикта: `accept` / `reject` с обязательным списком замечаний.
+- [x] Permission: edit only `docs/qa/**` and `docs/tasks/**`; read the whole project; bash read-only (git status/diff/log, test runners); `task: deny`.
+- [x] Prompt references `harness/process.md` sections 4-7.
+- [x] Vision scenario: read PlantUML/SVG/screenshots to verify diagrams.
+- [x] Verdict right: `accept` / `reject` with a mandatory findings list.
 
 ## Log
 
-- 2026-11-07: создан `harness/agents/qa.md` (ревью, vision-проверка схем, вердикт accept/reject, severity).
+- 2026-11-07: created `harness/agents/qa.md` (review, vision diagram checks, accept/reject verdict, severity).

@@ -1,26 +1,26 @@
 @startuml
 autonumber
 skinparam defaultFontName Segoe UI
-title S-01 Онбординг и bootstrap harness
+title S-01 Harness onboarding and bootstrap
 
-actor "Пользователь" as user
+actor "User" as user
 participant "opencode\n(primary build)" as oc
-participant "Глобальный harness\n~/.config/opencode" as gh
+participant "Global harness\n~/.config/opencode" as gh
 participant "Ollama" as ollama
-participant "Проект\nharness/ + docs/" as project
+participant "Project\nharness/ + docs/" as project
 
-user -> oc : install.ps1 (один раз)
+user -> oc : install.ps1 (once)
 oc -> gh : agents, commands, skill,\ntemplates, scripts
-oc -> ollama : проверить qwen3.8 / tiel-coder
-ollama --> oc : модели доступны
-user -> oc : перезапуск opencode
+oc -> ollama : check qwen3.8 / tiel-coder
+ollama --> oc : models available
+user -> oc : restart opencode
 user -> oc : /harness-init
-oc -> gh : прочитать process.md,\ntemplates, version.json
-oc -> project : создать harness/process.md,\ndocs/plan.md, activity.puml
+oc -> gh : read process.md,\ntemplates, version.json
+oc -> project : create harness/process.md,\ndocs/plan.md, activity.puml
 project --> oc : marker harness/process.md
-oc --> user : harness готов\n/harness-run T-XXX
+oc --> user : harness ready\n/harness-run T-XXX
 note right of oc
-  default_agent не меняется;
-  активация только явными /harness-*
+  default_agent is unchanged;
+  activation only via explicit /harness-*
 end note
 @enduml

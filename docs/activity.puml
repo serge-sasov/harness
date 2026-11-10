@@ -3,16 +3,16 @@ skinparam defaultFontName Segoe UI
 skinparam ActivityBackgroundColor #FFFFFF
 skinparam ActivityBorderColor #555555
 skinparam ArrowColor #555555
-title Локальный harness — план задач T-001..T-013
+title Local harness - task plan T-001..T-013
 
 start
 :T-001 Git bootstrap\n.gitignore, README; <<#90EE90>>
-:T-002 Единый регламент\nharness/process.md; <<#90EE90>>
+:T-002 Unified process rules\nharness/process.md; <<#90EE90>>
 fork
-  :T-003 Board + карточки задач\ndocs/plan.md, docs/tasks/; <<#90EE90>>
-  :T-004 Activity-диаграмма + SVG\nцветовые статусы задач; <<#90EE90>>
+  :T-003 Board + task cards\ndocs/plan.md, docs/tasks/; <<#90EE90>>
+  :T-004 Activity diagram + SVG\nstatus colors; <<#90EE90>>
 fork again
-  :T-005 Шаблоны артефактов\nharness/templates/; <<#90EE90>>
+  :T-005 Artifact templates\nharness/templates/; <<#90EE90>>
   fork
     :T-006 Sub-agent analyst; <<#90EE90>>
   fork again
@@ -27,12 +27,12 @@ fork again
     :T-011 Sub-agent orchestrator; <<#90EE90>>
   end fork
 end fork
-:T-012 Команды opencode\nharness-run, harness-board-*; <<#90EE90>>
-:T-013 Smoke-test полного цикла\nпилотная задача; <<#90EE90>>
+:T-012 opencode commands\nharness-run, harness-board-*; <<#90EE90>>
+:T-013 Full-cycle smoke test\npilot task; <<#90EE90>>
 stop
 
 legend right
-|= Цвет |= Статус |
+|= Color |= Status |
 |<#90EE90>| done |
 |<#FFE082>| in_progress |
 |<#D3D3D3>| pending |

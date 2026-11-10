@@ -1,27 +1,27 @@
 @startuml
 autonumber
 skinparam defaultFontName Segoe UI
-title S-09 Отчёт по board (harness-board-report)
+title S-09 Board report (harness-board-report)
 
-actor "Пользователь" as user
+actor "User" as user
 participant "harness\nprimary lead" as lead
 participant "harness-orchestrator" as orch
 participant "PlanBoard\ndocs/plan.md" as board
 participant "TaskCards\ndocs/tasks" as cards
-participant "Report\n(только чтение)" as report
+participant "Report\n(read-only)" as report
 
 user -> lead : /harness-board-report
-lead -> orch : read-only сводка по board
-orch -> board : статусы, зависимости, коммиты
-board --> orch : строки board
-orch -> cards : блокеры и логи
-cards --> orch : причины failed / blocked
-orch -> orch : проверка консистентности\n%done, висячие depends_on
-orch --> report : таблица статусов\nготовые к старту, блокеры
-report --> lead : сводка + 1..3 рекомендации
-lead --> user : отчёт
+lead -> orch : read-only board summary
+orch -> board : statuses, dependencies, commits
+board --> orch : board rows
+orch -> cards : blockers and logs
+cards --> orch : causes of failed / blocked
+orch -> orch : consistency check\n%done, dangling depends_on
+orch --> report : status table\nready to start, blockers
+report --> lead : summary + 1..3 recommendations
+lead --> user : report
 note right of report
-  Ничего не изменяется
-  и не коммитится
+  Nothing is changed
+  or committed
 end note
 @enduml

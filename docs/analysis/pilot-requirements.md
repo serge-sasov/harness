@@ -1,50 +1,49 @@
-# Требования: пилотный «Мини-CRUD сервис» (T-013)
+# Requirements: pilot "Mini-CRUD service" (T-013)
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
-| Задача | T-013 |
-| Роль | analyst |
-| Статус | accepted (пилот) |
-| Источник | `requirements/initial.txt` (пилотная проверка harness) |
+| Task | T-013 |
+| Role | analyst |
+| Status | accepted (pilot) |
+| Source | `requirements/initial.txt` (pilot harness check) |
 
-## Контекст
+## Context
 
-Пилотный сервис для проверки полного цикла harness: управление заметками
-(notes) через REST API, локальное хранение, запуск локально в Docker.
-Внешние интеграции и аутентификация — вне пилота.
+Pilot service for a full harness cycle: note management via REST API, local
+storage, local Docker run. External integrations and authentication are out of scope.
 
-## Функциональные требования
+## Functional requirements
 
-| ID | Требование |
+| ID | Requirement |
 |---|---|
-| R-001 | Создание заметки: `POST /notes` с полями `title`, `body`; ответ 201 с `id`. |
-| R-002 | Чтение списка: `GET /notes` — массив заметок, сортировка по `created_at` убыв. |
-| R-003 | Чтение одной: `GET /notes/{id}`; 404 при отсутствии. |
-| R-004 | Обновление: `PUT /notes/{id}` с `title`, `body`; 404 при отсутствии. |
-| R-005 | Удаление: `DELETE /notes/{id}`; 204 при успехе, 404 при отсутствии. |
-| R-006 | Валидация: `title` — 1..200 символов, `body` — до 10000; ошибка 422. |
+| R-001 | Create a note: `POST /notes` with `title`, `body`; response 201 with `id`. |
+| R-002 | List notes: `GET /notes` - array of notes, sorted by `created_at` descending. |
+| R-003 | Read one: `GET /notes/{id}`; 404 if missing. |
+| R-004 | Update: `PUT /notes/{id}` with `title`, `body`; 404 if missing. |
+| R-005 | Delete: `DELETE /notes/{id}`; 204 on success, 404 if missing. |
+| R-006 | Validation: `title` 1..200 characters, `body` up to 10000; error 422. |
 
-## Нефункциональные требования
+## Non-functional requirements
 
-| ID | Требование |
+| ID | Requirement |
 |---|---|
-| NFR-1 | Локальный запуск: `docker compose up` поднимает сервис на порту 8080. |
-| NFR-2 | Хранение: SQLite-файл в volume, переживает рестарт контейнера. |
-| NFR-3 | Тесты: unit + API-тесты, детерминированные, без сети. |
+| NFR-1 | Local run: `docker compose up` starts the service on port 8080. |
+| NFR-2 | Storage: SQLite file in a volume; survives container restart. |
+| NFR-3 | Tests: unit + API tests, deterministic, no network. |
 
-## Ограничения и допущения
+## Constraints and assumptions
 
-- Один пользователь, без auth (вне пилота).
-- Язык/стек выбирает архитектор (ADR обязателен с альтернативами).
+- Single user, no auth (out of scope).
+- The architect chooses the language/stack (ADR required with alternatives).
 
-## Открытые вопросы
+## Open questions
 
-| ID | Вопрос | Допущение пилота |
+| ID | Question | Pilot assumption |
 |---|---|---|
-| Q-001 | Нужна ли пагинация списка? | Нет, объём до 1000 заметок |
-| Q-002 | Нужен ли поиск по тексту? | Нет, вне пилота |
+| Q-001 | Is list pagination needed? | No, up to 1000 notes |
+| Q-002 | Is full-text search needed? | No, out of scope |
 
-## Риски
+## Risks
 
-- R1: рост SQLite-файла при больших объёмах — не критично для пилота.
-- R2: отсутствие auth — сервис только для local/staging.
+- R1: SQLite file growth at large volumes - not critical for the pilot.
+- R2: no auth - service is local/staging only.

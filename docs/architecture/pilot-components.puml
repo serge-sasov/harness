@@ -1,11 +1,11 @@
 @startuml
 skinparam componentStyle rectangle
 skinparam defaultFontName Segoe UI
-title Пилотный «Мини-CRUD сервис» — компоненты (ADR-001)
+title Pilot "Mini-CRUD service" - components (ADR-001)
 
-actor "Клиент" as client
+actor "Client" as client
 component "REST API\nFastAPI + Pydantic" as api
-component "NoteService\nдоменная логика" as svc
+component "NoteService\ndomain logic" as svc
 component "NoteRepository\nSQLAlchemy" as repo
 database "SQLite\nvolume /data" as db
 

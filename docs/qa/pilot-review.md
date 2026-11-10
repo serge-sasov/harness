@@ -1,29 +1,29 @@
-# QA-ревью: пилотный цикл T-013
+# QA review: pilot cycle T-013
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
-| Задача | T-013 |
-| Роль | qa |
-| Вердикт | **accept** |
+| Task | T-013 |
+| Role | qa |
+| Verdict | **accept** |
 
-## Проверка критериев acceptance
+## Acceptance criteria check
 
-| Критерий | Результат | Комментарий |
+| Criterion | Result | Comment |
 |---|---|---|
-| `docs/analysis/pilot-requirements.md` по пилотной задаче | pass | R-001..R-006, NFR-1..3, вопросы, риски |
-| `docs/architecture/pilot-adr.md` + `.puml` валиден и рендерится | pass | `check_syntax` valid, SVG отрендерен |
-| `docs/qa/pilot-review.md` с вердиктом | pass | настоящий документ |
-| Board и activity-диаграмма обновлены | pass | T-013 → done, все задачи зелёные |
-| Ролевые промпты детерминированы | pass | артефакты соответствуют шаблонам и зонам записи |
+| `docs/analysis/pilot-requirements.md` for the pilot task | pass | R-001..R-006, NFR-1..3, questions, risks |
+| `docs/architecture/pilot-adr.md` + `.puml` valid and renders | pass | `check_syntax` valid, SVG rendered |
+| `docs/qa/pilot-review.md` with a verdict | pass | this document |
+| Board and activity diagram updated | pass | T-013 -> done, all tasks green |
+| Role prompts deterministic | pass | artifacts match templates and write areas |
 
-## Замечания
+## Findings
 
-| ID | Severity | Замечание |
+| ID | Severity | Finding |
 |---|---|---|
-| N-001 | minor | ADR не фиксирует версию Python-образа (pin в Dockerfile — на этапе coder). |
-| N-002 | minor | В контракте не описан формат `created_at` (ISO-8601 UTC) — уточнить в contracts. |
+| N-001 | minor | The ADR does not pin the Python image version (pin in Dockerfile at the coder stage). |
+| N-002 | minor | The contract does not describe the `created_at` format (ISO-8601 UTC) - clarify in contracts. |
 
-## Вердикт
+## Verdict
 
-`accept`. Замечания minor, не блокируют пилот и адресуются роли `coder`
-при реализации. Ролевой цикл analyst → architect → qa работоспособен.
+`accept`. Findings are minor, do not block the pilot, and are addressed by the `coder`
+role during implementation. The analyst -> architect -> qa role cycle works.

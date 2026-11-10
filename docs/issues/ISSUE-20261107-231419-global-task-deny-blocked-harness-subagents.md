@@ -1,6 +1,6 @@
 # ISSUE-20261107-231419: Global task deny blocked harness subagents
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
 | id | ISSUE-20261107-231419 |
 | status | resolved |
@@ -12,44 +12,44 @@
 | location | C:/Users/sergey/.config/opencode/opencode.jsonc: permission.task |
 | environment | OS: Microsoft Windows NT 10.0.26300.0; cwd: C:\study\ai\research\analytic |
 
-## Симптомы
+## Symptoms
 
 build could not call harness-analyst or harness-orchestrator; task permission denied
 
-## Воспроизведение
+## Reproduction
 
-1. Открыть harness-проект в primary-агенте `build`.
-2. Вызвать `task` с `subagent_type: harness-analyst` (или `harness-orchestrator`).
-3. Получить `task` permission denied.
+1. Open a harness project in the primary agent `build`.
+2. Call `task` with `subagent_type: harness-analyst` (or `harness-orchestrator`).
+3. Get `task` permission denied.
 
-## Ожидаемое / фактическое поведение
+## Expected / actual behavior
 
-- Ожидалось: `build` может явно вызвать harness-роль для T-001.
-- Фактически: глобальный `permission.task` deny блокировал все harness-роли.
+- Expected: `build` can explicitly call a harness role for T-001.
+- Actual: global `permission.task` deny blocked all harness roles.
 
-## Причина
+## Cause
 
 install.ps1 added a global permission.task deny for harness roles; agent-specific allow existed only in harness lead
 
-## Решение / workaround
+## Solution / workaround
 
 migrate permission.task to allow for harness-* roles; install/doctor updated
 
-## Проверка
+## Verification
 
 opencode debug agent build shows allow for all harness roles; doctor passes
 
-## Предупреждение / follow-up
+## Prevention / follow-up
 
 any primary may explicitly call harness roles; keep marker and explicit /harness-* activation; roles keep task deny
 
-## Ссылки
+## Links
 
 commit 6d547b0; docs/guides/harness-global.md
 
 ## Timeline
 
-- 2026-11-07T23:14:19.1723574+03:00: обнаружено
-- 2026-11-07T23:15:00+03:00: причина — глобальный deny в permission.task
-- 2026-11-07T23:25:00+03:00: deny заменён на allow, install/doctor обновлены
-- 2026-11-07T23:26:00+03:00: проверено через `opencode debug agent build`
+- 2026-11-07T23:14:19.1723574+03:00: detected
+- 2026-11-07T23:15:00+03:00: cause - global deny in permission.task
+- 2026-11-07T23:25:00+03:00: deny replaced with allow; install/doctor updated
+- 2026-11-07T23:26:00+03:00: verified via `opencode debug agent build`

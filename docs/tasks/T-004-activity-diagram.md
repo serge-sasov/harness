@@ -1,9 +1,9 @@
-# T-004: Диаграмма активности
+# T-004: Activity diagram
 
-| Поле | Значение |
+| Field | Value |
 |---|---|
 | id | T-004 |
-| title | PlantUML activity-диаграмма задач с зависимостями и цветовыми статусами |
+| title | PlantUML activity diagram of tasks with dependencies and status colors |
 | role | orchestrator |
 | status | done |
 | depends_on | T-003 |
@@ -12,12 +12,12 @@
 
 ## Acceptance
 
-- [x] `docs/activity.puml` — валидный PlantUML (`check_syntax` без ошибок).
-- [x] На диаграмме все задачи T-001..T-013, отражены последовательность и зависимости (fork/ветвления для независимых задач).
-- [x] Цвета: done `#90EE90`, pending `#D3D3D3`, in_progress `#FFE082`, failed `#FF9090`, blocked `#FFB347`.
-- [x] `docs/activity.svg` отрендерен через MCP `plantuml-render`.
+- [x] `docs/activity.puml` is valid PlantUML (`check_syntax` with no errors).
+- [x] The diagram shows all tasks T-001..T-013, sequence, and dependencies (fork/branches for independent tasks).
+- [x] Colors: done `#90EE90`, pending `#D3D3D3`, in_progress `#FFE082`, failed `#FF9090`, blocked `#FFB347`.
+- [x] `docs/activity.svg` rendered via MCP `plantuml-render`.
 
 ## Log
 
-- 2026-11-07: создан `docs/activity.puml` (все 13 задач, fork-ветки T-003/T-004 и T-005→T-006..T-011, легенда цветов); `check_syntax` — valid; отрендерен `docs/activity.svg` (19740 байт).
-- 2026-11-07 (fix, T-013): синтаксис `#COLOR:activity;` устарел в PlantUML 1.2026.6 (в SVG попадал deprecation-баннер) — переведено на `:activity; <<#COLOR>>`; повторный рендер без warning, цвета применены.
+- 2026-11-07: created `docs/activity.puml` (all 13 tasks, fork branches T-003/T-004 and T-005->T-006..T-011, color legend); `check_syntax` valid; rendered `docs/activity.svg` (19740 bytes).
+- 2026-11-07 (fix, T-013): the `#COLOR:activity;` syntax is deprecated in PlantUML 1.2026.6 (a deprecation banner appeared in the SVG); switched to `:activity; <<#COLOR>>`; re-rendered without warnings, colors applied.

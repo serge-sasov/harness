@@ -1,3 +1,3 @@
-Мне необходимо спроетировать локальный harness под разработку архитектры решений и ПО, с последующей их реализацией. 
-Процесс должен выполняться разными ролями в рамках отдельных задач и общего плана выполнения (с зависимостями задач, статусом их реализации, ответственной ролью), где для каждой роли д.б. свой sub-agent. 
-Все задачи д.б. реализованны на базе локальных ИИ моделей в ollama. Выбери наиболее подходящие для каждой роли.Спроектируй такое решение, декомпозируй его на план с отдельными задачами.
+I need to design a local harness for developing solution and software architecture, followed by their implementation.
+The process should be performed by different roles within individual tasks and a shared execution plan (with task dependencies, implementation status, and responsible role), where each role should have its own subagent.
+All tasks should be implemented on local AI models in Ollama. Choose the most suitable ones for each role. Design such a solution and decompose it into a plan with separate tasks.

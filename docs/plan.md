@@ -1,40 +1,40 @@
-# Общий план (board)
+# Plan (board)
 
-Источник правил процесса: `harness/process.md`. Диаграмма: `docs/activity.puml`.
-Обновляется после каждой задачи (регламент, п. 5).
+Process rules: `harness/process.md`. Diagram: `docs/activity.puml`.
+Updated after every task (process section 5).
 
-## Легенда статусов
+## Status legend
 
-| Статус | Цвет в диаграмме | Значение |
+| Status | Diagram color | Meaning |
 |---|---|---|
-| `pending` | серый `#D3D3D3` | не начата |
-| `in_progress` | жёлтый `#FFE082` | в работе |
-| `done` | зелёный `#90EE90` | выполнена |
-| `failed` | красный `#FF9090` | ошибка, требуется исправление |
-| `blocked` | оранжевый `#FFB347` | внешняя блокировка |
+| `pending` | gray `#D3D3D3` | not started |
+| `in_progress` | yellow `#FFE082` | in progress |
+| `done` | green `#90EE90` | completed |
+| `failed` | red `#FF9090` | error, fix required |
+| `blocked` | orange `#FFB347` | external blocker |
 
 ## Board
 
-| ID | Задача | Роль | Зависимости | Статус | Артефакты | Коммит |
+| ID | Task | Role | Dependencies | Status | Artifacts | Commit |
 |---|---|---|---|---|---|---|
-| T-001 | Git bootstrap: `git init`, `.gitignore`, README | orchestrator | — | done | `.gitignore`, `README.md` | 2a19b33 |
-| T-002 | Единый регламент процесса | orchestrator | T-001 | done | `harness/process.md` | 9d713d8 |
-| T-003 | Board + карточки задач | orchestrator | T-002 | done | `docs/plan.md`, `docs/tasks/` | c621012 |
-| T-004 | Диаграмма активности + рендер SVG | orchestrator | T-003 | done | `docs/activity.puml`, `docs/activity.svg` | 1ede40d |
-| T-005 | Шаблоны артефактов | orchestrator | T-002 | done | `harness/templates/` | см. T-006 |
+| T-001 | Git bootstrap: `git init`, `.gitignore`, README | orchestrator | - | done | `.gitignore`, `README.md` | 2a19b33 |
+| T-002 | Unified process rules | orchestrator | T-001 | done | `harness/process.md` | 9d713d8 |
+| T-003 | Board + task cards | orchestrator | T-002 | done | `docs/plan.md`, `docs/tasks/` | c621012 |
+| T-004 | Activity diagram + SVG render | orchestrator | T-003 | done | `docs/activity.puml`, `docs/activity.svg` | 1ede40d |
+| T-005 | Artifact templates | orchestrator | T-002 | done | `harness/templates/` | see T-006 |
 | T-006 | Sub-agent `analyst` | analyst | T-005 | done | `harness/agents/analyst.md` | 9ad3ec9 |
 | T-007 | Sub-agent `architect` | architect | T-005 | done | `harness/agents/architect.md` | 061f8e5 |
 | T-008 | Sub-agent `coder` | coder | T-005 | done | `harness/agents/coder.md` | e4a4686 |
 | T-009 | Sub-agent `qa` | qa | T-005 | done | `harness/agents/qa.md` | 95b3949 |
 | T-010 | Sub-agent `doc-writer` | doc-writer | T-005 | done | `harness/agents/doc-writer.md` | 876e943 |
 | T-011 | Sub-agent `orchestrator` | orchestrator | T-005 | done | `harness/agents/orchestrator.md` | e021349 |
-| T-012 | Команды opencode | orchestrator | T-006..T-011 | done | `harness/commands/harness-*.md` | cbf393f |
-| T-013 | Smoke-test полного цикла | qa | T-012 | done | `docs/analysis/`, `docs/architecture/`, `docs/qa/` | fb145b6 |
+| T-012 | opencode commands | orchestrator | T-006..T-011 | done | `harness/commands/harness-*.md` | cbf393f |
+| T-013 | Full-cycle smoke test | qa | T-012 | done | `docs/analysis/`, `docs/architecture/`, `docs/qa/` | fb145b6 |
 
-## Правила ведения board
+## Board rules
 
-1. Статус меняет только orchestrator (или роль, выполняющая задачу, — по факту приёмки).
-2. Переход в `done` — только после выполнения всех пунктов `acceptance` в карточке.
-3. Хэш коммита записывается после коммита задачи.
-4. При `failed` — зависимые задачи остаются `pending`, причина фиксируется в карточке.
-5. В `in_progress` — не более одной задачи; параллельный запуск задач запрещён.
+1. Only the orchestrator changes status (or the role performing the task, on acceptance).
+2. `done` only after all `acceptance` items in the card are met.
+3. Record the commit hash after the task commit.
+4. On `failed`, dependent tasks stay `pending`; record the cause in the card.
+5. At most one task is `in_progress`; parallel task execution is forbidden.
