@@ -67,6 +67,7 @@ Write-Host "Do not forget to remove the permission.task block from ~/.config/ope
 Write-Host '  "task": {'
 Write-Host '    "harness-orchestrator": "deny",'
 Write-Host '    "harness-analyst": "deny",'
+Write-Host '    "harness-ux-designer": "deny",'
 Write-Host '    "harness-architect": "deny",'
 Write-Host '    "harness-coder": "deny",'
 Write-Host '    "harness-qa": "deny",'

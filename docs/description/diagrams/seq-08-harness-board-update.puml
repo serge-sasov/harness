@@ -7,6 +7,7 @@ actor "User" as user
 participant "harness\nprimary lead" as lead
 participant "harness-orchestrator" as orch
 participant "TaskCards\ndocs/tasks" as cards
+participant "BugRegistry\ndocs/bugs" as bugs
 participant "PlanBoard\ndocs/plan.md" as board
 participant "ActivityDiagram\n.puml" as activity
 participant "MCP\nplantuml-render" as mcp
@@ -14,9 +15,11 @@ participant "Git" as git
 
 user -> lead : /harness-board-update all | T-XXX
 lead -> orch : sync board\n(all or T-XXX)
-orch -> cards : read statuses,\nblockers, commits
-cards --> orch : actual statuses
-orch -> board : reconcile and update\nstatus, artifacts, hash
+orch -> cards : read workflow, statuses,\nblockers, commits
+cards --> orch : actual task state
+orch -> bugs : check bug status and task links
+bugs --> orch : BUG-XXX rows
+orch -> board : reconcile and update\nworkflow, status, bug link, artifacts, hash
 orch -> activity : task block color
 orch -> mcp : check_syntax
 mcp --> orch : valid

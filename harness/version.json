@@ -1,14 +1,15 @@
 {
   "name": "local-harness",
-  "version": "2.0.0",
+  "version": "2.2.0",
   "format": "opencode-v1",
   "language": "en",
   "created_at": "2026-11-07",
-  "source": "C:/study/ai/research/analytic",
+  "source": "C:/study/ai/research/harness",
   "agents": [
     "harness",
     "harness-orchestrator",
     "harness-analyst",
+    "harness-ux-designer",
     "harness-architect",
     "harness-coder",
     "harness-qa",
@@ -17,10 +18,16 @@
   ],
   "commands": [
     "harness-init",
+    "harness-feature",
+    "harness-bug",
     "harness-run",
     "harness-board-update",
     "harness-board-report",
     "harness-doctor"
+  ],
+  "workflows": [
+    "feature",
+    "bugfix"
   ],
   "skills": [
     "harness",

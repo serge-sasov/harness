@@ -3,8 +3,9 @@
 | Field | Value |
 |---|---|
 | Status | current |
-| Date | 2026-11-07 |
-| Scope | local multi-agent harness + pilot "Mini-CRUD service" |
+| Date | 2026-11-11 |
+| Version | 2.2.0 |
+| Scope | local multi-agent harness (feature + bugfix workflows) + pilot "Mini-CRUD service" |
 | Requirements source | [`requirements/initial.txt`](../../requirements/initial.txt) |
 | Process rules | [`harness/process.md`](../../harness/process.md) |
 | Board | [`docs/plan.md`](../plan.md) |
@@ -27,8 +28,14 @@ on a local Ollama model; external APIs are not used.
 
 The solution covers:
 
-- harness: roles, board, task cards, process rules, commands, artifacts;
+- harness: roles, two workflows, board, task/bug cards, checkpoints, process
+  rules, commands, artifacts;
 - local models and tools: Ollama, `local-rag`, MCP `plantuml-render`, Git;
+- feature flow: requirements -> `UC-E2E-NNN` -> YAML data -> automated tests ->
+  QA coverage/verdict;
+- bugfix flow: `BUG-XXX` report -> reproduction + failing regression -> minimal
+  fix -> independent QA fail-before/pass-after -> closure/postmortem;
+- UX flow: user flows -> screens -> wireframes -> UI spec -> HTML prototype;
 - the pilot "Mini-CRUD service" as an end-to-end example: requirements -> ADR ->
   diagrams -> QA acceptance.
 
@@ -37,16 +44,24 @@ multi-user operation, pagination, and note search.
 
 ### Key principles
 
-1. **Single board** - `docs/plan.md` is the only source of truth for the work scope.
-2. **Single process** - `harness/process.md` defines the lifecycle, statuses,
-   artifact update order, and git discipline.
-3. **Role isolation** - each role writes only to its area and stays within task
+1. **Single board** - `docs/plan.md` is the only execution queue for both workflows.
+2. **Single shared process** - `harness/process.md` defines shared rules;
+   `harness/workflows/feature.md` and `bugfix.md` define stages and gates.
+3. **One active task** - feature and bugfix never run in parallel and cannot
+   preempt each other.
+4. **Role isolation** - each role writes only to its area and stays within task
    boundaries; nested subagent calls are forbidden.
-4. **Deterministic acceptance** - a task closes only by the card's `acceptance`
-   criteria; failure is recorded in `Blockers`.
-5. **Locality** - models, embeddings, diagram rendering, and tests run locally.
-6. **Traceability** - decisions, diagrams, contracts, reviews, and commits are
-   linked through task IDs.
+5. **Deterministic acceptance** - a task closes only by the card's `acceptance`
+   criteria and explicit `CP-F` approval; failure is recorded in `Blockers`.
+6. **User control** - every task stops at checkpoints; user edits and decisions
+   are authoritative.
+7. **Evidence first** - feature e2e traceability and bugfix fail-before/pass-after
+   evidence are mandatory gates, not optional notes.
+8. **Separate registries** - product defects in `docs/bugs/`, harness problems in
+   `docs/issues/`.
+9. **Locality** - models, embeddings, diagram rendering, and tests run locally.
+10. **Traceability** - decisions, diagrams, contracts, reviews, and commits are
+    linked through task and bug IDs.
 
 ---
 
@@ -62,57 +77,64 @@ Solution layers:
 
 | Layer | Components | Purpose |
 |---|---|---|
-| Control | opencode, primary agent `harness`, `/harness-*` commands, global installation | explicit start, role routing, artifact sync |
-| Roles | `harness-orchestrator`, `harness-analyst`, `harness-architect`, `harness-coder`, `harness-qa`, `harness-qa-vision`, `harness-doc-writer` | work within responsibility areas |
+| Control | opencode, primary agent `harness`, `/harness-*` commands, global installation | explicit start, workflow routing, artifact sync |
+| Workflows | `feature`, `bugfix`, bug registry | stage gates, regression evidence, escalation |
+| Roles | `harness-orchestrator`, `harness-analyst`, `harness-ux-designer`, `harness-architect`, `harness-coder`, `harness-qa`, `harness-qa-vision`, `harness-doc-writer` | work within responsibility areas |
 | Models | `qwen3.8:27b-64k`, `tiel-coder:35b-a3b-mtp-128k-text`, `tiel-coder:35b-a3b-mtp-128k-vision` | local inference without external APIs |
-| Sources of truth | `docs/plan.md`, `docs/tasks/*.md` | work scope, statuses, dependencies, acceptance |
-| Artifacts | `docs/analysis`, `docs/architecture`, `docs/qa`, `docs/guides`, `docs/issues`, `src`, `tests` | role results |
+| Sources of truth | `docs/plan.md`, `docs/tasks/*.md`, `docs/bugs/*.md`, `docs/checkpoints/*.md` | work scope, statuses, defects, acceptance, user decisions |
+| Artifacts | `docs/analysis`, `docs/ux`, `docs/architecture`, `docs/qa`, `docs/guides`, `docs/issues`, `src`, `tests` | role results |
 | Tools | MCP `plantuml-render`, `local-rag`, Git | diagram validation/rendering, source search, versioning |
 | Pilot | FastAPI REST API, NoteService, NoteRepository, SQLite | end-to-end implementation example |
 
-Control flow: the user calls `/harness-run T-XXX` -> the command switches the
-session to the primary agent `harness` -> the lead checks the marker and
-`depends_on` -> `harness-orchestrator` maintains the board and acceptance -> the
-responsible role writes artifacts -> the orchestrator updates the board/diagram
-and commits.
+Control flow: the user calls `/harness-feature`, `/harness-bug`, or
+`/harness-run T-XXX` -> the command switches the session to the primary agent
+`harness` -> the lead checks the marker, workflow, dependency, and active-task
+invariant -> `harness-orchestrator` registers pending work or maintains the board,
+bug registry, and checkpoints -> the responsible role writes artifacts and stops
+at a checkpoint -> the orchestrator records `awaiting_review` and commits a
+snapshot -> the user reviews/edits and records a decision -> the run resumes
+until `CP-F` and closure.
 
 ### 2.2 Roles and models
 
 | Role | Ollama model | Thinking | Main task |
 |---|---|---|---|
-| harness lead | `qwen3.8:27b-64k` | xhigh | explicit start, marker, routing, report |
-| orchestrator | `qwen3.8:27b-64k` | xhigh | board, dependencies, acceptance, commits |
-| analyst | `qwen3.8:27b-64k` | medium | requirements, RAG analysis, questions, glossary |
+| harness lead | `qwen3.8:27b-64k` | xhigh | explicit start, marker, routing, checkpoints, report |
+| orchestrator | `qwen3.8:27b-64k` | xhigh | board, dependencies, checkpoints, acceptance, commits |
+| analyst | `qwen3.8:27b-64k` | medium | requirements, RAG analysis, questions, glossary, e2e UC/YAML |
+| ux-designer | `qwen3.8:27b-64k` | xhigh | user flows, screens, wireframes, UI spec, HTML prototype |
 | architect | `qwen3.8:27b-64k` | xhigh | ADR, PlantUML diagrams, contracts |
-| coder | `tiel-coder:35b-a3b-mtp-128k-text` | - | code, tests, CI/CD, local deployment |
-| qa | `qwen3.8:27b-64k` | low | text/code review, verdict |
-| qa-vision | `tiel-coder:35b-a3b-mtp-128k-vision` | - | visual checks of diagrams/screenshots |
+| coder | `tiel-coder:35b-a3b-mtp-128k-text` | - | code, unit/e2e tests, CI/CD, local deployment |
+| qa | `qwen3.8:27b-64k` | low | text/code review, e2e coverage/run/report, verdict |
+| qa-vision | `tiel-coder:35b-a3b-mtp-128k-vision` | - | visual checks of diagrams, wireframes, screenshots |
 | doc-writer | `qwen3.8:27b-64k` | low | README, runbook, guides, ADR finalization |
 
 Agents are installed globally as `harness`, `harness-orchestrator`,
-`harness-analyst`, `harness-architect`, `harness-coder`, `harness-qa`,
-`harness-qa-vision`, `harness-doc-writer`; the lead calls them via `task`.
-For visual artifacts, the orchestrator calls both QA agents and combines their
-findings into one verdict.
+`harness-analyst`, `harness-ux-designer`, `harness-architect`, `harness-coder`,
+`harness-qa`, `harness-qa-vision`, `harness-doc-writer`; the lead calls them via
+`task`. For visual artifacts, the lead calls both QA passes independently and
+the orchestrator combines their findings into one verdict.
 
 ### 2.3 Permissions and write areas
 
 | Role | Write area | Forbidden |
 |---|---|---|
 | harness lead | writes no files; reads and delegates only | edit/write, git commit, calling roles outside harness |
-| orchestrator | `docs/**`, `README.md`, `.gitignore` | other roles' work, `git push/tag/reset/rebase` |
-| analyst | `docs/analysis/**`, `docs/tasks/**` (own status/log) | architecture, code, tests, commits |
-| architect | `docs/architecture/**`, `docs/tasks/**` | code, tests, editing `docs/analysis` |
-| coder | `src/**`, `tests/**`, `scripts/**`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore` | prod actions, `git commit`, `docker push`, cloud CLIs |
-| qa | `docs/qa/**`, `docs/tasks/**` | fixing code/artifacts, commits, deployment |
-| qa-vision | `docs/qa/**` | code/docs edits, commits, deployment |
-| doc-writer | `README.md`, `docs/guides/**`, `docs/architecture/adr-*.md` (editing) | code, tests, CI/CD, changing ADR meaning |
+| orchestrator | `docs/**`, `README.md`, `.gitignore` | other roles' work, closing without `CP-F`, `git push/tag/reset/rebase` |
+| analyst | `docs/analysis/**`, `docs/tasks/**` (own status/log) | architecture, code, tests, editing `docs/bugs/`, commits |
+| ux-designer | `docs/ux/**`, `docs/tasks/**` (own status/log) | code, contracts, tests, editing `docs/bugs/`, commits |
+| architect | `docs/architecture/**`, `docs/tasks/**` | code, tests, editing `docs/analysis`/`docs/bugs` |
+| coder | `src/**`, `tests/**`, `scripts/**`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore` | prod actions, `git commit`, `docker push`, cloud CLIs, `docs/bugs/` |
+| qa | `docs/qa/**`, `docs/tasks/**` | fixing code/artifacts, editing `docs/bugs/`, commits, deployment |
+| qa-vision | `docs/qa/**` | code/docs edits, `docs/bugs/`, commits, deployment |
+| doc-writer | `README.md`, `docs/guides/**`, `docs/architecture/adr-*.md` (editing) | code, tests, CI/CD, `docs/bugs/`, changing ADR meaning |
 
 Permissions include both relative and `**/...` pattern variants: opencode
 matches edit/write against the absolute path, so the blanket deny `"*": "deny"`
 is overridden by a specific allow matching the full path. `.gitignore` is
-allowed for orchestrator and coder. All roles may create issue files in
-`docs/issues/**`; the orchestrator maintains the index.
+allowed for orchestrator and coder. All roles may create harness issue files in
+`docs/issues/**`; the orchestrator maintains the index. Product bug evidence is
+reported to the orchestrator, which owns `docs/bugs/**`.
 
 Common prohibitions: editing `~/.config/opencode/**`, secrets in code/logs/commits,
 nested subagent calls, access outside drive `C:`, production deployment.
@@ -122,14 +144,25 @@ nested subagent calls, access outside drive `C:`, production deployment.
 | Artifact | Path | Owner |
 |---|---|---|
 | Board | `docs/plan.md` | orchestrator |
+| Workflow stages | `harness/workflows/feature.md`, `bugfix.md` | architect + orchestrator |
 | Task card | `docs/tasks/T-XXX-*.md` | task role + orchestrator |
+| Product bug | `docs/bugs/BUG-XXX-*.md`, `docs/bugs/README.md` | orchestrator |
+| Checkpoint | `docs/checkpoints/T-XXX-CP-N.md` | user + orchestrator |
 | Requirements | `docs/analysis/requirements-*.md` | analyst |
 | Questions and assumptions | `docs/analysis/questions-*.md` | analyst |
 | Glossary | `docs/analysis/glossary.md` | analyst |
+| E2E use cases | `docs/analysis/e2e-use-cases-*.md` | analyst |
+| E2E test data | `docs/analysis/e2e-test-data-*.yaml` | analyst |
+| UX flows/screens/spec | `docs/ux/*-*.md` | ux-designer |
+| UX wireframes | `docs/ux/wireframes-*.puml`, `*.svg` | ux-designer |
+| UX prototype | `docs/ux/prototype/<slug>/index.html` | ux-designer |
 | ADR | `docs/architecture/adr-NNN-*.md` | architect (finalization: doc-writer) |
 | Diagrams | `docs/architecture/*.puml`, `*.svg` | architect |
 | Contracts | `docs/architecture/contracts-*.md` | architect |
+| E2E tests/runner | `tests/e2e/`, `scripts/e2e.ps1`, `scripts/validate-e2e-data.py` | coder |
+| QA e2e plan/report | `docs/qa/e2e-plan-*.md`, `docs/qa/e2e-report-*.md` | qa |
 | QA report | `docs/qa/review-T-XXX.md` | qa |
+| Bugfix regression | `tests/regression/` or existing suite | coder |
 | Code and tests | `src/`, `tests/`, `scripts/`, `Dockerfile`, compose, `Makefile` | coder |
 | Activity diagram | `docs/activity.puml`, `docs/activity.svg` | orchestrator |
 | Guides | `docs/guides/**`, `README.md` | doc-writer |
@@ -146,16 +179,19 @@ Source: [`diagrams/scenario-map.puml`](diagrams/scenario-map.puml).
 | ID | Scenario | Trigger | Roles | Result |
 |---|---|---|---|---|
 | S-01 | Installation and bootstrap | `install.ps1`, then `/harness-init` | opencode, global harness, Ollama | global agents installed, project initialized |
-| S-02 | Full task cycle | `/harness-run T-XXX` | harness lead + orchestrator + role | task `done`/`failed`, commit, dependents unblocked |
-| S-03 | Requirements analysis | analyst task | analyst, local-rag | requirements, questions, glossary |
+| S-02 | Task cycle with checkpoints | `/harness-run T-XXX` | harness lead + orchestrator + role | checkpoint review, task `done`/`failed`, commit |
+| S-14 | Bugfix workflow | `/harness-bug` then `/harness-run T-XXX` | orchestrator, coder, qa | `BUG-XXX` card, failing regression, fix, independent verification |
+| S-03 | Requirements and e2e use cases | analyst task | analyst, local-rag | requirements, `UC-E2E`, YAML data, glossary |
 | S-04 | Architecture and diagrams | architect task | architect, MCP PlantUML | ADR, `.puml`/`.svg`, contracts, decomposition |
-| S-05 | Implementation and tests | coder task | coder, test runner, Docker | code, tests, CI/CD, local run |
-| S-06 | QA acceptance | qa task | qa, qa-vision, test runner, vision | review report and `accept`/`reject` verdict |
+| S-05 | Implementation, unit + e2e tests | coder task | coder, test runner, e2e runner, Docker | code, tests, CI/CD, local run, e2e evidence |
+| S-06 | QA acceptance + e2e coverage | qa task | qa, qa-vision, test/e2e runner, vision | e2e plan/report, review and verdict |
 | S-07 | Documentation | doc-writer task | doc-writer | README, runbook, guides, ADR finalization |
 | S-08 | Board sync | `harness-board-update all / T-XXX` | orchestrator, MCP, Git | statuses, commits, SVG, chore commit |
 | S-09 | Board report | `harness-board-report` | orchestrator | summary and recommendations (read-only) |
 | S-10 | Errors and blockers | acceptance failure | orchestrator, role, user | `failed` -> retry <=3 -> `blocked`/`done` |
 | S-11 | Pilot end-to-end | task T-013 | orchestrator, analyst, architect, qa | confirmed full cycle on "Mini-CRUD" |
+| S-12 | UX design | ux-designer task | ux-designer, MCP PlantUML, qa-vision | flows, screens, wireframes, UI spec, HTML prototype |
+| S-13 | User checkpoints | role checkpoint | user, lead, orchestrator, role | `awaiting_review`, decisions, edits, resume |
 
 ---
 
@@ -171,48 +207,61 @@ models are loaded.
 
 Source: [`diagrams/seq-01-bootstrap.puml`](diagrams/seq-01-bootstrap.puml).
 
-**Result:** agents, commands, skill, templates, and scripts are in
+**Result:** agents, commands, skills, workflows, templates, and scripts are in
 `~/.config/opencode/`; the project has `harness/process.md`,
-`harness/version.json`, and `docs/plan.md`. **Note:** `default_agent` is not
-changed; an opencode restart is required after installing agents. Activation is
-only via explicit `/harness-*`.
+`harness/workflows/`, `harness/version.json`, `docs/plan.md`, `docs/bugs/`,
+`docs/ux/`, and `docs/checkpoints/`.
+**Note:** `default_agent` is not changed; an opencode restart is required after
+installing agents. Activation is only via explicit `/harness-*`.
 
-### S-02. Full task cycle (`/harness-run`)
+### S-02. Task cycle with checkpoints (`/harness-run`)
 
-**Goal:** take a task from dependency checks through acceptance and commit.
-**Preconditions:** the project is initialized (`harness/process.md`), the card
-`docs/tasks/T-XXX-*.md` exists, all `depends_on` are `done`, and no other task
-is `in_progress`. Tasks run strictly sequentially - parallel starts are forbidden.
+**Goal:** take a task from dependency checks through user checkpoints, acceptance,
+and commit. **Preconditions:** the project is initialized (`harness/process.md`),
+the card `docs/tasks/T-XXX-*.md` exists with a valid `workflow`/`stage`, its
+workflow file is present, all `depends_on` are `done`, and no other task is
+active (`in_progress` or `awaiting_review`). Tasks run strictly sequentially
+across both workflows - parallel starts and feature/bugfix preemption are
+forbidden.
 
-![S-02 Full task cycle](diagrams/seq-02-harness-run.svg)
+![S-02 Task cycle with checkpoints](diagrams/seq-02-harness-run.svg)
 
 Source: [`diagrams/seq-02-harness-run.puml`](diagrams/seq-02-harness-run.puml).
 
-**Result:** the task is `done`, the board, card, activity diagram, and SVG are
-updated, and a commit `T-XXX: ...` is made; dependent tasks are unblocked.
+**Result:** at each checkpoint the task is `awaiting_review` with a checkpoint
+file and snapshot commit; after the user's explicit `approved` decision and
+`CP-F`, the task is `done`, the board/card/activity/SVG are updated, and a
+commit `T-XXX: ...` is made; dependent tasks are unblocked.
 **Errors:** no marker - stop and suggest `/harness-init`; unmet dependencies -
-stop without starting; another task `in_progress` - stop without changing
-statuses; `acceptance` failure - `failed` and cause in `Blockers`.
+stop without starting; another active task - stop without changing statuses; no
+checkpoint decision - stop and ask, never infer approval; `acceptance` failure -
+`failed` and cause in `Blockers`.
 
-### S-03. Requirements analysis (analyst)
+### S-03. Requirements and e2e use cases (analyst)
 
-**Goal:** collect and refine requirements and check existing materials via RAG.
-**Preconditions:** a statement exists and `local-rag` is available (when Ollama
-is unavailable, RAG works in FTS5 mode).
+**Goal:** collect and refine requirements, check existing materials via RAG, and
+formalize end-to-end use cases with test data. **Preconditions:** a statement
+exists and `local-rag` is available (when Ollama is unavailable, RAG works in
+FTS5 mode).
 
-![S-03 Requirements analysis](diagrams/seq-03-analyst.svg)
+![S-03 Requirements and e2e use cases](diagrams/seq-03-analyst.svg)
 
 Source: [`diagrams/seq-03-analyst.puml`](diagrams/seq-03-analyst.puml).
 
 **Result:** `docs/analysis/requirements-*.md` with atomic verifiable
 requirements `R-NNN`, `questions-*.md` with open questions and assumptions,
-`glossary.md`; an orchestrator report with risks and blockers. **Errors:**
-missing data is recorded as a question, not as an invented requirement.
+`glossary.md`, `e2e-use-cases-*.md` with `UC-E2E-NNN` and a coverage matrix, and
+`e2e-test-data-*.yaml` (schema `harness-e2e/1`); an orchestrator report with
+risks and blockers. **Rules:** every functional requirement is covered by a use
+case or explicitly `out_of_scope`; the dataset contains no secrets and every use
+case has expected results and cleanup. **Errors:** missing data is recorded as a
+question, not as an invented requirement or use case.
 
 ### S-04. Architecture and diagrams (architect)
 
 **Goal:** make an architectural decision with alternatives, produce diagrams and
-contracts. **Preconditions:** analyst requirements are accepted.
+contracts. **Preconditions:** analyst requirements and e2e use cases are
+accepted; UX screen IDs/UI spec are available when the task has a UI.
 
 ![S-04 Architecture and diagrams](diagrams/seq-04-architect.svg)
 
@@ -223,33 +272,42 @@ interface contracts, and decomposition for the coder. **Mandatory control:**
 every diagram passes `check_syntax`, then `render_file`; syntax errors are fixed
 before handoff. A decision without alternatives is not acceptable.
 
-### S-05. Implementation and tests (coder)
+### S-05. Implementation, unit and e2e tests (coder)
 
-**Goal:** implement strictly per ADRs and contracts. **Preconditions:** ADRs and
-contracts are accepted; the task includes a local run target.
+**Goal:** implement strictly per ADRs, contracts, and UX specs, including
+deterministic e2e automation. **Preconditions:** ADRs, contracts, UX specs, and
+the analyst e2e dataset are accepted; the task includes a local run target.
 
-![S-05 Implementation and tests](diagrams/seq-05-coder.svg)
+![S-05 Implementation, unit and e2e tests](diagrams/seq-05-coder.svg)
 
 Source: [`diagrams/seq-05-coder.puml`](diagrams/seq-05-coder.puml).
 
-**Result:** code in `src/`, tests in `tests/`, CI/CD preparation (`Dockerfile`,
-compose, Makefile, scripts), green tests, and a locally running service.
-**Errors:** failing tests are fixed without weakening assertions; when context is
-insufficient - stop with a blocker, not a partial implementation.
+**Result:** code in `src/`, unit/integration tests, `tests/e2e/`, a dataset
+validator (`scripts/validate-e2e-data.py`), an isolated e2e runner
+(`scripts/e2e.ps1` or `make e2e`) with seed/cleanup and per-`UC-E2E` results,
+CI/CD preparation (`Dockerfile`, compose, Makefile), green tests, and a locally
+running service. **Errors:** failing tests are fixed without weakening
+assertions; e2e uses only local/staging resources; when context is insufficient -
+stop with a blocker, not a partial implementation.
 
-### S-06. QA acceptance (qa)
+### S-06. QA acceptance and e2e coverage (qa + qa-vision)
 
-**Goal:** independently verify artifacts against `acceptance`. **Preconditions:**
-the role results were passed by the orchestrator.
+**Goal:** independently verify artifacts against `acceptance`, including e2e
+coverage and execution. **Preconditions:** the role results were passed by the
+orchestrator; the coder provided an e2e runner and dataset validator.
 
-![S-06 QA acceptance](diagrams/seq-06-qa.svg)
+![S-06 QA acceptance and e2e coverage](diagrams/seq-06-qa.svg)
 
 Source: [`diagrams/seq-06-qa.puml`](diagrams/seq-06-qa.puml).
 
-**Result:** `docs/qa/review-T-XXX.md` with a "criterion -> pass/fail" table,
-findings by severity, and an `accept`/`reject` verdict; an independent test run
-(read-only) and visual diagram review. **Errors:** `reject` returns the task for
-fixes; QA does not edit artifacts itself.
+**Result:** `docs/qa/e2e-plan-*.md` with a requirement -> `UC-E2E-NNN` -> test
+matrix, `docs/qa/e2e-report-*.md` with run evidence, defects, and residual
+risks, and `docs/qa/review-T-XXX.md` with a "criterion -> pass/fail" table,
+findings by severity, and an `accept`/`reject` verdict; an independent
+unit/integration/e2e run (read-only). For visuals, the lead then runs a separate
+`qa-vision` pass and the orchestrator combines both reports into one verdict.
+**Errors:** `reject` returns the task for fixes; QA does not edit code, tests, or
+artifacts itself; e2e never touches production.
 
 ### S-07. Documentation (doc-writer)
 
@@ -275,9 +333,10 @@ statuses changed.
 Source: [`diagrams/seq-08-harness-board-update.puml`](diagrams/seq-08-harness-board-update.puml).
 
 **Result:** the `harness` lead delegates to `harness-orchestrator`: update
-`docs/plan.md`, cards, `docs/activity.puml` colors, re-render
-`docs/activity.svg`, record commit hashes, and commit `chore: board update (...)`.
-**Rule:** on divergence, the task card is the source of truth.
+`docs/plan.md`, cards, the bug index/links, `docs/activity.puml` colors,
+re-render `docs/activity.svg`, record commit hashes, and commit
+`chore: board update (...)`. **Rule:** on divergence, the task card is the source
+of truth; board update is forbidden while a task is active.
 
 ### S-09. Board report (`harness-board-report`)
 
@@ -289,9 +348,10 @@ is initialized.
 Source: [`diagrams/seq-09-harness-board-report.puml`](diagrams/seq-09-harness-board-report.puml).
 
 **Result:** the `harness` lead delegates to `harness-orchestrator` for a read-only
-summary: status table, tasks ready to start, `failed`/`blocked` with causes,
-%done, dangling dependency check, 1-3 recommendations. **Rule:** the scenario is
-strictly read-only; nothing is committed.
+summary: tasks by workflow, bug queue and severity, tasks ready to start,
+`failed`/`blocked` with causes, %done, dangling dependency and bug/task mismatch
+checks, 1-3 recommendations. **Rule:** the scenario is strictly read-only;
+nothing is committed.
 
 ### S-10. Errors, retries, and blockers
 
@@ -319,6 +379,59 @@ Source: [`diagrams/seq-11-pilot-e2e.puml`](diagrams/seq-11-pilot-e2e.puml).
 component diagram, QA - a review with verdict `accept`; T-013 is `done`, a commit
 is made. The pilot confirmed that role prompts are sufficiently deterministic.
 
+### S-12. UX design (ux-designer)
+
+**Goal:** turn accepted requirements and e2e use cases into reviewable UX
+artifacts. **Preconditions:** requirements and `UC-E2E` are accepted; the card
+marks `ux: required`.
+
+![S-12 UX design](diagrams/seq-12-ux-designer.svg)
+
+Source: [`diagrams/seq-12-ux-designer.puml`](diagrams/seq-12-ux-designer.puml).
+
+**Result:** `docs/ux/user-flows-*.md`, `screens-*.md`, `wireframes-*.puml` +
+`.svg`, `ui-spec-*.md`, and a static HTML prototype. Screen IDs are stable and
+referenced by architecture contracts and e2e use cases. The role stops at its
+checkpoint; QA vision and the user review the visuals. **Errors:** missing
+requirements - stop and ask the analyst; no production code, external CDNs, or
+real user data.
+
+### S-13. User checkpoints
+
+**Goal:** give the user a reliable review/edit/approve point without losing task
+context. **Preconditions:** the role reached a declared checkpoint.
+
+![S-13 User checkpoints](diagrams/seq-13-checkpoints.svg)
+
+Source: [`diagrams/seq-13-checkpoints.puml`](diagrams/seq-13-checkpoints.puml).
+
+**Result:** the task is `awaiting_review`; `docs/checkpoints/T-XXX-CP-N.md`
+records artifacts, snapshot commit, user remarks/edits, and the decision. On
+`approved` the role continues; on `changes_requested` it returns to the same
+checkpoint. `CP-F` is mandatory before `done`. **Errors:** missing decision -
+stop and ask; user edits - authoritative, preserve them; at most one task may be
+`awaiting_review`.
+
+### S-14. Bugfix workflow (`/harness-bug` -> `/harness-run`)
+
+**Goal:** restore expected behavior through a durable `BUG-XXX` report, a
+reproduction, a failing regression test, a minimal fix, and independent QA.
+**Preconditions:** the expected behavior exists; a report has observed/expected
+behavior, reproduction, and environment; no other active task.
+
+![S-14 Bugfix workflow](diagrams/seq-14-bugfix.svg)
+
+Source: [`diagrams/seq-14-bugfix.puml`](diagrams/seq-14-bugfix.puml).
+
+**Result:** `docs/bugs/BUG-XXX-*.md` and the index are updated; the coder stops at
+`CP-1` with reproduction/root cause and a regression test that fails on the base
+revision, then at `CP-2` with the minimal fix and green regression. QA verifies
+fail-before/pass-after independently and records `docs/qa/review-T-XXX.md`. The
+bug moves `fixed` -> `verified` -> `closed` only after `CP-F`; P0/P1 require a
+postmortem. **Errors:** missing reproduction data - keep the bug `new` and ask;
+no speculative fix. Contract/schema/security/multi-module/UI-flow changes
+escalate to feature-style analysis and design.
+
 ---
 
 ## 5. Conceptual class model
@@ -332,27 +445,38 @@ artifacts), not the classes of a specific application.
 
 | Class | Purpose |
 |---|---|
-| `PlanBoard` | board `docs/plan.md`: load tasks, change status, record a commit |
-| `TaskCard` | task card: id, role, dependencies, acceptance, artifacts, blockers, log |
-| `TaskStatus` | statuses `pending`, `in_progress`, `done`, `failed`, `blocked` |
+| `PlanBoard` | board `docs/plan.md`: workflow, tasks, statuses, bug links, commits |
+| `Workflow` | `feature` or `bugfix`: stage table, task graph, applicability, gates |
+| `TaskCard` | task card: id, workflow, stage, role, dependencies, acceptance, inputs, e2e/ux or bug/severity, checkpoints, artifacts, blockers, log |
+| `TaskStatus` | statuses `pending`, `in_progress`, `awaiting_review`, `done`, `failed`, `blocked` |
+| `BugReport` | `BUG-XXX`: observed/expected behavior, reproduction, severity, tasks, root cause, fix, verification |
+| `BugStatus` | `new`, `triaged`, `in_progress`, `fixed`, `verified`, `closed`, `duplicate`, `wontfix` |
+| `Checkpoint` | review point: ID, stage, artifacts, snapshot commit, remarks, decision |
+| `CheckpointDecision` | `awaiting_review`, `approved`, `changes_requested` |
 | `Role` | abstract role: model, permissions, write areas, task execution |
-| `Orchestrator`, `Analyst`, `Architect`, `Coder`, `QA`, `DocWriter` | concrete harness roles |
+| `Orchestrator`, `Analyst`, `UxDesigner`, `Architect`, `Coder`, `QA`, `QAVision`, `DocWriter` | concrete harness roles |
 | `ModelProfile` | local model, thinking mode, purpose |
+| `E2EUseCase` | `UC-E2E-NNN`: actor, priority, steps, cleanup, traceability |
+| `TestDataset` | YAML `harness-e2e/1`: environment and use-case data |
 | `Artifact` | role artifact with path, type, and producer |
 | `Diagram` | PlantUML source and SVG render; validation and rendering |
 | `Review` | QA report: verdict and findings list |
 | `Finding` | finding with ID, severity, and text |
 | `Commit` | task git commit: hash and message |
-| `Command` | opencode command: `/harness-run`, `/harness-board-update`, `/harness-board-report` |
-| `HarnessLead` | primary agent `harness`: marker, routing, report; writes no files |
+| `Command` | opencode command: `/harness-feature`, `/harness-bug`, `/harness-run`, `/harness-board-*` |
+| `HarnessLead` | primary agent `harness`: marker, workflow routing, checkpoints, report; writes no files |
 | `LogEntry` | task card log entry |
 | `RoleResult` | role result: status, files, summary |
 
-Key relationships: `PlanBoard 1 *-- 0..* TaskCard`; `TaskCard` depends on other
-cards (`dependsOn`), is assigned to one role, and has one status; a role produces
-many artifacts; `Diagram` and `Review` inherit `Artifact`; `HarnessLead` is
-selected by a command, reads the board/cards, and calls roles; the orchestrator
-updates the board and creates commits.
+Key relationships: `PlanBoard 1 *-- 0..* TaskCard`; every card selects one
+`Workflow` and has one `TaskStatus`; `TaskCard` depends on other cards
+(`dependsOn`), is assigned to one role, and owns 1..* checkpoints; a bugfix card
+links to one `BugReport`; a bug report owns many tasks and one `BugStatus`; a
+role produces many artifacts; `Diagram` and `Review` inherit `Artifact`;
+`Analyst` formalizes `E2EUseCase` and produces `TestDataset`; `HarnessLead` is
+selected by a command, reads the board/cards/bugs/checkpoints, and calls roles;
+the orchestrator updates the board, bug registry, checkpoint decisions, and
+creates commits.
 
 ---
 
@@ -360,16 +484,28 @@ updates the board and creates commits.
 
 ### 6.1 Task lifecycle
 
-1. The `harness` lead checks the project marker, `depends_on` (all `done`), and
-   that no other task is `in_progress`.
+1. The `harness` lead reads the card's `workflow`/`stage`, loads the matching
+   workflow file, checks the project marker, `depends_on` (all `done`), and that
+   no other task is active (`in_progress` or `awaiting_review`).
 2. `harness-orchestrator` sets the task to `in_progress` (plan, card, diagram
-   color).
-3. The role performs the task strictly per the card's `acceptance`.
-4. `harness-orchestrator` accepts the result; on failure - `failed`.
-5. Status -> `done`, log entry, board/activity/SVG update, and commit.
+   color) and updates the linked bug to `in_progress` for the first bugfix task.
+3. The role performs the current stage strictly per the card's `acceptance` and
+   stops at the next checkpoint; bugfix cannot pass reproduction without a
+   failing regression test.
+4. The orchestrator creates `docs/checkpoints/T-XXX-CP-N.md`, sets
+   `awaiting_review`, updates the bug status when applicable, and commits a
+   snapshot.
+5. The user reviews/edits artifacts and records `approved` or
+   `changes_requested`; `/harness-run` resumes the role.
+6. After the final role checkpoint and `CP-F` approval,
+   `harness-orchestrator` accepts the result; on failure - `failed`.
+7. Status -> `done`, bug status (`fixed`/`verified`/`closed`), log entry,
+   board/activity/SVG update, and commit.
 
-Tasks run strictly sequentially: at most one `in_progress` at a time; parallel
-task starts are forbidden.
+Tasks run strictly sequentially across both workflows: at most one task is
+`in_progress` or `awaiting_review` at a time; feature/bugfix preemption and
+parallel task starts are forbidden. New pending cards and bug reports may be
+registered while a task is active.
 
 ### 6.2 Statuses
 
@@ -377,20 +513,29 @@ task starts are forbidden.
 |---|---|---|
 | `pending` | `#D3D3D3` | not started |
 | `in_progress` | `#FFE082` | in progress |
-| `done` | `#90EE90` | completed and accepted |
+| `awaiting_review` | `#87CEFA` | waiting for user checkpoint review |
+| `done` | `#90EE90` | completed, accepted, `CP-F` approved |
 | `failed` | `#FF9090` | error, fix required |
 | `blocked` | `#FFB347` | external blocker |
 
-Allowed transitions: `pending -> in_progress -> done`; `in_progress -> failed`;
-`failed -> in_progress` (after a fix); `* -> blocked` on an external blocker.
+Allowed transitions: `pending -> in_progress`; `in_progress -> awaiting_review`
+at a checkpoint; `awaiting_review -> in_progress` after approval or a change
+request, except `CP-F` approval which goes to `done`; `awaiting_review -> done`
+only after `CP-F` approval;
+`in_progress -> failed`; `failed -> in_progress` (after a fix); `* -> blocked` on
+an external blocker.
 
 ### 6.3 Mandatory artifact update order
 
-1. `docs/plan.md` - status, artifacts, commit hash.
-2. `docs/tasks/T-XXX-*.md` - status, log, blockers.
-3. `docs/activity.puml` - task block color.
-4. Re-render `docs/activity.svg` via MCP `plantuml-render`.
-5. `git commit` with message `T-XXX: ...`.
+1. `docs/plan.md` - workflow, status, artifacts, bug link, commit hash.
+2. `docs/tasks/T-XXX-*.md` - status, log, blockers, checkpoint list.
+3. `docs/bugs/BUG-XXX-*.md` and `docs/bugs/README.md` - bug status, tasks, root
+   cause, fix, verification (orchestrator only).
+4. `docs/activity.puml` - task block color.
+5. Re-render `docs/activity.svg` via MCP `plantuml-render`.
+6. `docs/checkpoints/T-XXX-CP-N.md` - artifacts, decision, user remarks/edits,
+   snapshot commit.
+7. `git commit` with checkpoint snapshot message or final `T-XXX: ...`.
 
 ### 6.4 Git discipline
 
@@ -401,22 +546,29 @@ Allowed transitions: `pending -> in_progress -> done`; `in_progress -> failed`;
 
 ### 6.5 Plan execution diagram
 
-![Activity diagram T-001..T-013](../activity.svg)
+![Activity diagram T-001..T-029](../activity.svg)
 
 Source: [`docs/activity.puml`](../activity.puml). Green - `done`, gray -
-`pending`, yellow - `in_progress`, red - `failed`, orange - `blocked`.
+`pending`, yellow - `in_progress`, blue - `awaiting_review`, red - `failed`,
+orange - `blocked`.
 
-### 6.6 Issue log
+### 6.6 Bug and issue logs
+
+Product defects use the `BUG-XXX` registry:
+
+- `docs/bugs/BUG-XXX-<slug>.md` - one bug report, root cause, fix, verification;
+- [`docs/bugs/README.md`](../bugs/README.md) - bug index.
 
 Harness problems are recorded by the `harness-issues` skill:
 
 - `docs/issues/ISSUE-YYYYMMDD-HHMMSS-<slug>.md` - one problem;
 - [`docs/issues/README.md`](../issues/README.md) - index list.
 
-A record contains status, severity, type, source, role, absolute location,
-symptoms, reproduction, cause, solution/workaround, verification, prevention,
-and timeline. All roles may create issue files; `harness-orchestrator` verifies
-the index and includes them in the task commit. Secrets are never written to issues.
+A harness issue record contains status, severity, type, source, role, absolute
+location, symptoms, reproduction, cause, solution/workaround, verification,
+prevention, and timeline. All roles may create issue files; the
+`harness-orchestrator` verifies the index and includes them in the task commit.
+Only the orchestrator edits bug cards. Secrets are never written to either log.
 
 ---
 
@@ -502,11 +654,12 @@ not described (ISO-8601 UTC). Full report:
 1. From the repository root, run the global installation:
    `powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/install.ps1`.
 2. Restart opencode; check the installation with `/harness-doctor`.
-3. In the project, run `/harness-init`; check `harness/process.md` and
-   `docs/plan.md`.
-4. Fill in `docs/plan.md` and create a card from
-   `harness/templates/task-card.md`.
-5. Start a task with `/harness-run T-XXX`.
+3. In the project, run `/harness-init`; check `harness/process.md`,
+   `harness/workflows/`, and `docs/plan.md`.
+4. Start a feature with `/harness-feature <slug> [e2e] [ux]` or a bug with
+   `/harness-bug <report>`; review the created pending cards.
+5. Start a task with `/harness-run T-XXX`; stop at the checkpoint, review/edit
+   artifacts, record a decision, and resume.
 6. Summary: `/harness-board-report`; sync: `/harness-board-update all`.
 7. Diagram: `docs/activity.puml`, render: `docs/activity.svg`.
 
@@ -517,19 +670,27 @@ not described (ISO-8601 UTC). Full report:
 
 | Command | Argument | Purpose |
 |---|---|---|
-| `/harness-init` | - | create harness and marker files in the current project |
-| `/harness-run` | `T-XXX` | dependency checks, `in_progress`, role call, acceptance, commit |
-| `/harness-board-update` | `T-XXX` or `all` | reconcile statuses, commits, activity diagram, and SVG |
-| `/harness-board-report` | - | read-only summary: statuses, blockers, ready tasks, recommendations |
+| `/harness-init` | - | create harness, workflows, bug registry, and marker files in the current project |
+| `/harness-feature` | `<slug> [e2e] [ux]` | create a pending `P-00` feature planning task |
+| `/harness-bug` | `<report or BUG-XXX>` | create/triage a `BUG-XXX` card and pending bugfix tasks |
+| `/harness-run` | `T-XXX` | workflow/dependency checks, `in_progress`, role call, checkpoint, resume, acceptance, commit |
+| `/harness-board-update` | `T-XXX` or `all` | reconcile statuses, bug index, checkpoints, commits, activity diagram, and SVG when no task is active |
+| `/harness-board-report` | - | read-only summary: tasks by workflow, bug queue, pending reviews, blockers, recommendations |
 | `/harness-doctor` | - | check the global installation and the current project |
 
-### 8.3 How to add a task
+### 8.3 How to add work
 
-1. Create a card from `harness/templates/task-card.md`.
-2. Add a row to `docs/plan.md` from `harness/templates/plan-row.md`.
-3. Specify the role, `depends_on`, `acceptance`, and artifacts.
-4. Run `harness-run T-XXX` after dependencies are done.
-5. After the task, update the board/card/diagram and commit.
+1. Use `/harness-feature <slug> [e2e] [ux]` for new behavior or
+   `/harness-bug <report>` for a defect.
+2. The orchestrator creates a card from `harness/templates/task-card-feature.md`
+   or `task-card-bugfix.md` (bugfix also gets a `docs/bugs/BUG-XXX-*.md` card).
+3. Add/verify the row in `docs/plan.md` from `harness/templates/plan-row.md`.
+4. Specify `workflow`, `stage`, role, `depends_on`, `acceptance`, `inputs`,
+   e2e/UX or bug/severity applicability, and checkpoints (at least `CP-F`).
+5. Run `/harness-run T-XXX` after dependencies are done; never start a second
+   active task.
+6. Review each checkpoint, record a decision, and resume; after `CP-F`, update
+   the board/card/bug/diagram and commit.
 
 ### 8.4 Limitations and risks
 
@@ -540,6 +701,14 @@ not described (ISO-8601 UTC). Full report:
 - Diagrams and documentation require periodic reconciliation with code.
 - Role prompts are deterministic but do not guarantee a perfect first pass -
   `failed` and retry <= 3 are provided.
+- E2E tests target local/staging only; production data and deployment are
+  forbidden.
+- Feature and bugfix work never run in parallel; a hotfix waits behind the active
+  task instead of preempting it.
+- A bugfix without a reproducible failure stays `blocked` at `CP-1`; no
+  speculative fix is allowed.
+- Checkpoints require explicit user decisions; stale checkpoint files are caught
+  during board reconciliation, not automatically.
 
 ### 8.5 HTML build
 
@@ -563,6 +732,10 @@ are required.
 | RAG answers without embeddings | Ollama is unavailable | FTS5 mode; does not block the task |
 | diagram does not render | PlantUML error | `check_syntax`, fix `.puml`, rerun `render_file` |
 | task does not start | a dependency is not `done` | check `depends_on` and card statuses |
+| second task was requested | one active task exists across both workflows | finish or review the active task; no preemption |
+| card has no workflow/stage | legacy or malformed card | add a valid workflow/stage; bugfix also needs `bug`/`severity` |
+| bug cannot be reproduced | insufficient report/evidence | keep `BUG-XXX` `new` or `blocked`; request reproduction data |
+| product bug was filed in `docs/issues/` | wrong registry | move it to `docs/bugs/`; keep harness issues separate |
 
 ---
 
@@ -571,16 +744,19 @@ are required.
 | Scenario | Artifacts | Source |
 |---|---|---|
 | S-01 | global agents, project marker | [`harness/scripts/install.ps1`](../../harness/scripts/install.ps1), [`harness/commands/harness-init.md`](../../harness/commands/harness-init.md) |
-| S-02 | plan, card, activity, commit | [`harness/commands/harness-run.md`](../../harness/commands/harness-run.md) |
-| S-03 | requirements, questions, glossary | [`harness/agents/harness-analyst.md`](../../harness/agents/harness-analyst.md) |
+| S-02 | plan, card, checkpoints, activity, commit | [`harness/commands/harness-run.md`](../../harness/commands/harness-run.md) |
+| S-03 | requirements, e2e UC/YAML, questions, glossary | [`harness/agents/harness-analyst.md`](../../harness/agents/harness-analyst.md) |
 | S-04 | ADR, diagrams, contracts | [`harness/agents/harness-architect.md`](../../harness/agents/harness-architect.md) |
-| S-05 | code, tests, CI/CD | [`harness/agents/harness-coder.md`](../../harness/agents/harness-coder.md) |
-| S-06 | review report, visual findings | [`harness/agents/harness-qa.md`](../../harness/agents/harness-qa.md), [`harness/agents/harness-qa-vision.md`](../../harness/agents/harness-qa-vision.md) |
+| S-05 | code, unit/e2e tests, CI/CD | [`harness/agents/harness-coder.md`](../../harness/agents/harness-coder.md) |
+| S-06 | e2e plan/report, review, visual findings | [`harness/agents/harness-qa.md`](../../harness/agents/harness-qa.md), [`harness/agents/harness-qa-vision.md`](../../harness/agents/harness-qa-vision.md) |
 | S-07 | README, guides, ADR | [`harness/agents/harness-doc-writer.md`](../../harness/agents/harness-doc-writer.md) |
 | S-08 | board, cards, activity | [`harness/commands/harness-board-update.md`](../../harness/commands/harness-board-update.md) |
 | S-09 | board summary | [`harness/commands/harness-board-report.md`](../../harness/commands/harness-board-report.md) |
-| S-10 | `failed`/`blocked`, log | [`harness/process.md`](../../harness/process.md), section 7 |
+| S-10 | `failed`/`blocked`, log | [`harness/process.md`](../../harness/process.md), section 11 |
 | S-11 | pilot requirements, ADR, QA | [`docs/tasks/T-013-smoke-test.md`](../tasks/T-013-smoke-test.md) |
+| S-12 | UX flows, screens, wireframes, prototype | [`harness/agents/harness-ux-designer.md`](../../harness/agents/harness-ux-designer.md) |
+| S-13 | checkpoint files, decisions, resume | [`harness/templates/checkpoint.md`](../../harness/templates/checkpoint.md), [`harness/process.md`](../../harness/process.md) |
+| S-14 | BUG card, reproduction, regression, verification | [`harness/commands/harness-bug.md`](../../harness/commands/harness-bug.md), [`harness/workflows/bugfix.md`](../../harness/workflows/bugfix.md), [`harness/templates/bug-card.md`](../../harness/templates/bug-card.md) |
 
 ---
 
@@ -590,20 +766,24 @@ are required.
 |---|---|
 | `README.md` | harness overview and quick start |
 | `requirements/initial.txt` | initial requirements |
-| `harness/process.md` | process rules |
+| `harness/process.md` | shared process rules |
+| `harness/workflows/*.md` | feature and bugfix stage tables, graphs, gates |
 | `harness/agents/*.md` | primary agent `harness` and role subagents |
 | `harness/commands/*.md` | `/harness-*` commands |
 | `harness/skills/harness/SKILL.md` | global harness skill |
 | `harness/skills/harness-issues/SKILL.md` | problem and solution tracking skill |
-| `harness/templates/*.md` | card, ADR, plan-row, issue templates |
+| `harness/templates/*` | feature/bugfix cards, bug card, ADR, plan-row, issue, checkpoint, e2e, UX templates |
 | `harness/scripts/*.ps1` | install, init, doctor, uninstall, new-issue |
 | `harness/version.json` | installation version |
-| `docs/plan.md` | task board |
+| `docs/plan.md` | task board with workflow and bug columns |
 | `docs/tasks/*.md` | task cards |
-| `docs/issues/` | problem and solution log |
-| `docs/analysis/` | pilot requirements |
-| `docs/architecture/` | pilot ADR and diagrams |
-| `docs/qa/` | pilot review report |
+| `docs/bugs/` | product bug cards and index |
+| `docs/checkpoints/*.md` | user checkpoint decisions and edits |
+| `docs/issues/` | harness problem and solution log |
+| `docs/analysis/` | pilot requirements, e2e UC/data |
+| `docs/ux/` | flows, screens, wireframes, UI spec, HTML prototype |
+| `docs/architecture/` | ADRs, diagrams, contracts |
+| `docs/qa/` | reviews, e2e plans/reports |
 | `docs/activity.puml/.svg` | plan activity diagram |
 | `docs/description/` | this description, diagrams, and HTML |
 | `docs/description/README.md` | source description (Markdown) |
@@ -621,9 +801,16 @@ are required.
 |---|---|
 | Harness | local system of role subagents with a shared plan and process |
 | Sub-agent | a role called by a primary agent via `task` |
-| Board | `docs/plan.md` - task table with statuses and dependencies |
-| Task card | MD file with id, role, `depends_on`, `acceptance`, log |
+| Board | `docs/plan.md` - task table with workflows, statuses, dependencies, bug links |
+| Workflow | `feature` (new behavior) or `bugfix` (restore expected behavior) |
+| Task card | MD file with id, workflow, stage, role, `depends_on`, `acceptance`, log |
+| Bug card | `BUG-XXX` report: observed/expected behavior, reproduction, severity, fix, verification |
+| Hotfix | P0/P1 modifier that may defer docs but never reproduction, regression, QA, or postmortem |
 | Acceptance | verifiable task acceptance criteria |
+| Checkpoint | declared review point with a `docs/checkpoints/` file and user decision |
+| `CP-F` | mandatory final checkpoint before a task can be `done` |
+| `UC-E2E-NNN` | stable end-to-end use-case identifier used by tests and QA |
+| UX artifact | user flows, screens, wireframes, UI spec, or HTML prototype |
 | Artifact | a file or set of files created by a role |
 | ADR | Architecture Decision Record |
 | MCP | tool protocol; here - `plantuml-render` and `local-rag` |
@@ -638,9 +825,13 @@ are required.
 - [`requirements/initial.txt`](../../requirements/initial.txt) - initial requirements.
 - [`README.md`](../../README.md) - repository layout and quick start.
 - [`docs/guides/harness-global.md`](../guides/harness-global.md) - global installation and activation.
-- [`harness/process.md`](../../harness/process.md) - process rules.
-- [`docs/plan.md`](../plan.md) - task board T-001..T-013.
+- [`harness/process.md`](../../harness/process.md) - shared process rules.
+- [`harness/workflows/feature.md`](../../harness/workflows/feature.md) - feature workflow.
+- [`harness/workflows/bugfix.md`](../../harness/workflows/bugfix.md) - bugfix workflow.
+- [`docs/plan.md`](../plan.md) - task board T-001..T-029.
 - [`docs/analysis/pilot-requirements.md`](../analysis/pilot-requirements.md) - pilot requirements.
 - [`docs/architecture/pilot-adr.md`](../architecture/pilot-adr.md) - ADR-001.
+- [`docs/architecture/adr-002-harness-e2e-ux-checkpoints.md`](../architecture/adr-002-harness-e2e-ux-checkpoints.md) - ADR-002.
+- [`docs/architecture/adr-003-feature-bugfix-workflows.md`](../architecture/adr-003-feature-bugfix-workflows.md) - ADR-003.
 - [`docs/qa/pilot-review.md`](../qa/pilot-review.md) - pilot QA review.
 - [`docs/tasks/T-013-smoke-test.md`](../tasks/T-013-smoke-test.md) - pilot cycle card.

@@ -1,0 +1,59 @@
+@startuml
+autonumber
+skinparam defaultFontName Segoe UI
+title S-14 Bugfix workflow (BUG-XXX -> failing regression -> fix -> verification)
+
+actor "User" as user
+participant "harness\nprimary lead" as lead
+participant "harness-orchestrator" as orch
+participant "docs/bugs" as bugs
+participant "harness-coder" as coder
+participant "harness-qa" as qa
+participant "Git" as git
+
+user -> lead : /harness-bug <report or BUG-XXX>
+lead -> orch : register/triage product bug
+orch -> bugs : create/update BUG-XXX + index\nseverity, expected behavior, tasks
+orch --> lead : BUG-XXX triaged/new\npending coder + QA tasks
+lead --> user : bug card, linked tasks, missing data
+
+user -> lead : /harness-run T-XXX (coder)
+lead -> orch : check workflow, bug link, dependencies,\nno other active task
+orch -> bugs : BUG-XXX status: in_progress
+lead -> coder : B-01 reproduce and root cause
+
+coder -> coder : reproduce on base revision\nwrite failing regression test
+coder --> lead : CHECKPOINT CP-1 reached\nreproduction + root cause + failing test
+lead -> orch : record CP-1
+orch -> git : commit checkpoint snapshot
+orch --> lead : task awaiting_review
+
+user -> lead : /harness-run T-XXX (approved)
+lead -> coder : B-02 minimal fix
+coder -> coder : minimal fix\nregression + relevant suites pass
+coder --> lead : CHECKPOINT CP-2 reached\nfix + evidence
+lead -> orch : record CP-2, coder task CP-F
+orch -> bugs : BUG-XXX status: fixed
+orch -> git : commit fix
+
+user -> lead : /harness-run T-YYY (QA)
+lead -> qa : B-03 independent verification
+qa -> qa : verify fail-before on base revision\nverify pass-after on fixed revision
+alt verification fails
+  qa --> lead : reject: findings and evidence
+  lead -> orch : task failed; bug remains fixed/in_progress
+else verification passes
+  qa --> lead : CHECKPOINT CP-F reached\nreview + fail-before/pass-after evidence
+  lead -> orch : record CP-F
+  orch -> bugs : BUG-XXX status: verified -> closed\nP0/P1 postmortem
+  orch -> git : final commit "T-YYY: ..."
+  lead --> user : bug verified and closed
+end
+
+note right of bugs
+  BUG-XXX is a report, not a second board.
+  No speculative fix without reproduction.
+  Contract/schema/security/multi-module/UI-flow
+  changes escalate to feature-style analysis.
+end note
+@enduml

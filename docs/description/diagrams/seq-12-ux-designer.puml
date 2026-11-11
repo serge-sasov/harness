@@ -1,0 +1,28 @@
+@startuml
+autonumber
+skinparam defaultFontName Segoe UI
+title S-12 UX design (ux-designer)
+
+actor "User" as user
+participant "harness\nprimary lead" as primary
+participant "harness-ux-designer" as ux
+participant "docs/ux" as docs
+participant "MCP\nplantuml-render" as puml
+participant "harness-qa-vision" as vision
+participant "harness-orchestrator" as orch
+
+primary -> ux : task: UX design for accepted requirements
+ux -> docs : read requirements + e2e use cases
+ux -> docs : user-flows-*.md\nactors, flows, screen IDs
+ux -> docs : screens-*.md\nscreen inventory and states
+ux -> docs : wireframes-*.puml
+ux -> puml : check_syntax + render_file
+puml --> ux : wireframes-*.svg
+ux -> docs : ui-spec-*.md\nlayout, components, validation, a11y
+ux -> docs : prototype/<slug>/index.html\nstatic, offline, relative links
+ux -> ux : self-check IDs, states,\nempty/loading/error, no secrets
+ux --> orch : UX artifacts + CHECKPOINT CP-1 reached
+orch -> vision : visual review of SVG + prototype screenshots
+vision --> orch : findings
+user -> docs : review flows, wireframes, prototype\nedit artifacts at checkpoint
+@enduml

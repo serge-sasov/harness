@@ -27,12 +27,15 @@ $globalFiles = @(
     (Join-Path $GlobalRoot "agents\harness.md"),
     (Join-Path $GlobalRoot "agents\harness-orchestrator.md"),
     (Join-Path $GlobalRoot "agents\harness-analyst.md"),
+    (Join-Path $GlobalRoot "agents\harness-ux-designer.md"),
     (Join-Path $GlobalRoot "agents\harness-architect.md"),
     (Join-Path $GlobalRoot "agents\harness-coder.md"),
     (Join-Path $GlobalRoot "agents\harness-qa.md"),
     (Join-Path $GlobalRoot "agents\harness-qa-vision.md"),
     (Join-Path $GlobalRoot "agents\harness-doc-writer.md"),
     (Join-Path $GlobalRoot "commands\harness-init.md"),
+    (Join-Path $GlobalRoot "commands\harness-feature.md"),
+    (Join-Path $GlobalRoot "commands\harness-bug.md"),
     (Join-Path $GlobalRoot "commands\harness-run.md"),
     (Join-Path $GlobalRoot "commands\harness-board-update.md"),
     (Join-Path $GlobalRoot "commands\harness-board-report.md"),
@@ -41,10 +44,19 @@ $globalFiles = @(
     (Join-Path $GlobalRoot "skills\harness-issues\SKILL.md"),
     (Join-Path $GlobalHarness "process.md"),
     (Join-Path $GlobalHarness "version.json"),
+    (Join-Path $GlobalHarness "workflows\feature.md"),
+    (Join-Path $GlobalHarness "workflows\bugfix.md"),
     (Join-Path $GlobalHarness "templates\task-card.md"),
+    (Join-Path $GlobalHarness "templates\task-card-feature.md"),
+    (Join-Path $GlobalHarness "templates\task-card-bugfix.md"),
+    (Join-Path $GlobalHarness "templates\bug-card.md"),
     (Join-Path $GlobalHarness "templates\adr.md"),
     (Join-Path $GlobalHarness "templates\plan-row.md"),
     (Join-Path $GlobalHarness "templates\issue.md"),
+    (Join-Path $GlobalHarness "templates\checkpoint.md"),
+    (Join-Path $GlobalHarness "templates\e2e-use-case.md"),
+    (Join-Path $GlobalHarness "templates\e2e-test-data.yaml"),
+    (Join-Path $GlobalHarness "templates\ux-spec.md"),
     (Join-Path $GlobalHarness "scripts\new-issue.ps1")
 )
 $missingGlobal = @()
@@ -63,6 +75,7 @@ $configPath = Join-Path $GlobalRoot "opencode.jsonc"
 $harnessIds = @(
     "harness-orchestrator",
     "harness-analyst",
+    "harness-ux-designer",
     "harness-architect",
     "harness-coder",
     "harness-qa",
@@ -132,6 +145,44 @@ if ((Test-Path -LiteralPath $marker) -and (Test-Path -LiteralPath $plan)) {
     }
     else {
         Write-Warn "missing harness/templates/issue.md or harness/scripts/new-issue.ps1; run /harness-init -Force"
+    }
+    $newTemplates = @(
+        "checkpoint.md", "e2e-use-case.md", "e2e-test-data.yaml", "ux-spec.md",
+        "task-card-feature.md", "task-card-bugfix.md", "bug-card.md"
+    )
+    $missingTemplates = @($newTemplates | Where-Object {
+        -not (Test-Path -LiteralPath (Join-Path $Project "harness\templates\$_"))
+    })
+    if ($missingTemplates.Count -eq 0) {
+        Write-Ok "checkpoint, e2e, UX, workflow task, and bug templates available in the project"
+    }
+    else {
+        Write-Warn "missing project templates: $($missingTemplates -join ', '); run /harness-init -Force"
+    }
+    $missingWorkflows = @(@("feature.md", "bugfix.md") | Where-Object {
+        -not (Test-Path -LiteralPath (Join-Path $Project "harness\workflows\$_"))
+    })
+    if ($missingWorkflows.Count -eq 0) {
+        Write-Ok "feature and bugfix workflows available in the project"
+    }
+    else {
+        Write-Warn "missing project workflows: $($missingWorkflows -join ', '); run /harness-init -Force"
+    }
+    $bugsIndex = Join-Path $Project "docs\bugs\README.md"
+    if (Test-Path -LiteralPath $bugsIndex) {
+        Write-Ok "product bug registry docs/bugs/README.md exists"
+    }
+    else {
+        Write-Warn "docs/bugs/README.md not found; run /harness-init -Force"
+    }
+    $missingDirs = @(@("ux", "checkpoints", "bugs") | Where-Object {
+        -not (Test-Path -LiteralPath (Join-Path $Project "docs\$_"))
+    })
+    if ($missingDirs.Count -eq 0) {
+        Write-Ok "docs/ux, docs/checkpoints, and docs/bugs directories exist"
+    }
+    else {
+        Write-Warn "missing docs directories: $($missingDirs -join ', '); run /harness-init -Force"
     }
 }
 else {

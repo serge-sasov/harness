@@ -8,16 +8,19 @@ participant "harness\nprimary lead" as lead
 participant "harness-orchestrator" as orch
 participant "PlanBoard\ndocs/plan.md" as board
 participant "TaskCards\ndocs/tasks" as cards
+participant "BugRegistry\ndocs/bugs" as bugs
 participant "Report\n(read-only)" as report
 
 user -> lead : /harness-board-report
 lead -> orch : read-only board summary
-orch -> board : statuses, dependencies, commits
+orch -> board : workflows, statuses, dependencies, commits
 board --> orch : board rows
 orch -> cards : blockers and logs
 cards --> orch : causes of failed / blocked
-orch -> orch : consistency check\n%done, dangling depends_on
-orch --> report : status table\nready to start, blockers
+orch -> bugs : bug queue, severity, task links
+bugs --> orch : BUG-XXX statuses
+orch -> orch : consistency check\n%done, dangling depends_on, bug/task mismatch
+orch --> report : task table by workflow\nbug queue, ready to start, blockers
 report --> lead : summary + 1..3 recommendations
 lead --> user : report
 note right of report

@@ -1,26 +1,10 @@
-# T-XXX: Short task title
+# Task card template (deprecated pointer)
 
-| Field | Value |
-|---|---|
-| id | T-XXX |
-| title | Full task title |
-| role | orchestrator / analyst / architect / coder / qa / doc-writer |
-| status | pending |
-| depends_on | T-YYY, T-ZZZ |
-| artifacts | comma-separated artifact paths |
-| issues | ISSUE-... (links to docs/issues/ if problems occurred) |
-| commit | commit hash after completion |
+This file is kept for compatibility. New cards must use one of:
 
-## Acceptance
+- `harness/templates/task-card-feature.md` for `workflow: feature`;
+- `harness/templates/task-card-bugfix.md` for `workflow: bugfix`.
 
-- [ ] Criterion 1 (verifiable).
-- [ ] Criterion 2.
-- [ ] Criterion 3.
-
-## Blockers
-
-- (filled on status=failed|blocked: cause, output, what is needed to unblock)
-
-## Log
-
-- YYYY-MM-DD: what was done, files, commands, results.
+The selected workflow file (`harness/workflows/feature.md` or
+`harness/workflows/bugfix.md`) is authoritative for stages and checkpoints.
+Shared rules are in `harness/process.md`.

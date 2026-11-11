@@ -17,6 +17,8 @@ Load this skill when a problem occurred during harness work and had to be diagno
 
 Do not create an issue for every successful step and do not duplicate the task card. An issue is a log of a problem, its cause, and its solution.
 
+Product defects are **not** harness issues: track them as `BUG-XXX` cards in `docs/bugs/`; use this skill only for problems in the harness process, tools, agents, or commands.
+
 ## Hard check
 
 Verify `harness/process.md` and `docs/plan.md`; if missing, stop and suggest `/harness-init`.
@@ -53,7 +55,7 @@ Store `docs/issues/ISSUE-YYYYMMDD-HHMMSS-<slug>.md` (one problem per file); inde
 | `wontfix` | no fix required/possible, reason stated |
 
 `severity`: `blocker`, `major`, `minor`, `info`.
-`type`: `permission`, `tool`, `model`, `mcp`, `rag`, `path`, `git`, `process`, `other`.
+`type`: `permission`, `tool`, `model`, `mcp`, `rag`, `path`, `git`, `process`, `checkpoint`, `e2e`, `ux`, `other`.
 
 ## Index
 

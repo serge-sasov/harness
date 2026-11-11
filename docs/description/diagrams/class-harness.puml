@@ -6,9 +6,26 @@ title Harness - conceptual class model
 enum TaskStatus {
   pending
   in_progress
+  awaiting_review
   done
   failed
   blocked
+}
+
+enum Workflow {
+  feature
+  bugfix
+}
+
+enum BugStatus {
+  new
+  triaged
+  in_progress
+  fixed
+  verified
+  closed
+  duplicate
+  wontfix
 }
 
 enum Verdict {
@@ -26,15 +43,38 @@ class PlanBoard {
 class TaskCard {
   +id : String
   +title : String
+  +workflow : Workflow
+  +stage : String
+  +bug : BugReport
   +role : Role
   +status : TaskStatus
   +dependsOn : TaskCard[]
   +acceptance : String[]
   +artifacts : Path[]
   +blockers : String[]
+  +checkpoints : Checkpoint[]
+  +inputs : Path[]
+  +e2e : Boolean
+  +ux : Boolean
   +log : LogEntry[]
   +canStart() : Boolean
   +accept() : Boolean
+}
+
+class BugReport {
+  +id : String
+  +title : String
+  +status : BugStatus
+  +severity : String
+  +observed : String
+  +expected : String
+  +reproduction : String[]
+  +rootCause : String
+  +fix : String
+  +verification : String
+  +duplicateOf : BugReport
+  +tasks : TaskCard[]
+  +postmortem : String
 }
 
 abstract class Role {
@@ -45,8 +85,38 @@ abstract class Role {
   +execute(task) : RoleResult
 }
 
+enum CheckpointDecision {
+  awaiting_review
+  approved
+  changes_requested
+}
+
+class Checkpoint {
+  +id : String
+  +stage : String
+  +status : CheckpointDecision
+  +artifacts : Path[]
+  +snapshotCommit : String
+  +userRemarks : String
+}
+
+class E2EUseCase {
+  +id : String
+  +actor : String
+  +priority : String
+  +steps : String[]
+  +cleanup : String[]
+}
+
+class TestDataset {
+  +schema : String
+  +useCases : E2EUseCase[]
+  +validate() : Boolean
+}
+
 class Orchestrator
 class Analyst
+class UxDesigner
 class Architect
 class Coder
 class QA
@@ -113,6 +183,7 @@ class Finding {
 
 Role <|-- Orchestrator
 Role <|-- Analyst
+Role <|-- UxDesigner
 Role <|-- Architect
 Role <|-- Coder
 Role <|-- QA
@@ -120,10 +191,18 @@ Role <|-- QAVision
 Role <|-- DocWriter
 Role --> ModelProfile
 Role ..> RoleResult : returns
+TaskCard --> Workflow
 TaskCard --> Role
 TaskCard --> TaskStatus
 TaskCard "0..*" --> "0..*" TaskCard : dependsOn
 TaskCard *-- "0..*" LogEntry
+TaskCard *-- "1..*" Checkpoint
+BugReport --> BugStatus
+TaskCard "0..1" --> "1" BugReport : bug
+Checkpoint --> CheckpointDecision
+Analyst --> E2EUseCase : formalizes
+Analyst --> TestDataset : produces
+TestDataset *-- "1..*" E2EUseCase
 PlanBoard "1" *-- "0..*" TaskCard
 Role "1" --> "0..*" Artifact : produces
 Artifact <|-- Diagram
@@ -131,11 +210,15 @@ Artifact <|-- Review
 Review --> Verdict
 Review *-- "0..*" Finding
 Orchestrator --> PlanBoard : updates
+Orchestrator --> BugReport : triages / closes
+Orchestrator --> Checkpoint : records decisions
 Orchestrator --> Commit : creates
 Command --> HarnessLead : selects
+HarnessLead --> Workflow : selects
 HarnessLead --> Role : dispatches
 HarnessLead --> PlanBoard : reads
 HarnessLead --> TaskCard : reads
+HarnessLead --> BugReport : reads
 QA --> Review : produces
 QAVision ..> Review : adds visual findings
 Diagram ..> Command : rendered by

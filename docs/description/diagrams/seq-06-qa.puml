@@ -1,28 +1,36 @@
 @startuml
 autonumber
 skinparam defaultFontName Segoe UI
-title S-06 QA acceptance (qa + qa-vision)
+title S-06 QA acceptance + e2e coverage (qa + qa-vision)
 
 participant "harness\nprimary lead" as primary
 participant "harness-qa" as qa
 participant "harness-qa-vision" as qavision
-participant "Artifacts\ncode + docs" as store
+participant "Artifacts\ncode + docs + UX" as store
 participant "TestRunner" as tests
+participant "E2E runner" as e2e
 participant "Vision\nSVG / PNG" as vision
 participant "harness-orchestrator" as orch
 
-primary -> qa : task: review against acceptance
-qa -> store : read criteria and artifacts
+primary -> qa : task: text/code/e2e review against acceptance
+qa -> store : read criteria, e2e UC/data,\nUX artifacts, contracts
 qa -> tests : independent test run
 tests --> qa : results (read-only)
-qa -> qavision : inspect diagrams and screenshots
+qa -> e2e : run coder-provided e2e runner
+e2e --> qa : evidence per UC-E2E
+qa -> store : docs/qa/e2e-plan-*.md\ncoverage matrix
+qa -> store : docs/qa/e2e-report-*.md\ndefects + residual risks
+qa -> store : docs/qa/review-T-XXX.md\ntechnical findings
+qa --> primary : technical verdict
+
+primary -> qavision : task: visual pass for diagrams,\nwireframes, prototype screenshots
 qavision -> vision : read PNG / SVG
 vision --> qavision : pixels, text, layout
 qavision -> store : docs/qa/vision-review-T-XXX.md
-qavision --> qa : visual findings + verdict
-qa -> qa : combined verdict accept / reject
-qa -> store : docs/qa/review-T-XXX.md\ncriteria, findings, verdict
-qa --> orch : verdict + finding severity
+qavision --> primary : visual findings + verdict
+
+primary -> orch : both QA reports
+orch -> orch : combine into one verdict
 alt reject
   orch --> primary : failed, fixes to the task role
 else accept

@@ -3,7 +3,7 @@ skinparam defaultFontName Segoe UI
 skinparam ActivityBackgroundColor #FFFFFF
 skinparam ActivityBorderColor #555555
 skinparam ArrowColor #555555
-title Local harness - task plan T-001..T-013
+title Local harness - task plan T-001..T-029
 
 start
 :T-001 Git bootstrap\n.gitignore, README; <<#90EE90>>
@@ -29,12 +29,29 @@ fork again
 end fork
 :T-012 opencode commands\nharness-run, harness-board-*; <<#90EE90>>
 :T-013 Full-cycle smoke test\npilot task; <<#90EE90>>
+:T-014 ADR-002 + contracts\ne2e / UX / checkpoints; <<#90EE90>>
+:T-015 Analyst e2e use cases\nUC-E2E + YAML dataset; <<#90EE90>>
+:T-016 UX-Designer role\nflows, wireframes, prototype; <<#90EE90>>
+:T-017 Checkpoint protocol\nawaiting_review + CP-F; <<#90EE90>>
+:T-018 Coder e2e automation\ntests, runner, validator; <<#90EE90>>
+:T-019 QA e2e coverage\ne2e plan, run, report; <<#90EE90>>
+:T-020 Install/version/docs\n2.1.0 integration; <<#90EE90>>
+:T-021 Description diagrams\nHTML + activity rebuild; <<#90EE90>>
+:T-023 ADR-003 + contracts\nfeature / bugfix workflows; <<#90EE90>>
+:T-024 Shared process\n+ workflow files; <<#90EE90>>
+:T-025 Workflow templates\ncards, bug card, board schema; <<#90EE90>>
+:T-026 Commands + agents\nworkflow-aware routing; <<#90EE90>>
+:T-027 Version 2.2.0\ninstall / init / doctor; <<#90EE90>>
+:T-028 README + guide + description\nworkflow documentation; <<#90EE90>>
+:T-029 Diagrams + HTML\nbugfix sequence, activity; <<#90EE90>>
+:T-022 Harness 2.2.0 smoke test\nfeature + bugfix flows; <<#D3D3D3>>
 stop
 
 legend right
 |= Color |= Status |
 |<#90EE90>| done |
 |<#FFE082>| in_progress |
+|<#87CEFA>| awaiting_review |
 |<#D3D3D3>| pending |
 |<#FF9090>| failed |
 |<#FFB347>| blocked |

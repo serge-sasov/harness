@@ -4,7 +4,7 @@
   Global installation of the local harness for the current user.
 
 .DESCRIPTION
-  Copies agents, commands, skill, and templates to ~/.config/opencode,
+  Copies agents, commands, skill, workflows, and templates to ~/.config/opencode,
   backs up changed files, and adds permission rules for harness agents
   to opencode.jsonc (if the file has no comments).
 
@@ -49,11 +49,24 @@ $BackupRoot = Join-Path $GlobalRoot "backups\harness-install-$Timestamp"
 $requiredSource = @(
     (Join-Path $SourceRoot "agents\harness.md"),
     (Join-Path $SourceRoot "agents\harness-orchestrator.md"),
+    (Join-Path $SourceRoot "agents\harness-ux-designer.md"),
     (Join-Path $SourceRoot "agents\harness-qa-vision.md"),
     (Join-Path $SourceRoot "commands\harness-run.md"),
+    (Join-Path $SourceRoot "commands\harness-feature.md"),
+    (Join-Path $SourceRoot "commands\harness-bug.md"),
     (Join-Path $SourceRoot "skills\harness\SKILL.md"),
     (Join-Path $SourceRoot "skills\harness-issues\SKILL.md"),
+    (Join-Path $SourceRoot "workflows\feature.md"),
+    (Join-Path $SourceRoot "workflows\bugfix.md"),
     (Join-Path $SourceRoot "templates\issue.md"),
+    (Join-Path $SourceRoot "templates\checkpoint.md"),
+    (Join-Path $SourceRoot "templates\task-card.md"),
+    (Join-Path $SourceRoot "templates\task-card-feature.md"),
+    (Join-Path $SourceRoot "templates\task-card-bugfix.md"),
+    (Join-Path $SourceRoot "templates\bug-card.md"),
+    (Join-Path $SourceRoot "templates\e2e-use-case.md"),
+    (Join-Path $SourceRoot "templates\e2e-test-data.yaml"),
+    (Join-Path $SourceRoot "templates\ux-spec.md"),
     (Join-Path $SourceRoot "scripts\new-issue.ps1"),
     (Join-Path $SourceRoot "process.md"),
     (Join-Path $SourceRoot "version.json")
@@ -110,12 +123,14 @@ $globalHarness = Join-Path $GlobalRoot "harness"
 Copy-Item -Path (Join-Path $SourceRoot "process.md") -Destination $globalHarness -Force
 Copy-Item -Path (Join-Path $SourceRoot "version.json") -Destination $globalHarness -Force
 Copy-Item -Path (Join-Path $SourceRoot "templates") -Destination $globalHarness -Recurse -Force
+Copy-Item -Path (Join-Path $SourceRoot "workflows") -Destination $globalHarness -Recurse -Force
 Copy-Item -Path (Join-Path $SourceRoot "scripts") -Destination $globalHarness -Recurse -Force
 
 $configPath = Join-Path $GlobalRoot "opencode.jsonc"
 $harnessIds = @(
     "harness-orchestrator",
     "harness-analyst",
+    "harness-ux-designer",
     "harness-architect",
     "harness-coder",
     "harness-qa",

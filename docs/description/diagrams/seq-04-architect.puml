@@ -7,10 +7,11 @@ participant "harness\nprimary lead" as primary
 participant "harness-architect" as arch
 participant "MCP\nplantuml-render" as mcp
 participant "docs/architecture" as docs
+participant "docs/analysis + docs/ux" as inputs
 participant "harness-orchestrator" as orch
 
 primary -> arch : task: ADR + diagrams + contracts
-arch -> docs : read requirements and constraints
+arch -> inputs : read requirements, e2e use cases,\nUX screen IDs and UI spec
 arch -> arch : choose the solution\nand alternatives
 arch -> docs : adr-NNN-*.md
 arch -> mcp : check_syntax (.puml)

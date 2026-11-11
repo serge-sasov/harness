@@ -1,0 +1,47 @@
+@startuml
+autonumber
+skinparam defaultFontName Segoe UI
+title S-13 User checkpoint protocol
+
+actor "User" as user
+participant "harness\nprimary lead" as lead
+participant "harness-orchestrator" as orch
+participant "Task role" as role
+participant "docs/checkpoints" as cp
+participant "Git" as git
+
+role --> lead : CHECKPOINT CP-N reached\nartifacts + checklist
+lead -> orch : record checkpoint CP-N
+orch -> cp : create T-XXX-CP-N.md\nstatus: awaiting_review
+orch -> git : commit snapshot
+git --> orch : snapshot hash
+orch -> cp : snapshot_commit = hash
+orch --> lead : checkpoint ready
+lead --> user : CP-N artifacts, review checklist,\nhow to edit/comment and resume
+
+user -> cp : edit artifacts and/or write remarks
+user -> cp : decision: approved / changes_requested
+user -> lead : /harness-run T-XXX
+
+lead -> cp : read decision, remarks, user edits
+alt no decision
+  lead --> user : stop: decision required
+else changes_requested
+  lead -> role : apply remarks; return to CP-N
+  role --> lead : updated artifacts
+else approved
+  lead -> orch : resume
+  orch -> cp : decision: approved\nreviewed_at
+  alt CP-F
+    orch -> git : final commit "T-XXX: ..."
+    orch --> lead : task done
+  else more checkpoints
+    lead -> role : continue to next checkpoint
+  end
+end
+note right of cp
+  At most one task is awaiting_review;
+  roles read user edits and git diff
+  before continuing; silence is not approval
+end note
+@enduml

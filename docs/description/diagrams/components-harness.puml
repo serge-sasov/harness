@@ -6,7 +6,8 @@ title Local harness - solution component diagram
 actor "User" as user
 
 package "opencode (primary + global harness agents)" {
-  component "Commands\nharness-run / harness-board-*" as commands
+  component "Commands\nharness-feature / harness-bug /\nharness-run / harness-board-*" as commands
+  component "Workflows\nfeature / bugfix" as workflows
   component "harness\nprimary lead" as lead
   component "Subagent registry\n~/.config/opencode/agents" as registry
 }
@@ -14,6 +15,7 @@ package "opencode (primary + global harness agents)" {
 package "Harness roles (subagents)" {
   component "harness-orchestrator" as orch
   component "harness-analyst" as analyst
+  component "harness-ux-designer" as ux
   component "harness-architect" as architect
   component "harness-coder" as coder
   component "harness-qa" as qa
@@ -22,17 +24,23 @@ package "Harness roles (subagents)" {
 }
 
 package "Local models (Ollama)" {
-  component "qwen3.8:27b-64k\nharness / orchestrator / analyst /\narchitect / qa / doc-writer" as qwen
+  component "qwen3.8:27b-64k\nharness / orchestrator / analyst /\nux-designer / architect / qa / doc-writer" as qwen
   component "tiel-coder:35b-a3b-mtp-128k\ntext / vision\ncoder / qa-vision" as tiel
 }
 
 package "Sources of truth" {
+  component "workflows\nfeature.md / bugfix.md" as workflowdocs
   component "board\ndocs/plan.md" as board
   component "task cards\ndocs/tasks/*.md" as cards
+  component "bug registry\ndocs/bugs/BUG-*.md" as bugs
+  component "checkpoints\ndocs/checkpoints/*.md" as checkpoints
 }
 
 package "Artifacts" {
-  component "docs/analysis\ndocs/architecture\ndocs/qa\ndocs/guides\ndocs/issues" as docs
+  component "docs/analysis\nrequirements + e2e UC + YAML" as docs
+  component "docs/ux\nflows / wireframes / prototype" as uxdocs
+  component "docs/architecture\ndocs/qa\ndocs/guides\ndocs/issues" as designdocs
+  component "docs/bugs\nBUG cards + index" as bugdocs
   component "src, tests, scripts\nDockerfile, compose" as code
   component "activity.puml / .svg" as activity
 }
@@ -50,14 +58,18 @@ package "Pilot service (T-013)" {
   database "SQLite\nvolume /data" as db
 }
 
-user --> commands : /harness-init / /harness-run
+user --> commands : /harness-init / /harness-feature\n/harness-bug / /harness-run
 commands --> lead : agent: harness
+commands --> workflows : selects stage graph
 lead --> registry : task harness-*
+lead --> workflowdocs : reads selected workflow
 lead --> board : reads board
 lead --> cards : reads cards
+lead --> bugs : reads bug report
 lead --> qwen
 registry --> orch
 registry --> analyst
+registry --> ux
 registry --> architect
 registry --> coder
 registry --> qa
@@ -66,6 +78,7 @@ registry --> docwriter
 
 orch --> qwen
 analyst --> qwen
+ux --> qwen
 architect --> qwen
 docwriter --> qwen
 coder --> tiel
@@ -73,29 +86,37 @@ qavision --> tiel
 
 orch --> board : statuses and commits
 orch --> cards : acceptance / blockers
+orch --> bugs : triage / status / root cause
+orch --> bugdocs : bug cards and index
+orch --> checkpoints : awaiting_review / decisions
 orch --> activity : status color
-orch --> docs : issue index
+orch --> designdocs : issue index
 orch --> puml : check_syntax / render
 orch --> git : add + commit
 
 analyst --> rag : source search
-analyst --> docs : requirements
-architect --> docs : ADR and diagrams
-qa --> docs : text review reports
-qavision --> docs : visual review reports
-docwriter --> docs : guides and README
+analyst --> docs : requirements + e2e data
+ux --> uxdocs : flows, wireframes, prototype
+architect --> designdocs : ADR and diagrams
+architect --> uxdocs : reads screen IDs
+qa --> designdocs : e2e plan/report + review
+qa --> bugs : reads acceptance
+qavision --> uxdocs : visual review
+docwriter --> designdocs : guides and README
 
-coder --> code : implementation and tests
+coder --> code : implementation, unit + e2e tests\nreproduction + regression
+coder --> docs : reads e2e data
+coder --> bugs : reads report
 coder --> api : Docker local
 api --> svc
 svc --> repo
 repo --> db
 
-docs --> code : implementation contracts
+designdocs --> code : implementation contracts
 
 note right of registry
   Global install:
-  agents / commands / skills / harness
+  agents / commands / skills / workflows / harness
   Project activation: /harness-init
 end note
 @enduml

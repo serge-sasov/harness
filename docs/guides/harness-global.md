@@ -7,11 +7,12 @@ and enable it in projects only by explicit command.
 
 | Part | Location | Contents |
 |---|---|---|
-| Harness tooling | `~/.config/opencode/` | `harness-*` agents, `/harness-*` commands, `harness` and `harness-issues` skills, templates, scripts |
-| Project state | `<project>/` | `harness/process.md`, `harness/version.json`, `docs/plan.md`, `docs/tasks/`, artifacts, git |
+| Harness tooling | `~/.config/opencode/` | `harness-*` agents, `/harness-*` commands, `harness` and `harness-issues` skills, workflow files, templates, scripts |
+| Project state | `<project>/` | `harness/process.md`, `harness/workflows/`, `harness/version.json`, `docs/plan.md`, `docs/tasks/`, `docs/bugs/`, artifacts, git |
 
-The board, task cards, and artifacts cannot be global: they are project state.
-Only role definitions, commands, templates, and scripts are global.
+The board, task cards, bug registry, and artifacts cannot be global: they are
+project state. Only role definitions, commands, workflows, templates, and scripts
+are global.
 
 ## 2. Global installation
 
@@ -23,7 +24,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/install.ps1
 
 The script:
 
-1. copies agents, commands, skills, templates, and scripts to
+1. copies agents, commands, skills, workflows, templates, and scripts to
    `~/.config/opencode/`;
 2. backs up changed files to
    `~/.config/opencode/backups/harness-install-<timestamp>/`;
@@ -34,6 +35,7 @@ The script:
   "task": {
     "harness-orchestrator": "allow",
     "harness-analyst": "allow",
+    "harness-ux-designer": "allow",
     "harness-architect": "allow",
     "harness-coder": "allow",
     "harness-qa": "allow",
@@ -74,18 +76,33 @@ Created:
 harness/
   process.md
   version.json
+  workflows/
+    feature.md
+    bugfix.md
   templates/
     task-card.md
+    task-card-feature.md
+    task-card-bugfix.md
+    bug-card.md
     adr.md
     plan-row.md
+    issue.md
+    checkpoint.md
+    e2e-use-case.md
+    e2e-test-data.yaml
+    ux-spec.md
 docs/
   plan.md
   activity.puml
   tasks/
   analysis/
+  ux/
   architecture/
   qa/
   guides/
+  issues/
+  bugs/
+  checkpoints/
 ```
 
 `/harness-init` does not copy global agents or commands: the global
@@ -102,25 +119,91 @@ backs up to `.harness-backup-<timestamp>/`.
 | Command | Purpose |
 |---|---|
 | `/harness-init` | initialize the project |
-| `/harness-run T-XXX` | execute a task, accept it, update the board, commit |
-| `/harness-board-update all / T-XXX` | sync the board, cards, activity, and SVG |
-| `/harness-board-report` | read-only board summary |
+| `/harness-feature <slug> [e2e] [ux]` | create a pending `P-00` feature planning task |
+| `/harness-bug <report or BUG-XXX>` | create/triage a `BUG-XXX` card and pending bugfix tasks |
+| `/harness-run T-XXX` | execute a task until a checkpoint, or resume after review |
+| `/harness-board-update all / T-XXX` | sync the board, cards, bug index, checkpoints, activity, and SVG when no task is active |
+| `/harness-board-report` | read-only board/bug summary, including pending reviews |
 | `/harness-doctor` | check the installation and the project |
 
 Run flow:
 
 ```text
+/harness-feature <slug> | /harness-bug <report>
+  -> harness-orchestrator: register pending planning/bugfix work only
 /harness-run T-XXX
-  -> primary agent harness (marker and depends_on checks)
-  -> harness-orchestrator (in_progress, board, activity, SVG)
-  -> harness-analyst | harness-architect | harness-coder |
-    harness-qa | harness-qa-vision | harness-doc-writer
-  -> harness-orchestrator (acceptance, done/failed, commit)
+  -> primary agent harness (marker, workflow, depends_on, active-task checks)
+  -> harness-orchestrator (in_progress, board, bug status, activity, SVG)
+  -> harness-analyst | harness-ux-designer | harness-architect |
+    harness-coder | harness-qa | harness-qa-vision | harness-doc-writer
+  -> role stops: CHECKPOINT CP-N reached
+  -> harness-orchestrator (checkpoint file, awaiting_review, snapshot commit)
+  -> user reviews/edits artifacts and records a decision
+  -> /harness-run T-XXX (resume; repeat until CP-F)
+  -> harness-orchestrator (acceptance, bug status, done/failed, final commit)
 ```
 
-The lead does not edit files itself; the orchestrator handles the board and
-commits. Tasks run strictly sequentially: one ID per `/harness-run`, at most
-one task `in_progress`, no parallel role calls via `task`.
+The lead does not edit files itself; the orchestrator handles the board, bug
+registry, checkpoints, and commits. Tasks run strictly sequentially across both
+workflows: one ID per `/harness-run`, at most one active task (`in_progress` or
+`awaiting_review`), no feature/bugfix preemption, and no parallel role calls via
+`task`. New bug reports and pending cards may be registered while a task is
+active; existing statuses and dependencies must not change.
+
+## 4.1. User checkpoints
+
+Every task card declares at least one checkpoint; `CP-F` (final acceptance) is
+mandatory before a task can be `done`. Checkpoint records live in
+`docs/checkpoints/T-XXX-CP-N.md` and are created from
+`harness/templates/checkpoint.md`.
+
+Flow:
+
+1. The role stops at the declared checkpoint and reports
+   `CHECKPOINT <ID> reached`.
+2. The orchestrator writes the checkpoint file, sets the task to
+   `awaiting_review`, updates the board/activity/SVG, and commits a snapshot.
+3. The user reviews artifacts, edits files if needed, and records a decision:
+   `approved`, `changes_requested`, or no decision (keep reviewing).
+4. `/harness-run T-XXX` resumes:
+   - `approved` -> `in_progress`, the role continues to the next checkpoint;
+   - `changes_requested` -> the role applies the requested changes and returns
+     to the same checkpoint;
+   - missing decision -> stop and ask; never infer approval.
+5. User edits are authoritative. The role reads the checkpoint file and the
+   `git diff` since the snapshot before continuing and preserves those edits.
+
+Status colors: `pending` `#D3D3D3`, `in_progress` `#FFE082`,
+`awaiting_review` `#87CEFA`, `done` `#90EE90`, `failed` `#FF9090`, `blocked`
+`#FFB347`.
+
+## 4.2. E2E and UX artifacts
+
+- Analyst: `docs/analysis/e2e-use-cases-<slug>.md` with `UC-E2E-NNN` use cases
+  and `docs/analysis/e2e-test-data-<slug>.yaml` (schema `harness-e2e/1`).
+- UX designer: `docs/ux/user-flows-<slug>.md`, `screens-<slug>.md`,
+  `wireframes-<slug>.puml/.svg`, `ui-spec-<slug>.md`, and
+  `docs/ux/prototype/<slug>/index.html` plus optional screenshots.
+- Architect: contracts cover the screen IDs, use-case IDs, and the e2e
+  environment/data consumption.
+- Coder: `tests/e2e/`, an isolated runner (for example `scripts/e2e.ps1`), and
+  a dataset validator (for example `scripts/validate-e2e-data.py`).
+- QA: `docs/qa/e2e-plan-<slug>.md` (coverage matrix), `e2e-report-<slug>.md`
+  (run evidence and defects), and `review-T-XXX.md` (verdict).
+
+E2E runs only against local/staging resources, with isolated and cleaned-up test
+data. Production is forbidden.
+
+Bugfix evidence:
+
+- `BUG-XXX` card in `docs/bugs/` with observed/expected behavior, reproduction,
+  severity, and task links;
+- coder `CP-1`: reproduction/root cause and a regression test that fails on the
+  base revision; `CP-2`: minimal fix and regression green;
+- QA: independent fail-before/pass-after evidence in `docs/qa/review-T-XXX.md`;
+- optional docs/changelog for `B-04`; P0/P1 postmortem before `closed`;
+- full e2e/UX/architecture only when the fix escalates to a contract, schema,
+  security, multi-module, or UI-flow change.
 
 ## 5. Protection against accidental starts
 
@@ -171,11 +254,13 @@ check `git rev-parse --show-toplevel`: the root must match the project.
 Absolute patterns protect against this, but a correct workspace root is still
 preferable.
 
-## 5.2. Problem log (`harness-issues`)
+## 5.2. Problem logs: harness issues vs product bugs
 
-The `harness-issues` skill records harness problems, their cause, location, and
-solution. One file per problem:
+Harness problems use the `harness-issues` skill. Product defects use
+`/harness-bug` and `docs/bugs/`; never put a product bug in `docs/issues/` or a
+harness failure in the bug registry.
 
+One file per harness problem:
 ```text
 docs/issues/
   README.md
@@ -214,6 +299,7 @@ manually from the template.
 
 ## 6. Versions and pins
 
+- Current version: `2.2.0` (feature/bugfix workflows, BUG registry, new commands).
 - Global version: `~/.config/opencode/harness/version.json`.
 - Project version: `harness/version.json`, created by `/harness-init`.
 - `/harness-doctor` warns when the versions differ.
@@ -270,6 +356,15 @@ script prints a reminder).
 | old agents bypass gating | `.opencode/agents/analyst.md` etc. remain | remove old copies or rename to `harness-*` |
 | config was not patched | `opencode.jsonc` contains comments | add `permission.task` with allow manually |
 | `new-issue.ps1` is missing | the project was initialized by an older version | run `/harness-init -Force` with backup |
+| checkpoint templates or `docs/checkpoints/` missing | the project was initialized by an older version | run `/harness-init -Force` with backup |
+| `harness/workflows/` or `docs/bugs/` missing | the project was initialized by an older version | run `/harness-init -Force` with backup |
+| task card has no `workflow`/`stage` | legacy 2.1.0 card | add `workflow: feature` and a stage, or recreate from the feature template; do not guess |
+| bugfix card has no bug link | invalid card for `workflow: bugfix` | stop; the orchestrator must set `bug: BUG-XXX` and `severity` |
+| bug cannot be reproduced | missing or unstable reproduction data | coder stops at `CP-1` with evidence; no speculative fix |
+| product bug was filed in `docs/issues/` | wrong registry | move it to `docs/bugs/` from the bug card template; keep harness issues separate |
+| task is stuck in `awaiting_review` | no explicit decision in the checkpoint file | review, record `approved`/`changes_requested`, resume `/harness-run T-XXX` |
+| role does not stop at a checkpoint | card has no `checkpoints` list or old agent copies | add checkpoints to the card; rerun install and restart opencode |
+| e2e runner cannot read test data | missing or invalid YAML dataset | check `docs/analysis/e2e-test-data-<slug>.yaml`; run the coder validator |
 | version differs | the project was initialized by an older version | update the project deliberately; see pin |
 
 ## 9. Migration to opencode V2

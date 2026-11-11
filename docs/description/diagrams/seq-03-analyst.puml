@@ -1,7 +1,7 @@
 @startuml
 autonumber
 skinparam defaultFontName Segoe UI
-title S-03 Requirements analysis (analyst)
+title S-03 Requirements + e2e use cases (analyst)
 
 participant "harness\nprimary lead" as primary
 participant "harness-analyst" as analyst
@@ -9,19 +9,20 @@ participant "local-rag\nFTS5 + LanceDB" as rag
 participant "docs/analysis" as docs
 participant "harness-orchestrator" as orch
 
-primary -> analyst : task: requirements for the topic
+primary -> analyst : task: requirements + e2e for the topic
 analyst -> rag : rag_context / rag_search
 rag --> analyst : pointers: file + lines
 analyst -> analyst : Read and verify sources
-alt data is sufficient
-  analyst -> docs : requirements-*.md\nR-001.., NFR-1..
-else gaps exist
-  analyst -> docs : questions-*.md\nquestions + assumptions
-end
+analyst -> docs : requirements-*.md\nR-001.., NFR-1..
+analyst -> docs : questions-*.md\nopen questions + assumptions
 analyst -> docs : glossary.md
-analyst --> orch : requirements, questions, risks,\nartifact paths, blockers
+analyst -> docs : e2e-use-cases-*.md\nUC-E2E-NNN + coverage matrix
+analyst -> docs : e2e-test-data-*.yaml\nschema harness-e2e/1
+analyst -> analyst : validate IDs and coverage\n(requirement -> UC-E2E -> data)
+analyst --> orch : requirements, e2e artifacts,\nrisks, blockers
 note right of analyst
-  Requirements are atomic
-  and verifiable, with IDs R-NNN
+  Every functional requirement is covered
+  by a use case or explicitly out_of_scope;
+  dataset contains no secrets
 end note
 @enduml

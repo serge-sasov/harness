@@ -1,0 +1,34 @@
+# E2E test data contract (harness-e2e/1)
+# Source use cases: docs/analysis/e2e-use-cases-<slug>.md
+# No secrets: use environment placeholders only.
+schema: harness-e2e/1
+scope: "<scope>"
+environment:
+  base_url: "${E2E_BASE_URL}"
+  timeout_seconds: 30
+  seed_profile: "<seed profile>"
+use_cases:
+  - id: UC-E2E-001
+    title: "<title>"
+    requirements:
+      - R-001
+    actor: "<actor>"
+    priority: P0
+    preconditions:
+      - "<precondition>"
+    steps:
+      - id: S1
+        action: "POST /notes"
+        data:
+          title: "Note 1"
+          body: "Body"
+        expected:
+          status: 201
+          json_paths:
+            - "$.id"
+    cleanup:
+      - "DELETE /notes/{id}"
+    expected_postcondition: "<observable state>"
+    traceability:
+      test_ids:
+        - "e2e/test_notes.py::test_create_note"
