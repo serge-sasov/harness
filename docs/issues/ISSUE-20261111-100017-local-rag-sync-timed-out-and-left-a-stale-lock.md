@@ -44,6 +44,11 @@ rag_search found docs/architecture/adr-002-harness-e2e-ux-checkpoints.md and con
 
 Raise the MCP sync timeout or make rag_sync return a job ID and expose progress; add a smoke-test check for stale sync locks.
 
+Harness 2.2.1: `/harness-doctor` warns when the `local-rag` MCP timeout is
+`<= 120000` ms; `process.md` section 11 says a sync timeout does not block the
+task when `rag_search` already returns the new content; T-022 checks that
+`rag_status` advances after a docs/diagram update.
+
 ## Links
 
 docs/description/README.md, docs/architecture/adr-002-harness-e2e-ux-checkpoints.md, T-022
@@ -52,3 +57,4 @@ docs/description/README.md, docs/architecture/adr-002-harness-e2e-ux-checkpoints
 
 - 2026-11-11T10:00:17.8524821+03:00: detected
 - 2026-11-11T10:58:00+03:00: reproduced after the 2.2.0 docs/diagram update; MCP sync timed out again, status still shows the previous sync.
+- 2026-11-11T13:33:18+03:00: reproduced during the 2.2.1 reliability update; a targeted `rag_sync` timed out, the retry returned `Sync already running; skipped.`, and `rag_search` still returned the old `T-022-smoke-test-2.2.0.md` content.

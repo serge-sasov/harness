@@ -4,7 +4,7 @@
 |---|---|
 | Status | current |
 | Date | 2026-11-11 |
-| Version | 2.2.0 |
+| Version | 2.2.1 |
 | Scope | local multi-agent harness (feature + bugfix workflows) + pilot "Mini-CRUD service" |
 | Requirements source | [`requirements/initial.txt`](../../requirements/initial.txt) |
 | Process rules | [`harness/process.md`](../../harness/process.md) |
@@ -568,7 +568,9 @@ A harness issue record contains status, severity, type, source, role, absolute
 location, symptoms, reproduction, cause, solution/workaround, verification,
 prevention, and timeline. All roles may create issue files; the
 `harness-orchestrator` verifies the index and includes them in the task commit.
-Only the orchestrator edits bug cards. Secrets are never written to either log.
+Only `docs/issues/` is valid; a root `harness-issues/` directory is not a
+registry. `/harness-doctor` checks the index in both directions. Only the
+orchestrator edits bug cards. Secrets are never written to either log.
 
 ---
 
@@ -736,6 +738,10 @@ are required.
 | card has no workflow/stage | legacy or malformed card | add a valid workflow/stage; bugfix also needs `bug`/`severity` |
 | bug cannot be reproduced | insufficient report/evidence | keep `BUG-XXX` `new` or `blocked`; request reproduction data |
 | product bug was filed in `docs/issues/` | wrong registry | move it to `docs/bugs/`; keep harness issues separate |
+| `task` fails with `Subagent depth limit` | compaction handoff created a child continuation | do not run the role inline; fix/disable the handoff plugin, start a new root session, resume `/harness-run` |
+| QA returns an empty report or `finish=length` | `limit.context` is above the real `num_ctx` or output budget is small | run `/harness-doctor`, compare `ollama show` with `limit.context`, reduce reads, resume the same session |
+| `rag_sync` times out or returns `Sync already running` | indexing exceeds the local-rag MCP timeout | verify with `rag_search`, retry after the lock releases; consider a larger timeout |
+| issue files are missing from the index | a record was created outside `docs/issues/` | move it to `docs/issues/`, add the row, rerun `/harness-doctor` |
 
 ---
 

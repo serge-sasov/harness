@@ -64,11 +64,11 @@ Store `docs/issues/ISSUE-YYYYMMDD-HHMMSS-<slug>.md` (one problem per file); inde
 | ID | Summary | Severity | Status | Location | Source | Updated |
 |---|---|---|---|---|---|---|
 
-The script appends a row to the index. The orchestrator checks consistency and fixes mismatches. Do not delete issue file history.
+The script appends a row to the index. The orchestrator checks consistency and fixes mismatches. `/harness-doctor` verifies that the index lists every `ISSUE-*.md` file, has no orphan rows, and that no issue files live in a root `harness-issues/` directory. Do not delete issue file history.
 
 ## Rules
 
 - One file per problem; never overwrite.
 - Never write secrets/tokens/keys/`.env`; redact.
 - Use absolute paths; relative paths may not match permissions.
-- An issue does not replace a task. Process changes go to "Prevention / follow-up" and a separate task.
+- An issue does not replace a task. Process changes go to "Prevention / follow-up" and a separate task. A `resolved` issue with unimplemented prevention links that follow-up task and records the implemented prevention once done.

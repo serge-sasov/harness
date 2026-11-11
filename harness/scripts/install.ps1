@@ -5,15 +5,16 @@
 
 .DESCRIPTION
   Copies agents, commands, skill, workflows, and templates to ~/.config/opencode,
-  backs up changed files, and adds permission rules for harness agents
-  to opencode.jsonc (if the file has no comments).
+  backs up changed files, and adds or repairs permission rules for harness agents
+  in opencode.jsonc (if the file has no comments).
 
 .PARAMETER SkipConfig
   Do not modify opencode.jsonc; only print the ready JSON snippet.
 #>
 [CmdletBinding()]
 param(
-    [switch]$SkipConfig
+    [switch]$SkipConfig,
+    [string]$ConfigPath = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -38,6 +39,77 @@ function Backup-IfExists {
         $destination = Join-Path $BackupRoot $name
         Copy-Item -LiteralPath $Path -Destination $destination -Recurse -Force
     }
+}
+
+function Get-BraceBlock {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][int]$OpenIndex
+    )
+    $depth = 0
+    $inString = $false
+    $escape = $false
+    for ($i = $OpenIndex; $i -lt $Text.Length; $i++) {
+        $ch = $Text[$i]
+        if ($inString) {
+            if ($escape) { $escape = $false }
+            elseif ($ch -eq '\') { $escape = $true }
+            elseif ($ch -eq '"') { $inString = $false }
+            continue
+        }
+        if ($ch -eq '"') { $inString = $true }
+        elseif ($ch -eq '{') { $depth++ }
+        elseif ($ch -eq '}') {
+            $depth--
+            if ($depth -eq 0) {
+                return [pscustomobject]@{
+                    Start = $OpenIndex
+                    End   = $i
+                    Text  = $Text.Substring($OpenIndex, $i - $OpenIndex + 1)
+                }
+            }
+        }
+    }
+    return $null
+}
+
+function Add-MissingTaskAllows {
+    param(
+        [Parameter(Mandatory = $true)][string]$Raw,
+        [Parameter(Mandatory = $true)][string[]]$Ids
+    )
+    $taskMatch = [regex]::Match($Raw, '"task"\s*:\s*\{')
+    if (-not $taskMatch.Success) { return $null }
+    $openIndex = $Raw.IndexOf('{', $taskMatch.Index)
+    if ($openIndex -lt 0) { return $null }
+    $block = Get-BraceBlock -Text $Raw -OpenIndex $openIndex
+    if ($null -eq $block) { return $null }
+
+    $missing = @($Ids | Where-Object {
+        $block.Text -notmatch ('"' + [regex]::Escape($_) + '"\s*:\s*"(?:allow|deny|ask)"')
+    })
+    if ($missing.Count -eq 0) { return $Raw }
+
+    $inner = $Raw.Substring($block.Start + 1, $block.End - $block.Start - 1)
+    $indent = "      "
+    $indentMatch = [regex]::Match($inner, '(?m)^([ \t]+)"[^"]+"\s*:')
+    if ($indentMatch.Success) { $indent = $indentMatch.Groups[1].Value }
+
+    $before = $inner.TrimEnd()
+    if ($before.Length -gt 0 -and -not $before.EndsWith(',')) { $before += ',' }
+    $entryLines = @()
+    for ($i = 0; $i -lt $missing.Count; $i++) {
+        $comma = if ($i -lt ($missing.Count - 1)) { "," } else { "" }
+        $entryLines += "$indent`"$($missing[$i])`": `"allow`"$comma"
+    }
+    $entryText = $entryLines -join "`r`n"
+    if ($before.Length -gt 0) {
+        $newInner = $before + "`r`n" + $entryText + "`r`n    "
+    }
+    else {
+        $newInner = "`r`n" + $entryText + "`r`n    "
+    }
+    return $Raw.Substring(0, $block.Start + 1) + $newInner + $Raw.Substring($block.End)
 }
 
 $SourceRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
@@ -126,7 +198,12 @@ Copy-Item -Path (Join-Path $SourceRoot "templates") -Destination $globalHarness 
 Copy-Item -Path (Join-Path $SourceRoot "workflows") -Destination $globalHarness -Recurse -Force
 Copy-Item -Path (Join-Path $SourceRoot "scripts") -Destination $globalHarness -Recurse -Force
 
-$configPath = Join-Path $GlobalRoot "opencode.jsonc"
+if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
+    $configPath = Join-Path $GlobalRoot "opencode.jsonc"
+}
+else {
+    $configPath = $ConfigPath
+}
 $harnessIds = @(
     "harness-orchestrator",
     "harness-analyst",
@@ -156,6 +233,11 @@ if (-not $SkipConfig) {
     }
     else {
         $raw = Get-Content -LiteralPath $configPath -Raw
+        $configBackup = Join-Path $BackupRoot "opencode.jsonc"
+        if ($configPath -ne (Join-Path $GlobalRoot "opencode.jsonc")) {
+            $configBackup = Join-Path $BackupRoot "opencode-custom.jsonc"
+            Copy-Item -LiteralPath $configPath -Destination $configBackup -Force
+        }
         if ($raw -match '(?m)^\s*//' -or $raw -match '(?m)^\s*/\*') {
             Write-Warning "opencode.jsonc contains comments; automatic edit skipped."
             Write-Host "Add manually to the `"permission`" object:"
@@ -169,7 +251,7 @@ if (-not $SkipConfig) {
             $newRaw = $raw
             $changed = $false
             foreach ($id in $harnessIds) {
-                $pattern = '("' + [regex]::Escape($id) + '"\s*:\s*)"(?:deny|allow)"'
+                $pattern = '("' + [regex]::Escape($id) + '"\s*:\s*)"(?:deny|allow|ask)"'
                 if ($newRaw -match $pattern) {
                     $updated = [regex]::Replace($newRaw, $pattern, '$1"allow"')
                     if ($updated -ne $newRaw) {
@@ -178,14 +260,26 @@ if (-not $SkipConfig) {
                     }
                 }
             }
+            $withMissing = Add-MissingTaskAllows -Raw $newRaw -Ids $harnessIds
+            if ($null -eq $withMissing) {
+                $missing = @($harnessIds | Where-Object {
+                    $newRaw -notmatch ('"' + [regex]::Escape($_) + '"\s*:\s*"allow"')
+                })
+                Write-Warning "Cannot locate the permission.task block; add missing allow rules manually: $($missing -join ', ')"
+            }
+            elseif ($withMissing -ne $newRaw) {
+                $newRaw = $withMissing
+                $changed = $true
+            }
+
             if ($changed) {
                 Write-Utf8NoBom -Path $configPath -Text $newRaw
                 try {
                     Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json | Out-Null
-                    Write-Host "permission.task: harness roles set to allow."
+                    Write-Host "permission.task: harness roles set to allow (missing entries added)."
                 }
                 catch {
-                    Copy-Item -LiteralPath (Join-Path $BackupRoot "opencode.jsonc") -Destination $configPath -Force
+                    Copy-Item -LiteralPath $configBackup -Destination $configPath -Force
                     throw "opencode.jsonc validation failed; file restored from backup. $_"
                 }
             }
@@ -211,12 +305,16 @@ if (-not $SkipConfig) {
                 Write-Warning "No permission object found in opencode.jsonc; add rules manually."
             }
             else {
+                $permOpen = $raw.IndexOf('{', $match.Index)
+                $permBlock = if ($permOpen -ge 0) { Get-BraceBlock -Text $raw -OpenIndex $permOpen } else { $null }
+                $permInner = if ($permBlock) { $raw.Substring($permBlock.Start + 1, $permBlock.End - $permBlock.Start - 1) } else { "" }
+                $taskComma = if ($permInner.Trim().Length -gt 0) { "," } else { "" }
                 $lines = @('    "task": {')
                 for ($i = 0; $i -lt $harnessIds.Count; $i++) {
                     $comma = if ($i -lt ($harnessIds.Count - 1)) { "," } else { "" }
                     $lines += "      `"$($harnessIds[$i])`": `"allow`"$comma"
                 }
-                $lines += '    },'
+                $lines += "    }$taskComma"
                 $insert = ($lines -join "`r`n") + "`r`n"
                 $newRaw = $raw.Substring(0, $match.Index + $match.Length) + "`r`n" + $insert + $raw.Substring($match.Index + $match.Length)
                 Write-Utf8NoBom -Path $configPath -Text $newRaw
@@ -225,7 +323,7 @@ if (-not $SkipConfig) {
                     Write-Host "Added harness allow rules to opencode.jsonc."
                 }
                 catch {
-                    Copy-Item -LiteralPath (Join-Path $BackupRoot "opencode.jsonc") -Destination $configPath -Force
+                    Copy-Item -LiteralPath $configBackup -Destination $configPath -Force
                     throw "opencode.jsonc validation failed; file restored from backup. $_"
                 }
             }

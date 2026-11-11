@@ -453,7 +453,7 @@ hr { border: none; border-top: 1px solid var(--line); margin: 2rem 0; }
 </tr>
 <tr>
 <td>Version</td>
-<td>2.2.0</td>
+<td>2.2.1</td>
 </tr>
 <tr>
 <td>Scope</td>
@@ -1366,7 +1366,9 @@ orange - <code>blocked</code>.</p>
 location, symptoms, reproduction, cause, solution/workaround, verification,
 prevention, and timeline. All roles may create issue files; the
 <code>harness-orchestrator</code> verifies the index and includes them in the task commit.
-Only the orchestrator edits bug cards. Secrets are never written to either log.</p>
+Only <code>docs/issues/</code> is valid; a root <code>harness-issues/</code> directory is not a
+registry. <code>/harness-doctor</code> checks the index in both directions. Only the
+orchestrator edits bug cards. Secrets are never written to either log.</p>
 <hr />
 <h2 id="7-pilot-case-mini-crud-service-t-013">7. Pilot case "Mini-CRUD service" (T-013)</h2>
 <p>The pilot checks the analyst -&gt; architect -&gt; qa cycle on a separate task: REST CRUD
@@ -1666,6 +1668,26 @@ are required.</p>
 <td>product bug was filed in <code>docs/issues/</code></td>
 <td>wrong registry</td>
 <td>move it to <code>docs/bugs/</code>; keep harness issues separate</td>
+</tr>
+<tr>
+<td><code>task</code> fails with <code>Subagent depth limit</code></td>
+<td>compaction handoff created a child continuation</td>
+<td>do not run the role inline; fix/disable the handoff plugin, start a new root session, resume <code>/harness-run</code></td>
+</tr>
+<tr>
+<td>QA returns an empty report or <code>finish=length</code></td>
+<td><code>limit.context</code> is above the real <code>num_ctx</code> or output budget is small</td>
+<td>run <code>/harness-doctor</code>, compare <code>ollama show</code> with <code>limit.context</code>, reduce reads, resume the same session</td>
+</tr>
+<tr>
+<td><code>rag_sync</code> times out or returns <code>Sync already running</code></td>
+<td>indexing exceeds the local-rag MCP timeout</td>
+<td>verify with <code>rag_search</code>, retry after the lock releases; consider a larger timeout</td>
+</tr>
+<tr>
+<td>issue files are missing from the index</td>
+<td>a record was created outside <code>docs/issues/</code></td>
+<td>move it to <code>docs/issues/</code>, add the row, rerun <code>/harness-doctor</code></td>
 </tr>
 </tbody>
 </table></div>

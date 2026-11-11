@@ -32,7 +32,7 @@ Before any action:
 - `/harness-run T-XXX`: execute or resume exactly one task from either workflow.
 - `/harness-board-update all|T-XXX`: board reconciliation when no task is active.
 - `/harness-board-report`: read-only board report.
-- `/harness-doctor`: installation and project health check.
+- `/harness-doctor`: installation and project health check, including issue index, model context, compaction plugin, and RAG timeout checks.
 
 Explicit only; `default_agent` is never switched to harness.
 
@@ -93,7 +93,7 @@ Every task has at least one checkpoint; `CP-F` is mandatory before `done`. At a 
 
 A task is closed only by the card's `acceptance` criteria and `CP-F` approval. On failure, set `failed` with the cause in `Blockers`; up to 3 attempts, then `blocked`. A bug that cannot be reproduced after 3 attempts is `blocked` with evidence, not a speculative fix.
 
-For any harness problem, blocker, or workaround, use the `harness-issues` skill and create a record in `docs/issues/`; the orchestrator updates the index and includes the issue in the task commit.
+For any harness problem, blocker, or workaround, use the `harness-issues` skill and create a record in `docs/issues/`; the orchestrator updates the index and includes the issue in the task commit. `/harness-doctor` verifies that every issue file is indexed and that no issue lives in a root `harness-issues/` directory.
 
 ## Global installation and versions
 

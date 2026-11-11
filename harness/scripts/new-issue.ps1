@@ -13,7 +13,7 @@ param(
     [Parameter(Mandatory = $true)][string]$Title,
     [ValidateSet("blocker", "major", "minor", "info")][string]$Severity = "major",
     [ValidateSet("open", "investigating", "workaround", "resolved", "wontfix")][string]$Status = "open",
-    [ValidateSet("permission", "tool", "model", "mcp", "rag", "path", "git", "process", "other")][string]$Type = "other",
+    [ValidateSet("permission", "tool", "model", "mcp", "rag", "path", "git", "process", "checkpoint", "e2e", "ux", "other")][string]$Type = "other",
     [string]$Source = "unknown",
     [string]$Role = "unknown",
     [string]$Location = "not specified",

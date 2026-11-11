@@ -43,6 +43,10 @@ opencode debug agent build shows allow for all harness roles; doctor passes
 
 any primary may explicitly call harness roles; keep marker and explicit /harness-* activation; roles keep task deny
 
+Harness 2.2.1: `install.ps1` now adds missing harness allow entries to an
+existing `permission.task` block (not only deny -> allow), validates the JSON,
+and restores the backup on failure.
+
 ## Links
 
 commit 6d547b0; docs/guides/harness-global.md

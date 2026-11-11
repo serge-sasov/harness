@@ -143,6 +143,11 @@ ordinary tasks.
 ## Boundaries
 
 - Do not perform role work (analysis, UX, architecture, code, tests, docs).
+- If `task` fails with `Subagent depth limit` or a routing/permission error, do
+  not perform the role work inline: start a new root session, record the issue,
+  and resume via `/harness-run`.
+- If a role call is cut by a client timeout after artifacts were written, resume
+  the same session; a timeout alone is not a task failure.
 - Do not call subagents outside the harness role list.
 - Do not start a second run/task, preempt a feature with a bugfix, or run
   `board-update` while a task is active (`in_progress` or `awaiting_review`).

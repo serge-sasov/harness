@@ -78,6 +78,8 @@ Read selectively: card `acceptance`, API contract, target files/patterns, analys
 
 Output budget is limited (`limit.output`). Do not print the whole report or retell the process: write the artifact incrementally via `write` - skeleton with headings, then 1-2 KB sections. Final message <=10 lines.
 
+If the client cuts the run by a timeout after the report is written, report the artifact path and resume the same session; do not discard the report or restart from scratch.
+
 Before starting, verify that `harness/process.md`, the workflow file, and the card exist; if missing, stop and report that the project is not initialized (`/harness-init`).
 
 ## Responsibilities

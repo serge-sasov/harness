@@ -4,8 +4,8 @@
 |---|---|
 | id | ISSUE-20261108-005859 |
 | status | resolved |
-| severity | medium |
-| type | tooling / subagent |
+| severity | major |
+| type | tool |
 | detected_at | 2026-11-07T21:58:59Z |
 | resolved_at | 2026-11-08T17:08:39+03:00 |
 | source | primary (harness lead) |
@@ -119,6 +119,11 @@ not related to the cause of this issue.
   record real commands and results.
 - Add a check to `/harness-doctor` (or docs): warn when the handoff plugin
   creates child continuation sessions.
+
+Implemented in harness 2.2.1: `/harness-doctor` warns when the compaction
+handoff creates a continuation with `parentID`; `harness/process.md` section 11
+forbids running role work inline on a depth/routing failure and requires a new
+root session plus an issue record.
 
 ## References
 

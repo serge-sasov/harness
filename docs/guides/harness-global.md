@@ -299,7 +299,8 @@ manually from the template.
 
 ## 6. Versions and pins
 
-- Current version: `2.2.0` (feature/bugfix workflows, BUG registry, new commands).
+- Current version: `2.2.1` (feature/bugfix workflows, BUG registry, new commands,
+  reliability checks in `/harness-doctor`, and issue-registry enforcement).
 - Global version: `~/.config/opencode/harness/version.json`.
 - Project version: `harness/version.json`, created by `/harness-init`.
 - `/harness-doctor` warns when the versions differ.
@@ -354,7 +355,11 @@ script prints a reminder).
 | write `.gitignore` is blocked | `.gitignore` is outside the role's write area | use `harness-orchestrator` or `harness-coder` |
 | workspace root `/` | opencode was not started from the project root / wrong cwd | start from the project, check `git rev-parse --show-toplevel` |
 | old agents bypass gating | `.opencode/agents/analyst.md` etc. remain | remove old copies or rename to `harness-*` |
-| config was not patched | `opencode.jsonc` contains comments | add `permission.task` with allow manually |
+| config was not patched | `opencode.jsonc` contains comments | add `permission.task` with allow manually; without comments, rerun install (it adds missing entries) |
+| `task` fails with `Subagent depth limit reached` | compaction handoff created a child continuation session | do not run the role inline; update/disable the handoff plugin, start a new root session, resume `/harness-run`; doctor checks the plugin |
+| QA returns an empty report or `finish=length` | configured `limit.context` is above the real `num_ctx`, or output budget is too small | run `/harness-doctor`, compare `ollama show <model>` with `limit.context`, reduce reads, resume the same session |
+| `rag_sync` times out or returns `Sync already running` | indexing exceeds the local-rag MCP timeout; the lock remains | verify new content with `rag_search`, retry after the lock releases; consider a larger `local-rag` timeout; record an issue if it persists |
+| issue files are missing from the index | a record was created outside `docs/issues/` or manually | move it to `docs/issues/`, add the index row, rerun `/harness-doctor` |
 | `new-issue.ps1` is missing | the project was initialized by an older version | run `/harness-init -Force` with backup |
 | checkpoint templates or `docs/checkpoints/` missing | the project was initialized by an older version | run `/harness-init -Force` with backup |
 | `harness/workflows/` or `docs/bugs/` missing | the project was initialized by an older version | run `/harness-init -Force` with backup |
@@ -366,6 +371,11 @@ script prints a reminder).
 | role does not stop at a checkpoint | card has no `checkpoints` list or old agent copies | add checkpoints to the card; rerun install and restart opencode |
 | e2e runner cannot read test data | missing or invalid YAML dataset | check `docs/analysis/e2e-test-data-<slug>.yaml`; run the coder validator |
 | version differs | the project was initialized by an older version | update the project deliberately; see pin |
+
+`/harness-doctor` checks the global installation, `permission.task` allows,
+`**/` path variants, the issue registry and index, the compaction handoff
+plugin, the model `num_ctx` against `limit.context`, and the `local-rag` MCP
+timeout. Use `-SkipModelProbe` for a fast run without Ollama probes.
 
 ## 9. Migration to opencode V2
 

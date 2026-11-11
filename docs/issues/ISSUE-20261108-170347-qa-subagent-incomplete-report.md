@@ -4,8 +4,8 @@
 |---|---|
 | id | ISSUE-20261108-170347 |
 | status | resolved |
-| severity | low |
-| type | tooling / subagent |
+| severity | minor |
+| type | model |
 | detected_at | 2026-11-08T14:03:47Z |
 | resolved_at | 2026-11-08T20:16:03+03:00 |
 | source | primary (harness lead) |
@@ -88,6 +88,11 @@ vision/tools; `tiel-coder:...-text` has actual 131072.
   text acceptance and vision review.
 - Do not move an issue to `resolved` without a real QA run; record session ID,
   model, tokens, and `finish`.
+
+Implemented in harness 2.2.1: `/harness-doctor` compares the actual `num_ctx`
+from `ollama show` with `limit.context` and warns on overflow; `process.md`
+section 11 treats a client timeout with a written artifact as resumable, not as
+a failed attempt.
 
 ## References
 

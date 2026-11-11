@@ -1,4 +1,4 @@
-# T-022: Harness 2.2.0 smoke test: feature and bugfix workflows
+# T-022: Harness 2.2.1 smoke test: feature and bugfix workflows
 
 | Field | Value |
 |---|---|
@@ -9,16 +9,19 @@
 | role | qa |
 | status | pending |
 | depends_on | T-019, T-021, T-029 |
-| inputs | harness 2.2.0, workflows, agents, templates, scripts, docs |
-| artifacts | `docs/qa/smoke-2.2.0.md` |
+| inputs | harness 2.2.1, workflows, agents, templates, scripts, docs |
+| artifacts | `docs/qa/smoke-2.2.1.md` |
 | e2e | required (sample `UC-E2E` + runner) |
 | ux | required (sample prototype + visual review) |
-| issues | ISSUE-20261111-100017 (RAG sync timeout) |
+| issues | ISSUE-20261108-005859 (depth), ISSUE-20261108-170347 (QA context), ISSUE-20261111-100017 (RAG sync) |
 | commit | - |
 
 ## Acceptance
 
 - [ ] `/harness-doctor` reports no critical problems after global install.
+- [ ] Doctor reliability checks pass: issue index matches all issue files, no root `harness-issues/`, role `**/` paths, compaction plugin, and model `num_ctx` vs `limit.context`; the local-rag timeout warning is reviewed.
+- [ ] `install.ps1` adds a missing harness allow to an existing `permission.task` block in a test config copy and validates the JSON.
+- [ ] After docs/diagram updates, `rag_sync` completes and `rag_status` advances; if not, ISSUE-20261111-100017 is updated.
 - [ ] `/harness-feature` creates one pending `P-00` planning task and no active work.
 - [ ] `/harness-bug` creates a `BUG-XXX` card and pending fix tasks without starting them.
 - [ ] A sample feature task stops at `CP-1`, creates `docs/checkpoints/T-XXX-CP-1.md`, and becomes `awaiting_review`.
@@ -34,7 +37,7 @@
 
 | ID | Stage | Artifacts | Status | Review file |
 |---|---|---|---|---|
-| CP-1 | smoke report draft | `docs/qa/smoke-2.2.0.md` | pending | `docs/checkpoints/T-022-CP-1.md` |
+| CP-1 | smoke report draft | `docs/qa/smoke-2.2.1.md` | pending | `docs/checkpoints/T-022-CP-1.md` |
 | CP-F | final acceptance | smoke report + verdict | pending | `docs/checkpoints/T-022-CP-F.md` |
 
 ## Blockers
@@ -47,3 +50,4 @@
 - 2026-11-11: recorded ISSUE-20261111-100017 for the local-rag sync timeout during verification.
 - 2026-11-11: retargeted to 2.2.0 feature and bugfix workflows.
 - 2026-11-11: renamed from `T-022-smoke-test-2.1.0.md`; T-029 is done, so the smoke test is ready to start.
+- 2026-11-11: retargeted to 2.2.1; added doctor reliability, issue-index, install repair, and RAG sync checks.

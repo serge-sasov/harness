@@ -19,8 +19,13 @@ here; workflow-specific stages and task graphs live in
   Roles must not call each other (`task: deny`); the primary agent routes.
 - Role permissions include relative and `**/...` path variants: edit/write match
   absolute paths, so a blanket deny needs a specific allow for the full path.
-- Harness problems go to `docs/issues/`; product defects go to `docs/bugs/`.
-  The orchestrator maintains both indexes.
+- Harness problems go only to `docs/issues/`; product defects go to `docs/bugs/`.
+  The orchestrator maintains both indexes. A root `harness-issues/` directory is
+  not a valid registry; `/harness-doctor` warns when issue files are outside
+  `docs/issues/` or missing from the index.
+- Issue records use the `harness-issues` schema: severity
+  `blocker|major|minor|info`; type
+  `permission|tool|model|mcp|rag|path|git|process|checkpoint|e2e|ux|other`.
 - `harness/version.json` records the installed version; `/harness-doctor` warns
   on mismatch.
 
@@ -269,6 +274,20 @@ here; workflow-specific stages and task graphs live in
   not a speculative fix.
 - Empty subagent result or `finish=length` = failed attempt; record in the card
   log; do not leave `in_progress`.
+- If `task` fails with `Subagent depth limit` or a routing/permission error, do
+  not perform the role work inline. Stop, start a new root session or fix the
+  routing tool/plugin, record an issue, and resume via `/harness-run`.
+- A client timeout or canceled role call is not a failed attempt when the role
+  already wrote its artifact and the session can be resumed; resume the same
+  session. Mark `failed` only after 3 attempts without a usable artifact or
+  verdict.
+- Before a long role run, compare the actual `num_ctx` (`ollama show <model>`)
+  with `limit.context` in `~/.config/opencode/opencode.jsonc`; configured
+  context greater than the actual value is a blocker for that role.
+  `/harness-doctor` checks this mismatch.
+- `rag_sync` timeout or `Sync already running` does not block the task when
+  `rag_search` already returns the updated content; retry after the lock
+  releases and record an issue if it persists.
 - QA (`limit.output=16384`): write the report incrementally via `write`; final
   message <=10 lines; a long single message hitting `finish=length` is a failed
   attempt.
@@ -319,8 +338,15 @@ orchestrator; roles do not edit `docs/bugs/`.
   `harness/templates/issue.md`.
 - One file per problem: `docs/issues/ISSUE-YYYYMMDD-HHMMSS-<slug>.md`.
 - Index: `docs/issues/README.md`; orchestrator verifies and commits.
+- The index must list every `ISSUE-*.md` file and contain no orphan rows;
+  `/harness-doctor` checks both directions.
+- Only `docs/issues/` is valid; never keep issue files in a root
+  `harness-issues/` directory.
 - Required: status, severity, type, source, role, absolute location, symptoms,
   cause, solution/workaround, verification, prevention, links.
 - Put the issue ID in the card log; an issue does not replace the card.
 - Never write secrets/tokens/`.env` to an issue.
+- `resolved` means the root cause is fixed. Prevention that requires a process,
+  agent, or script change gets a follow-up task and a link in the issue; record
+  the implemented prevention in the issue.
 - On resolution set `resolved`/`workaround`; do not delete history.

@@ -43,6 +43,9 @@ opencode debug agent shows allow; doctor passes; docs/plan.md edit path resolved
 
 keep absolute **/... variants in role permissions; use absolute location in issue records
 
+Harness 2.2.1: `/harness-doctor` verifies that edit/read allow paths in the
+global harness agents have `**/` counterparts.
+
 ## Links
 
 commits e943761, 6d547b0; docs/guides/harness-global.md

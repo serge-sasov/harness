@@ -1,10 +1,20 @@
 ﻿#requires -Version 5.1
 <#
 .SYNOPSIS
-  Check the global harness installation and the current project.
+  Check the global harness installation, model readiness, and the current project.
+
+.DESCRIPTION
+  Verifies global harness files, permission.path variants, permission.task,
+  issue registry and index consistency, the compaction handoff plugin, model
+  num_ctx against limit.context, and the local-rag MCP timeout.
+
+.PARAMETER SkipModelProbe
+  Skip the live `ollama show` comparison of configured and actual context sizes.
 #>
 [CmdletBinding()]
-param()
+param(
+    [switch]$SkipModelProbe
+)
 
 $ErrorActionPreference = "Stop"
 $script:critical = $false
@@ -12,6 +22,66 @@ $script:critical = $false
 function Write-Ok($text) { Write-Host "[ok]   $text" -ForegroundColor Green }
 function Write-Warn($text) { Write-Host "[warn] $text" -ForegroundColor Yellow }
 function Write-Err($text) { Write-Host "[err]  $text" -ForegroundColor Red; $script:critical = $true }
+function Write-Info($text) { Write-Host "[info] $text" -ForegroundColor Gray }
+
+function Get-BraceBlock {
+    param(
+        [Parameter(Mandatory = $true)][string]$Text,
+        [Parameter(Mandatory = $true)][int]$OpenIndex
+    )
+    $depth = 0
+    $inString = $false
+    $escape = $false
+    for ($i = $OpenIndex; $i -lt $Text.Length; $i++) {
+        $ch = $Text[$i]
+        if ($inString) {
+            if ($escape) { $escape = $false }
+            elseif ($ch -eq '\') { $escape = $true }
+            elseif ($ch -eq '"') { $inString = $false }
+            continue
+        }
+        if ($ch -eq '"') { $inString = $true }
+        elseif ($ch -eq '{') { $depth++ }
+        elseif ($ch -eq '}') {
+            $depth--
+            if ($depth -eq 0) { return $Text.Substring($OpenIndex, $i - $OpenIndex + 1) }
+        }
+    }
+    return $null
+}
+
+function Get-ConfiguredContextValues {
+    param(
+        [Parameter(Mandatory = $true)][string]$ConfigText,
+        [Parameter(Mandatory = $true)][string]$Model
+    )
+    $values = @()
+    $keyPattern = '"' + [regex]::Escape($Model) + '"\s*:\s*\{'
+    foreach ($keyMatch in [regex]::Matches($ConfigText, $keyPattern)) {
+        $openIndex = $ConfigText.IndexOf('{', $keyMatch.Index)
+        if ($openIndex -lt 0) { continue }
+        $modelBlock = Get-BraceBlock -Text $ConfigText -OpenIndex $openIndex
+        if (-not $modelBlock) { continue }
+        $limitMatch = [regex]::Match($modelBlock, '"limit"\s*:\s*\{')
+        if (-not $limitMatch.Success) { continue }
+        $limitOpen = $modelBlock.IndexOf('{', $limitMatch.Index)
+        if ($limitOpen -lt 0) { continue }
+        $limitBlock = Get-BraceBlock -Text $modelBlock -OpenIndex $limitOpen
+        if (-not $limitBlock) { continue }
+        $contextMatch = [regex]::Match($limitBlock, '"context"\s*:\s*(\d+)')
+        if ($contextMatch.Success) { $values += [int]$contextMatch.Groups[1].Value }
+    }
+    return $values
+}
+
+function Get-OllamaNumCtx {
+    param([Parameter(Mandatory = $true)][string]$Model)
+    $output = @(& ollama show $Model 2>$null)
+    if ($LASTEXITCODE -ne 0 -or $output.Count -eq 0) { return $null }
+    $match = [regex]::Match(($output -join "`n"), '(?m)^\s*num_ctx\s+(\d+)\s*$')
+    if ($match.Success) { return [int]$match.Groups[1].Value }
+    return $null
+}
 
 $UserProfile = [Environment]::GetFolderPath("UserProfile")
 $GlobalRoot = Join-Path $UserProfile ".config\opencode"
@@ -71,6 +141,45 @@ else {
     $missingGlobal | ForEach-Object { Write-Host "       $_" }
 }
 
+$agentFiles = @(Get-ChildItem -LiteralPath (Join-Path $GlobalRoot "agents") -Filter "harness*.md" -File -ErrorAction SilentlyContinue)
+$missingCounterparts = @()
+foreach ($agentFile in $agentFiles) {
+    $section = ""
+    $sectionAllows = @{ "edit" = @(); "read" = @() }
+    foreach ($line in (Get-Content -LiteralPath $agentFile.FullName)) {
+        if ($line -match '^\s{2}([A-Za-z0-9_-]+):') {
+            $section = $Matches[1]
+            continue
+        }
+        if ($line -match '^[A-Za-z0-9_-]+:') { $section = ""; continue }
+        if ($section -in @("edit", "read")) {
+            $allowMatch = [regex]::Match($line, '^\s*"([^"]+)"\s*:\s*"allow"\s*,?\s*$')
+            if ($allowMatch.Success) {
+                $sectionAllows[$section] += $allowMatch.Groups[1].Value
+            }
+        }
+    }
+    foreach ($sec in @("edit", "read")) {
+        $allows = @($sectionAllows[$sec])
+        foreach ($pathValue in $allows) {
+            if ($pathValue -eq "*" -or $pathValue -like "**/*") { continue }
+            if ($pathValue -match '^[A-Za-z]:[\\/]') { continue }
+            if ($allows -notcontains "**/$pathValue") {
+                $missingCounterparts += "$($agentFile.Name) [$sec]: $pathValue"
+            }
+        }
+    }
+}
+if ($agentFiles.Count -eq 0) {
+    Write-Warn "no global harness agent files found; **/ path check skipped"
+}
+elseif ($missingCounterparts.Count -eq 0) {
+    Write-Ok "role edit/read allow paths have **/ counterparts"
+}
+else {
+    Write-Warn "role allow paths without **/ counterparts: $($missingCounterparts -join '; ')"
+}
+
 $configPath = Join-Path $GlobalRoot "opencode.jsonc"
 $harnessIds = @(
     "harness-orchestrator",
@@ -103,6 +212,96 @@ if (Test-Path -LiteralPath $configPath) {
     if ($config -match 'qwen3\.8:27b-64k') { Write-Ok "model qwen3.8:27b-64k declared" } else { Write-Warn "model qwen3.8:27b-64k not found in config" }
     if ($config -match 'tiel-coder:35b-a3b-mtp-128k-text') { Write-Ok "tiel-coder text model declared" } else { Write-Warn "tiel-coder text model not found in config" }
     if ($config -match 'tiel-coder:35b-a3b-mtp-128k-vision') { Write-Ok "tiel-coder vision model declared" } else { Write-Warn "tiel-coder vision model not found in config" }
+
+    if (-not $SkipModelProbe) {
+        $roleModels = @()
+        $agentDir = Join-Path $GlobalRoot "agents"
+        Get-ChildItem -LiteralPath $agentDir -Filter "harness*.md" -File -ErrorAction SilentlyContinue | ForEach-Object {
+            $modelLine = Select-String -LiteralPath $_.FullName -Pattern '^model:\s*(\S+)' | Select-Object -First 1
+            if ($modelLine) {
+                $model = $modelLine.Matches[0].Groups[1].Value
+                if ($model -match '/') { $model = ($model -split '/', 2)[1] }
+                $roleModels += $model
+            }
+        }
+        $roleModels = @($roleModels | Sort-Object -Unique)
+        if ($roleModels.Count -eq 0) {
+            Write-Warn "cannot find harness role models in global agents; model context probe skipped"
+        }
+        elseif (-not (Get-Command ollama -ErrorAction SilentlyContinue)) {
+            Write-Warn "ollama not found in PATH; model context probe skipped"
+        }
+        else {
+            foreach ($model in $roleModels) {
+                $actual = Get-OllamaNumCtx -Model $model
+                if ($null -eq $actual) {
+                    Write-Warn "model $model`: cannot read num_ctx from 'ollama show'"
+                    continue
+                }
+                $configured = @(Get-ConfiguredContextValues -ConfigText $config -Model $model)
+                if ($configured.Count -eq 0) {
+                    Write-Warn "model $model`: no limit.context in opencode.jsonc (actual num_ctx $actual)"
+                    continue
+                }
+                $tooHigh = @($configured | Where-Object { $_ -gt $actual })
+                if ($tooHigh.Count -gt 0) {
+                    Write-Warn "model $model`: limit.context $($tooHigh -join '/') > actual num_ctx $actual; opencode may not compact before the real limit"
+                }
+                else {
+                    $maxConfigured = ($configured | Measure-Object -Maximum).Maximum
+                    if ($maxConfigured -lt $actual) {
+                        Write-Info "model $model`: limit.context $maxConfigured < actual num_ctx $actual (safe, context underused)"
+                    }
+                    else {
+                        Write-Ok "model $model`: limit.context matches actual num_ctx $actual"
+                    }
+                }
+            }
+        }
+    }
+    else {
+        Write-Info "model context probe skipped (-SkipModelProbe)"
+    }
+
+    $pluginPath = Join-Path $GlobalRoot "plugins\qwen-compaction-handoff.js"
+    if (Test-Path -LiteralPath $pluginPath) {
+        $plugin = Get-Content -LiteralPath $pluginPath -Raw
+        $unsafe = [regex]::Match($plugin, 'client\.session\.create\s*\([\s\S]{0,1200}?body\s*:\s*\{[^}]*parentID')
+        if ($unsafe.Success) {
+            Write-Warn "compaction handoff creates child continuation sessions (parentID); 'task' may hit the subagent depth limit"
+        }
+        else {
+            Write-Ok "compaction handoff does not create child continuation sessions"
+        }
+    }
+    else {
+        Write-Info "no qwen-compaction-handoff.js plugin; compaction depth check skipped"
+    }
+    $depthMatch = [regex]::Match($config, '"subagent_depth"\s*:\s*(\d+)')
+    if ($depthMatch.Success -and [int]$depthMatch.Groups[1].Value -lt 1) {
+        Write-Warn "experimental.subagent_depth is $($depthMatch.Groups[1].Value); root sessions cannot launch role subagents"
+    }
+
+    $ragKey = [regex]::Match($config, '"local-rag"\s*:\s*\{')
+    if ($ragKey.Success) {
+        $ragOpen = $config.IndexOf('{', $ragKey.Index)
+        $ragBlock = if ($ragOpen -ge 0) { Get-BraceBlock -Text $config -OpenIndex $ragOpen } else { $null }
+        if ($ragBlock) {
+            $timeoutMatch = [regex]::Match($ragBlock, '"timeout"\s*:\s*(\d+)')
+            if ($timeoutMatch.Success) {
+                $timeout = [int]$timeoutMatch.Groups[1].Value
+                if ($timeout -le 120000) {
+                    Write-Warn "local-rag timeout is $timeout ms; large syncs may exceed it (ISSUE-20261111-100017). Consider >=180000 or async sync."
+                }
+                else {
+                    Write-Ok "local-rag timeout is $timeout ms"
+                }
+            }
+            else {
+                Write-Info "local-rag timeout is not set; MCP default may be too short for large syncs"
+            }
+        }
+    }
 }
 else {
     Write-Warn "$configPath not found; harness allow rules are not configured"
@@ -139,6 +338,35 @@ if ((Test-Path -LiteralPath $marker) -and (Test-Path -LiteralPath $plan)) {
     }
     else {
         Write-Warn "docs/issues/README.md not created yet; it will appear with the first issue"
+    }
+    $issuesDir = Join-Path $Project "docs\issues"
+    $issueFiles = @(Get-ChildItem -LiteralPath $issuesDir -Filter "ISSUE-*.md" -File -ErrorAction SilentlyContinue)
+    if (Test-Path -LiteralPath $issuesIndex) {
+        $indexText = Get-Content -LiteralPath $issuesIndex -Raw
+        $indexed = @([regex]::Matches($indexText, '\]\(([^)]+\.md)\)') | ForEach-Object { $_.Groups[1].Value })
+        $missingRows = @($issueFiles | Where-Object { $indexed -notcontains $_.Name })
+        $orphanRows = @($indexed | Where-Object {
+            -not (Test-Path -LiteralPath (Join-Path $issuesDir $_))
+        })
+        if ($missingRows.Count -eq 0 -and $orphanRows.Count -eq 0) {
+            Write-Ok "issue index matches $($issueFiles.Count) issue file(s)"
+        }
+        else {
+            if ($missingRows.Count -gt 0) {
+                Write-Warn "issue index is missing rows for: $($missingRows.Name -join ', ')"
+            }
+            if ($orphanRows.Count -gt 0) {
+                Write-Warn "issue index has orphan rows: $($orphanRows -join ', ')"
+            }
+        }
+    }
+    $strayIssueDir = Join-Path $Project "harness-issues"
+    if (Test-Path -LiteralPath $strayIssueDir) {
+        Write-Warn "root harness-issues/ exists; issue records belong only in docs/issues/"
+    }
+    $strayIssueFiles = @(Get-ChildItem -LiteralPath $Project -Filter "ISSUE-*.md" -File -ErrorAction SilentlyContinue)
+    if ($strayIssueFiles.Count -gt 0) {
+        Write-Warn "issue files outside docs/issues/: $($strayIssueFiles.Name -join ', ')"
     }
     if ((Test-Path -LiteralPath $issueTemplate) -and (Test-Path -LiteralPath $issueScript)) {
         Write-Ok "issue template and new-issue.ps1 available in the project"
