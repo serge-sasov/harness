@@ -55,9 +55,9 @@ schema, security boundary, multiple modules, or a UI flow.
 | Agent | Role |
 |---|---|
 | `harness` | primary lead: routing, marker checks, checkpoints, reporting |
-| `harness-orchestrator` | board, bug registry, dependencies, checkpoints, acceptance, activity, commits |
+| `harness-orchestrator` | board, bug registry, dependencies, checkpoints, acceptance, derived activity, commits |
 | `harness-analyst` | requirements, RAG, questions, glossary, e2e use cases/test data; bug impact |
-| `harness-ux-designer` | user flows, screen inventory, wireframes, UI spec, HTML prototypes; UI bug impact |
+| `harness-ux-designer` | user flows, screen inventory, wireframes, UI spec, per-scenario HTML prototypes (may delegate page code to coder); UI bug impact |
 | `harness-architect` | ADRs, PlantUML, contracts; design-level root cause |
 | `harness-coder` | code, unit/integration/e2e tests, CI/CD, local runs; reproduction and regression fix |
 | `harness-qa` | text/code review, e2e coverage/run, independent bug verification, verdict |
@@ -72,10 +72,12 @@ The lead does not edit files itself; the orchestrator handles the board, bug reg
 - `docs/tasks/T-XXX-*.md`: feature/bugfix task cards with inputs, applicability, `workflow`, `stage`, and checkpoints;
 - `docs/bugs/BUG-XXX-*.md` and `docs/bugs/README.md`: product bug reports and index, owned by the orchestrator;
 - `docs/checkpoints/T-XXX-CP-N.md`: user review decisions, edits, and remarks;
-- `docs/activity.puml` / `.svg`: task statuses;
+- `docs/activity.puml` / `.svg`: derived visual progress aid only, never a
+  status/routing/acceptance source; colors use `:task text; <<#RRGGBB>>`;
 - `harness/workflows/`: feature and bugfix stage tables/task graphs;
 - `docs/analysis/`: requirements, questions, glossary, e2e use cases and YAML test data;
-- `docs/ux/`: user flows, screens, wireframes, UI spec, HTML prototypes;
+- `docs/ux/`: user flows, screens, wireframes, UI spec, prototype catalog and
+  one HTML page per `UC-E2E-NNN` under `docs/ux/prototype/<slug>/`;
 - `docs/architecture/`, `docs/qa/`, `docs/guides/`: role artifacts;
 - `docs/issues/`: harness problem and solution log (skill `harness-issues`);
 - `src/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`: code and CI/CD.
@@ -89,11 +91,13 @@ Transitions: `pending -> in_progress`; `in_progress -> awaiting_review` at a che
 
 Tasks run strictly sequentially across both workflows: at most one active task (`in_progress` or `awaiting_review`); no parallel/preempted feature or bugfix work. New pending cards and bug reports may be registered, but existing statuses/dependencies and `/harness-board-update` are forbidden while a task is active.
 
+Status decisions use the plan, task cards, checkpoints, bug cards, workflow files, and Git evidence. `docs/activity.puml`, `docs/activity.svg`, and derivatives are informational only; never use them to determine or reconcile status, dependencies, active task, acceptance, checkpoint decisions, or routing. If activity disagrees with the board/card, the board/card wins and activity is re-rendered.
+
 Every task has at least one checkpoint; `CP-F` is mandatory before `done`. At a checkpoint the role stops, the orchestrator creates the checkpoint file and sets `awaiting_review`, and the user reviews/edits artifacts and records a decision. Without explicit approval, the task stays `awaiting_review`.
 
 A task is closed only by the card's `acceptance` criteria and `CP-F` approval. On failure, set `failed` with the cause in `Blockers`; up to 3 attempts per chunk, then `blocked`. A bug that cannot be reproduced after 3 attempts is `blocked` with evidence, not a speculative fix.
 
-Generation is budgeted per `process.md` 11.1: A-02 and large code stages are chunked, artifacts are written incrementally, and a role stops at the context threshold with a handoff. `harness-analyst` and `harness-coder` may spawn self-sub-sessions of their own role for chunks (depth 2, sequential, no grandchildren); other roles must not call subagents.
+Generation is budgeted per `process.md` 11.1: A-02 and large code stages are chunked, artifacts are written incrementally, and a role stops at the context threshold with a handoff. `harness-analyst` and `harness-coder` may spawn self-sub-sessions of their own role for chunks (depth 2, sequential, no grandchildren). The single cross-role exception is `harness-ux-designer -> harness-coder` for prototype pages: one child at a time, same UX task, coder writes only `docs/ux/prototype/**`; all other cross-role calls are forbidden.
 
 For any harness problem, blocker, or workaround, use the `harness-issues` skill and create a record in `docs/issues/`; the orchestrator updates the index and includes the issue in the task commit. `/harness-doctor` verifies that every issue file is indexed and that no issue lives in a root `harness-issues/` directory.
 

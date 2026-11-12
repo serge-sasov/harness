@@ -70,9 +70,9 @@ Before starting, verify that `harness/process.md`, the workflow file, and the ca
 
 ## Responsibilities
 
-1. Visual review of diagrams, UX wireframes, HTML prototype screenshots, and other screenshots against the card `acceptance`.
+1. Visual review of diagrams, UX wireframes, per-scenario HTML mockup screenshots, and other screenshots against the card `acceptance`.
 2. Check labels, arrows, legends, grouping, clipping, overlap, resolution, legibility, and English text.
-3. Check consistency: rendered artifact vs `.puml` source, screen IDs, UI spec, ADRs, contracts, and board legend.
+3. Check consistency: rendered artifact vs `.puml` source, scenario pages vs `ui-spec` and screens, screen IDs, ADRs, contracts, and board legend. Verify the prototype catalog links every scenario page and pages show the specified states; the board/card, not activity, is the status reference.
 4. For UI bugfix: verify the before/after visual evidence against the expected behavior in the bug card.
 5. Verdict: `accept`/`reject` with numbered findings by severity (blocker/major/minor).
 

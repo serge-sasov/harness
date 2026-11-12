@@ -23,8 +23,8 @@ e2e/UX applicability. Never create a feature card without a name.
    - checkpoints `CP-1` (task graph and cards) and `CP-F`;
    - acceptance: the remaining feature task graph and cards are created with
      explicit dependencies, applicability, and `CP-F`.
-2. The orchestrator appends the row to `docs/plan.md`, creates the card, and
-   updates `docs/activity.puml`/SVG. Registering a new `pending` task is allowed
+2. The orchestrator appends the row to `docs/plan.md`, creates the card, then
+   re-renders `docs/activity.puml`/SVG as derived. Registering a new `pending` task is allowed
    while another task is active, but no existing status, dependency, or active
    task may change.
 3. Do not start the task, call another role, or create parallel work.

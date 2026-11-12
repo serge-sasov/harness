@@ -16,9 +16,13 @@ here; workflow-specific stages and task graphs live in
 - Before work, `harness` checks for `harness/process.md`, the selected workflow
   file, and `docs/plan.md`; if missing, stop and ask for `/harness-init`.
 - Global permissions allow any primary agent to call `harness-*` subagents.
-  Roles must not call other roles. A generator role may spawn a self-sub-session
-  of its own role for a decomposed chunk (depth 2, sequential) when its agent
-  declares `task` self-allow; the primary agent routes all cross-role work.
+  Roles must not call other roles, with one exception: `ux-designer` may call
+  `harness-coder` to implement static web UI mockups under
+  `docs/ux/prototype/<slug>/`. This nested call is depth 2, sequential, one
+  child at a time; the UX designer remains the task owner and accepts the
+  result. A generator role may spawn a self-sub-session of its own role for a
+  decomposed chunk (depth 2, sequential) when its agent declares `task`
+  self-allow. The primary agent routes all other cross-role work.
 - Role permissions include relative and `**/...` path variants: edit/write match
   absolute paths, so a blanket deny needs a specific allow for the full path.
 - Harness problems go only to `docs/issues/`; product defects go to `docs/bugs/`.
@@ -42,9 +46,19 @@ here; workflow-specific stages and task graphs live in
   source of shared process rules; the workflow file is the source of stages for
   its workflow.
 - Each task is performed by exactly one role within its task/artifact
-  boundaries. Exception: the lead may call `harness-qa` and `harness-qa-vision`
+  boundaries. Exceptions: the lead may call `harness-qa` and `harness-qa-vision`
   as two independent passes when visuals are in scope; the orchestrator combines
-  both reports into one verdict.
+  both reports into one verdict. The `ux-designer` may call `harness-coder` for
+  prototype pages as part of the same UX task; this is not a second active task
+  or parallel role call, and the UX designer remains accountable.
+- Status and routing decisions use only `docs/plan.md`, task cards, checkpoint
+  files, bug cards, workflow files, and Git evidence. `docs/activity.puml`,
+  `docs/activity.svg`, and their derivatives (rendered images, screenshots, or
+  HTML that embeds them) are visual progress aids only: never use them to
+  determine or reconcile task or bug status, dependencies, the active task,
+  acceptance, checkpoint decisions, or role routing. If an activity artifact
+  disagrees with the board or a card, the board/card wins; the orchestrator
+  re-renders the activity artifact from the authoritative sources.
 - Tasks run strictly sequentially for both workflows: at most one active task
   (`in_progress` or `awaiting_review`); no parallel `/harness-run`, multiple IDs,
   concurrent role calls, or feature/bugfix preemption.
@@ -70,7 +84,7 @@ here; workflow-specific stages and task graphs live in
 | harness (lead) | `qwen3.8:27b-64k` (xhigh) | routing/reporting |
 | orchestrator | `qwen3.8:27b-64k` (xhigh) | planning/context, board, bug registry |
 | analyst | `qwen3.8:27b-64k` (medium) | requirements/RAG/e2e; bug impact when behavior is unclear |
-| ux-designer | `qwen3.8:27b-64k` (xhigh) | UX flows, wireframes, UI spec, prototypes; UI bugs on escalation |
+| ux-designer | `qwen3.8:27b-64k` (xhigh) | UX flows, wireframes, UI spec, per-scenario HTML mockups (coder-assisted); UI bugs on escalation |
 | architect | `qwen3.8:27b-64k` (xhigh) | design; design-level defects on escalation |
 | coder | `tiel-coder:35b-a3b-mtp-128k-text` | code/tests/e2e; bug reproduction/strict regression fix |
 | qa | `qwen3.8:27b-64k` (low) | text/code QA, e2e coverage/run/verdict; independent bug verification |
@@ -133,15 +147,17 @@ here; workflow-specific stages and task graphs live in
 2. Check `depends_on`: all predecessors must be `done`.
 3. Create/verify the card fields for its workflow: stage, inputs, e2e/ux or
    bug/severity, checkpoints; ensure `CP-F` exists.
-4. Set `in_progress` in plan, card, and activity diagram.
+4. Set `in_progress` in the plan and card; then re-render the activity diagram
+   as a derived visualization.
 5. The role performs work up to the next checkpoint per the card's `acceptance`
    and checkpoint list.
 6. At a checkpoint, the role stops and reports `CHECKPOINT <ID> reached` with
    artifacts and a verification checklist. It must not continue past a
    checkpoint.
 7. Orchestrator creates `docs/checkpoints/T-XXX-CP-N.md`, sets
-   `awaiting_review`, updates plan/card/activity/SVG, updates the bug status
-   when applicable, and commits the checkpoint snapshot.
+   `awaiting_review`, updates plan/card/checkpoints, re-renders activity/SVG as
+   derived artifacts, updates the bug status when applicable, and commits the
+   checkpoint snapshot.
 8. The lead reports the checkpoint to the user: artifacts, checklist, how to
    edit/comment, and resume command. The run ends; no auto-continue.
 9. On `/harness-run T-XXX` in `awaiting_review`: read the checkpoint file and
@@ -239,6 +255,14 @@ here; workflow-specific stages and task graphs live in
 - UX artifacts in `docs/ux/`: user flows, screen inventory and states, PlantUML
   Salt wireframes (`.puml` + `.svg`), UI spec/interaction/accessibility/UI copy,
   and a static offline HTML prototype.
+- The prototype contains `index.html` and one page per in-scope `UC-E2E-NNN`
+  (`docs/ux/prototype/<slug>/uc-e2e-001.html`) with the relevant
+  empty/loading/success/error states. A use case without a web UI records an
+  explicit waiver in the UI spec.
+- The `ux-designer` may delegate prototype page implementation to
+  `harness-coder` under the exception in section 0/1: one child at a time, a
+  precise page brief, and coder writes only `docs/ux/prototype/<slug>/**`. The
+  UX designer validates all pages and remains accountable at CP-2.
 - The prototype must not use external CDNs or network APIs. Optional screenshots
   for visual QA are stored in
   `docs/ux/prototype/<slug>/screenshots/`.
@@ -250,16 +274,22 @@ here; workflow-specific stages and task graphs live in
 
 ## 9. Artifact updates (mandatory order)
 
-1. At a checkpoint: plan status `awaiting_review`, card status, activity color,
-   checkpoint file, bug card status when applicable, commit snapshot.
+1. At a checkpoint: plan status `awaiting_review`, card status, checkpoint file,
+   bug card status when applicable, then derived activity color, commit snapshot.
 2. On resume/closure: `docs/plan.md`: status, artifacts, commit.
 3. Task card: status, log, blockers, checkpoint results.
 4. Bug card and `docs/bugs/README.md`: status, task links, root cause, fix,
    verification; only the orchestrator edits them.
-5. `docs/activity.puml`: color `done` green `#90EE90`, `pending` gray
-   `#D3D3D3`, `in_progress` yellow `#FFE082`, `awaiting_review` blue `#87CEFA`,
-   `failed` red `#FF9090`, `blocked` orange `#FFB347`.
-6. Re-render `docs/activity.svg` via MCP `plantuml-render`.
+5. `docs/activity.puml`: update it only after steps 1-4, as a derived
+   visualization of the board/card/checkpoint/bug state. Never read the
+   existing activity content to reconcile statuses. Node status color is a
+   suffix stereotype after `;`: `:task text; <<#90EE90>>`. Never use the
+   deprecated prefix form `#90EE90:task text;` — PlantUML 1.2026.6 renders a
+   deprecation banner in the SVG. Colors: `done` green `#90EE90`, `pending`
+   gray `#D3D3D3`, `in_progress` yellow `#FFE082`, `awaiting_review` blue
+   `#87CEFA`, `failed` red `#FF9090`, `blocked` orange `#FFB347`.
+6. Re-render `docs/activity.svg` via MCP `plantuml-render`; activity artifacts
+   remain informational only.
 7. `git commit` (section 10).
 
 ## 10. Git discipline
@@ -322,6 +352,7 @@ stop and request decomposition instead of attempting a larger write.
 | Markdown docs (analyst, architect, ux-designer, qa, doc-writer) | 8 KB | 20 KB | 2-3 use cases or one section | 60% of `limit.context` |
 | YAML e2e data | 6 KB | 15 KB | 2-3 use-case entries | 60% of `limit.context` |
 | Code (coder) | 12 KB | 40 KB | one module/file group | 65% of `limit.context` |
+| HTML/CSS/JS prototype (ux-designer or delegated coder) | 12 KB | 40 KB | one scenario page or shared asset | 65% of `limit.context` |
 | Any final report | 4 KB | - | - | - |
 
 - Never create a large artifact in one `write`. Write a skeleton and fill it
@@ -342,8 +373,14 @@ stop and request decomposition instead of attempting a larger write.
   return of the artifact path plus a summary of at most 10 lines. The parent
   remains accountable and must not read the full artifact into its own context;
   it validates with grep, a script, or targeted reads.
-- A child session must not spawn another child; the global `subagent_depth` is 2
-  and grandchildren are forbidden.
+- The `ux-designer` may delegate prototype pages to one `harness-coder` child at
+  a time: explicit page brief, non-overlapping files under
+  `docs/ux/prototype/<slug>/`, and a return of paths plus a summary of at most
+  10 lines. This is the only cross-role child call.
+- A depth-2 call may be a same-role self-sub-session or the allowed
+  `ux-designer -> harness-coder` prototype call. The child must not spawn
+  another child; depth 3 and all other cross-role calls are forbidden. The
+  global `subagent_depth` must be 2.
 
 ## 12. Role artifacts
 
@@ -354,7 +391,7 @@ stop and request decomposition instead of attempting a larger write.
 | analyst | `docs/analysis/` |
 | ux-designer | `docs/ux/` |
 | architect | `docs/architecture/` |
-| coder | `src/`, `backend/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore`, `requirements.txt`, `pyproject.toml`, `.env.example`, `alembic.ini`, `sources.yaml` |
+| coder | `src/`, `backend/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore`, `requirements.txt`, `pyproject.toml`, `.env.example`, `alembic.ini`, `sources.yaml`; `docs/ux/prototype/**` only when invoked by `ux-designer` for mockups |
 | qa | `docs/qa/` |
 | qa-vision | `docs/qa/` |
 | doc-writer | `docs/guides/`, `README.md`, ADR finalization |
@@ -370,10 +407,16 @@ orchestrator; roles do not edit `docs/bugs/`.
 - Production actions: `git push`, `docker push`, deployment outside
   local/staging, production migrations.
 - Secrets/tokens/keys in code, logs, or commits.
-- Cross-role subagent calls and grandchildren. Self-sub-sessions of the same
-  role are allowed only for decomposed chunks, one at a time, when the agent
-  declares `task` self-allow and the global `subagent_depth` is 2. `harness`
-  allows only harness roles.
+- Cross-role subagent calls, except the single `ux-designer -> harness-coder`
+  prototype delegation: depth 2, sequential, one child at a time, coder writes
+  only `docs/ux/prototype/**`, no children. Self-sub-sessions of the same role
+  are allowed only for decomposed chunks, one at a time, when the agent declares
+  `task` self-allow and `subagent_depth` is 2. `harness` allows only harness
+  roles.
+- Using `docs/activity.puml`, `docs/activity.svg`, or any derivative as a
+  decision input for task/bug status, dependencies, active-task detection,
+  acceptance, checkpoint decisions, or role routing. These artifacts are
+  informational visualizations only.
 - Parallel task execution: >1 active task, concurrent `/harness-run`, batch or
   parallel `task`, feature/bugfix preemption, or `board-update` while a task is
   active.

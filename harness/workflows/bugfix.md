@@ -51,7 +51,7 @@ summary, verification, and postmortem link. The orchestrator owns it.
 | B-02 | Minimal fix and regression | Minimal fix, regression test passes, relevant suites pass, no unrelated changes | coder | code, tests, card log | B-01 | Always; architect task if design-level | CP-2 |
 | B-03 | Independent verification | Reproduce/verify fail-before, verify pass-after, run regression, verdict | qa | `docs/qa/review-T-XXX.md` | B-02 | Always | CP-1 report, CP-F |
 | B-04 | Docs/changelog | Changelog, guide, or ADR note if behavior/docs changed | doc-writer | `CHANGELOG.md`, `docs/guides/*` | B-02 | Optional | CP-1 |
-| B-05 | Closure and postmortem | Update bug status, board, activity, commit; P0/P1 postmortem | orchestrator + lead | `docs/bugs/BUG-XXX-*.md`, `docs/bugs/README.md`, board, git commit | B-03, B-04 if present | Always; postmortem for P0/P1 | CP-F |
+| B-05 | Closure and postmortem | Update bug status, plan/card, re-render activity as derived, commit; P0/P1 postmortem | orchestrator + lead | `docs/bugs/BUG-XXX-*.md`, `docs/bugs/README.md`, plan/card, git commit | B-03, B-04 if present | Always; postmortem for P0/P1 | CP-F |
 
 ## Task graph
 
@@ -63,7 +63,9 @@ Optional insertions:
 
 - expected behavior unclear: analyst task before the coder task;
 - design-level defect: architect task before the coder task;
-- UI/UX defect: UX task before the coder task;
+- UI/UX defect: UX task before the coder task; the UX task may update affected
+  scenario pages and delegate their implementation to `harness-coder` under the
+  prototype exception;
 - docs/changelog affected: doc-writer task after the fix;
 - P0/P1: postmortem by the orchestrator in the bug card before `closed`.
 
@@ -124,4 +126,5 @@ Closure:
 - bug status is correct (`fixed`/`verified`/`closed`/`duplicate`/`wontfix`);
 - bug index links to all tasks and the fix commit;
 - P0/P1 postmortem exists;
+- activity artifacts are derived only, never status or acceptance evidence;
 - no bug is closed without user approval at `CP-F`.

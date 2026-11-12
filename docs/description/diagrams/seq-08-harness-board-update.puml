@@ -7,6 +7,7 @@ actor "User" as user
 participant "harness\nprimary lead" as lead
 participant "harness-orchestrator" as orch
 participant "TaskCards\ndocs/tasks" as cards
+participant "Checkpoints\ndocs/checkpoints" as checkpoints
 participant "BugRegistry\ndocs/bugs" as bugs
 participant "PlanBoard\ndocs/plan.md" as board
 participant "ActivityDiagram\n.puml" as activity
@@ -17,10 +18,19 @@ user -> lead : /harness-board-update all | T-XXX
 lead -> orch : sync board\n(all or T-XXX)
 orch -> cards : read workflow, statuses,\nblockers, commits
 cards --> orch : actual task state
+orch -> checkpoints : read decisions and artifacts
+checkpoints --> orch : approvals/changes
 orch -> bugs : check bug status and task links
 bugs --> orch : BUG-XXX rows
+orch -> git : read commit hashes
+git --> orch : actual hashes
 orch -> board : reconcile and update\nworkflow, status, bug link, artifacts, hash
-orch -> activity : task block color
+note right of orch
+  Authoritative: plan, cards,
+  checkpoints, bugs, workflows, Git.
+  Do not read activity as input.
+end note
+orch -> activity : render derived colors\nfrom reconciled state
 orch -> mcp : check_syntax
 mcp --> orch : valid
 orch -> mcp : render_file -> activity.svg
@@ -29,8 +39,8 @@ orch -> git : add + commit\n"chore: board update"
 git --> orch : hash
 orch --> lead : changed statuses,\ncommits, SVG path
 lead --> user : report
-note right of orch
-  On divergence, the task card
-  is the source of truth
+note right of activity
+  Informational visualization;
+  board/card wins on divergence
 end note
 @enduml

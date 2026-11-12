@@ -8,7 +8,7 @@ participant "Command\nharness-run" as cmd
 participant "harness\nprimary lead" as lead
 participant "harness-orchestrator" as orch
 participant "Task role\nharness-*" as role
-participant "Board + Checkpoints\n+ ActivityDiagram" as board
+participant "Board + Cards + Checkpoints\n+ derived ActivityDiagram" as board
 participant "Git" as git
 
 user -> cmd : /harness-run T-XXX
@@ -23,10 +23,10 @@ alt task is awaiting_review
     lead --> user : stop: decision required
   else approved
     lead -> orch : resume in_progress
-    orch -> board : status + activity + SVG
+    orch -> board : plan/card status,\nthen re-render activity/SVG
   else changes_requested
     lead -> orch : resume in_progress
-    orch -> board : status + activity + SVG
+    orch -> board : plan/card status,\nthen re-render activity/SVG
   end
 else task is pending or in_progress
   lead -> board : check dependencies\nand no other active task
@@ -34,8 +34,8 @@ else task is pending or in_progress
   alt not ready
     lead --> user : stop: dependency or active task
   else ready
-    lead -> orch : in_progress\nplan + card + activity + SVG
-    orch -> board : update status and color
+    lead -> orch : in_progress\nplan + card, then activity + SVG
+    orch -> board : update plan/card status,\nthen derived color
   end
 end
 
@@ -44,7 +44,7 @@ loop until final checkpoint CP-F
   role -> role : do the stage\nwithin the write area
   role --> lead : result + CHECKPOINT CP-N reached
   lead -> orch : record checkpoint
-  orch -> board : checkpoint file\nawaiting_review
+  orch -> board : checkpoint file, awaiting_review\nplan/card, then derived activity
   orch -> git : add + commit "T-XXX: checkpoint CP-N"
   git --> orch : snapshot hash
   orch --> lead : checkpoint ready
@@ -62,7 +62,7 @@ end
 
 lead -> orch : final acceptance\nCP-F approved
 alt acceptance passed
-  orch -> board : done + artifacts + log
+  orch -> board : done in plan/card + log,\nthen derived activity
   orch -> git : add + commit "T-XXX: ..."
   git --> orch : commit hash
   orch --> lead : done, hash
@@ -72,9 +72,13 @@ else acceptance failed
 end
 lead --> user : status, checkpoint state,\ncommit, unblocked tasks
 note right of lead
+  Status comes from plan/cards/checkpoints/
+  bugs/workflows/Git; activity is informational.
   For workflow: bugfix, the BUG-XXX status
   is updated by the orchestrator and the
   coder/QA gates include reproduction,
   failing regression, and fail-before/pass-after.
+  A UX task may call harness-coder for
+  prototype pages (depth 2, one at a time).
 end note
 @enduml

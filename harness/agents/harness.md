@@ -85,7 +85,7 @@ ordinary tasks.
    to the card's `workflow`. For a new bug, read the bugfix workflow and
    `docs/bugs/README.md`.
 3. Do not edit files; you have no edit/write permission. Board, cards, bug
-   registry, checkpoints, activity, SVG, and commits are done by
+   registry, checkpoints, derived activity/SVG, and commits are done by
    `harness-orchestrator` on your instruction.
 4. Check `docs/plan.md`: if a task is `in_progress` or `awaiting_review`, stop and
    report its ID. A second parallel task is forbidden. New pending feature/bug
@@ -121,22 +121,26 @@ ordinary tasks.
      to the same checkpoint.
 4. For a `pending` task: check `depends_on` (all `done`) and the board (no other
    active task). If either fails, stop and report; change nothing.
-5. Tell `harness-orchestrator` to set T-XXX `in_progress`, update
-   plan/card/activity, and re-render SVG.
+5. Tell `harness-orchestrator` to set T-XXX `in_progress`, update plan/card,
+   then re-render activity/SVG as derived artifacts.
 6. Give the role: task ID, card path, workflow file, `acceptance`, `inputs`,
    workflow applicability, checkpoint list, shared rules in
    `harness/process.md`, and the `chunks`/`budget` fields. For bugfix, also give
    the `BUG-XXX` card and require reproduction/root cause/failing regression
    before the fix. Require the role to stop at the next checkpoint. A generator
-   role (analyst, coder) may process the chunks in self-sub-sessions; the lead
-   still routes cross-role work and must not run role work inline.
+   role (analyst, coder) may process the chunks in self-sub-sessions. The only
+   nested cross-role call is `ux-designer -> harness-coder` for prototype pages;
+   it is part of the same UX task. The lead routes all other cross-role work and
+   must not run role work inline. Status comes from the plan, card, and
+   checkpoints, never from `docs/activity.puml` or its derivatives.
 7. After each role call, check the session for `finish=length`, SSE timeouts,
    compaction, and context above the card's `context_stop_pct`. If any occurs,
    stop the run and split the chunk; do not ask the role to repeat the same
    oversized call.
 8. When the role reports a checkpoint: instruct `harness-orchestrator` to
-   create/update the checkpoint file, set `awaiting_review`, update artifacts
-   and the bug status when applicable, commit the snapshot, and report. Show the
+   create/update the checkpoint file, set `awaiting_review`, update plan/card,
+   re-render activity/SVG as derived artifacts, update the bug status when
+   applicable, commit the snapshot, and report. Show the
    user: checkpoint ID, artifacts, review checklist, how to edit/comment, and
    resume command. End the run; do not continue the role.
 9. Close via `harness-orchestrator` only after the final role checkpoint and
@@ -158,7 +162,9 @@ ordinary tasks.
 - Do not call subagents outside the harness role list. Generator roles may spawn
   self-sub-sessions of their own role for chunks (depth 2, sequential); the lead
   must verify `subagent_depth: 2` and self-allow in the role before relying on
-  it.
+  it. The single cross-role exception is `ux-designer -> harness-coder` for
+  prototype pages; verify the UX agent has the coder task allow and do not treat
+  the nested call as a second task or parallel role.
 - Do not start a second run/task, preempt a feature with a bugfix, or run
   `board-update` while a task is active (`in_progress` or `awaiting_review`).
 - Do not close a task without `CP-F` approval; do not infer user approval from

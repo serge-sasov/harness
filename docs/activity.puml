@@ -56,5 +56,6 @@ legend right
 |<#D3D3D3>| pending |
 |<#FF9090>| failed |
 |<#FFB347>| blocked |
+| (derived) | Informational only; board/card is authoritative |
 endlegend
 @enduml

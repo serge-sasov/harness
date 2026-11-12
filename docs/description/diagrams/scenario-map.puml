@@ -13,13 +13,13 @@ title Harness scenario map (S-01..S-14)
 *** S-10 Errors,\nretry <= 3, blocked
 ** Roles
 *** S-03 Requirements\n+ e2e use cases + YAML
-*** S-12 UX design\nflows / wireframes / prototype
+*** S-12 UX design\nflows / wireframes / per-UC pages
 *** S-04 Architecture\nADR + diagrams
 *** S-05 Implementation\ncode + unit + e2e tests
 *** S-06 QA acceptance\ne2e coverage + verdict
 *** S-07 Documentation\nREADME + guides
 ** Service commands
-*** S-08 /harness-board-update\nsync + bug index
+*** S-08 /harness-board-update\nsync + derived activity
 *** S-09 /harness-board-report\nread-only summary
 ** Pilot
 *** S-11 T-013\nend-to-end

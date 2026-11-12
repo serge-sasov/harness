@@ -23,7 +23,7 @@ qa -> store : docs/qa/e2e-report-*.md\ndefects + residual risks
 qa -> store : docs/qa/review-T-XXX.md\ntechnical findings
 qa --> primary : technical verdict
 
-primary -> qavision : task: visual pass for diagrams,\nwireframes, prototype screenshots
+primary -> qavision : task: visual pass for diagrams,\nwireframes, per-scenario prototype screenshots
 qavision -> vision : read PNG / SVG
 vision --> qavision : pixels, text, layout
 qavision -> store : docs/qa/vision-review-T-XXX.md

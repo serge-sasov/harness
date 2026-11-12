@@ -38,11 +38,11 @@ package "Sources of truth" {
 
 package "Artifacts" {
   component "docs/analysis\nrequirements + e2e UC + YAML" as docs
-  component "docs/ux\nflows / wireframes / prototype" as uxdocs
+  component "docs/ux\nflows / wireframes / UI spec /\nprototype catalog + scenario pages" as uxdocs
   component "docs/architecture\ndocs/qa\ndocs/guides\ndocs/issues" as designdocs
   component "docs/bugs\nBUG cards + index" as bugdocs
   component "src, tests, scripts\nDockerfile, compose" as code
-  component "activity.puml / .svg" as activity
+  component "activity.puml / .svg\nderived, informational" as activity
 }
 
 package "Tools" {
@@ -89,14 +89,16 @@ orch --> cards : acceptance / blockers
 orch --> bugs : triage / status / root cause
 orch --> bugdocs : bug cards and index
 orch --> checkpoints : awaiting_review / decisions
-orch --> activity : status color
+orch --> activity : derived status color (last)
 orch --> designdocs : issue index
 orch --> puml : check_syntax / render
 orch --> git : add + commit
 
 analyst --> rag : source search
 analyst --> docs : requirements + e2e data
-ux --> uxdocs : flows, wireframes, prototype
+ux --> uxdocs : flows, wireframes, UI spec, catalog
+ux --> coder : optional task:\nprototype scenario page (depth 2)
+coder --> uxdocs : prototype page code\nonly when delegated by UX
 architect --> designdocs : ADR and diagrams
 architect --> uxdocs : reads screen IDs
 qa --> designdocs : e2e plan/report + review
@@ -118,5 +120,11 @@ note right of registry
   Global install:
   agents / commands / skills / workflows / harness
   Project activation: /harness-init
+end note
+
+note bottom of activity
+  Render from plan/cards/checkpoints/bugs/Git.
+  Never use as a status, dependency,
+  acceptance, or routing source.
 end note
 @enduml

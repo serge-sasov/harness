@@ -13,11 +13,13 @@
   doc-writer.
 - `Dependencies`: comma-separated, `-` if none; all must be `done` before start.
 - `Status`: `pending` | `in_progress` | `awaiting_review` | `done` | `failed` |
-  `blocked`; colors mirror `docs/activity.puml` (process section 9).
+  `blocked`. The board is authoritative; activity colors are rendered from it
+  and never used to determine status (process section 9).
 - `Bug`: `BUG-XXX` for bugfix tasks, `-` for feature tasks.
 - `awaiting_review` is an active status: it blocks other tasks until the user
   approves or requests changes.
-- `Artifacts`: relative to the repo root. `Commit`: final task hash; checkpoint
-  commits are recorded in the card.
+- `Artifacts`: relative to the repo root; UX prototype rows use
+  `docs/ux/prototype/<slug>/index.html`, `uc-e2e-*.html`, `assets/*`. `Commit`:
+  final task hash; checkpoint commits are recorded in the card.
 - `e2e` / `ux` applicability, workflow, stage, and the checkpoint list live in
   the task card, not on the board.

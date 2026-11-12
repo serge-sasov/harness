@@ -75,7 +75,9 @@ Root: `docs/ux/`.
 | Screen inventory | `screens-<slug>.md` | screen ID, purpose, states, navigation, data |
 | Wireframes | `wireframes-<slug>.puml` + `.svg` | one diagram per key flow or screen set |
 | UI specification | `ui-spec-<slug>.md` | layout, components, validation, empty/loading/error states, accessibility |
-| Prototype | `prototype/<slug>/index.html` | static, offline, no external CDNs or secrets; links screens and states |
+| Prototype catalog | `prototype/<slug>/index.html` | static, offline; links every scenario page and back |
+| Scenario pages | `prototype/<slug>/uc-e2e-NNN.html` | one page per in-scope e2e use case; screens and empty/loading/success/error states |
+| Prototype assets | `prototype/<slug>/assets/*` | local CSS/JS/images only; no CDNs or network APIs |
 | Screenshots (optional) | `prototype/<slug>/screenshots/` | PNG for QA vision |
 
 Rules:
@@ -83,8 +85,14 @@ Rules:
 - screen IDs are stable and referenced by architecture contracts and e2e use
   cases;
 - the prototype is a design artifact, not production code;
+- every in-scope `UC-E2E-NNN` maps to exactly one scenario page or an explicit
+  waiver with a reason in the UI spec; filenames use the lower-case use-case
+  number (`uc-e2e-001.html`);
+- the UX designer may delegate scenario-page implementation to `harness-coder`
+  one page at a time; this is the only cross-role child call (depth 2), coder
+  writes only `prototype/<slug>/**`, and the UX designer validates and accepts;
 - no real user data, credentials, or tracking scripts;
-- all links are relative.
+- all links are relative; pages open offline.
 
 ## 3. Checkpoint contract
 
@@ -105,6 +113,8 @@ Rules:
 - `snapshot_commit` is the commit that freezes the reviewed artifact state;
 - the role reads the checkpoint file and `git diff <snapshot_commit>..HEAD`
   before continuing and preserves user edits;
+- status and checkpoint decisions come from the plan, card, checkpoint files,
+  and Git evidence; `docs/activity.puml`/`.svg` are derived and informational;
 - a task cannot be `done` without `CP-F = approved`.
 
 Task status transitions:

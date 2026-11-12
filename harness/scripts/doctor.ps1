@@ -211,6 +211,7 @@ if (Test-Path -LiteralPath $configPath) {
     }
 
     $selfSessionRoles = @("harness-analyst", "harness-coder")
+    $expectedCrossRole = @{ "harness-ux-designer" = "harness-coder" }
     $crossRole = @()
     foreach ($agentFile in $agentFiles) {
         $roleName = [System.IO.Path]::GetFileNameWithoutExtension($agentFile.Name)
@@ -235,9 +236,21 @@ if (Test-Path -LiteralPath $configPath) {
                 Write-Warn "$roleName lacks self task allow; chunked self-sub-sessions will fail"
             }
         }
+        if ($expectedCrossRole.ContainsKey($roleName)) {
+            $expectedChild = $expectedCrossRole[$roleName]
+            if ($taskAllows -contains $expectedChild) {
+                Write-Ok "$roleName may call $expectedChild for prototype pages"
+            }
+            else {
+                Write-Warn "$roleName lacks expected prototype task allow: $expectedChild"
+            }
+        }
         if ($roleName -ne "harness") {
             foreach ($allowed in $taskAllows) {
                 if ($allowed -like "harness-*" -and $allowed -ne $roleName) {
+                    if ($expectedCrossRole.ContainsKey($roleName) -and $allowed -eq $expectedCrossRole[$roleName]) {
+                        continue
+                    }
                     $crossRole += "$roleName -> $allowed"
                 }
             }
@@ -324,10 +337,10 @@ if (Test-Path -LiteralPath $configPath) {
     if ($depthMatch.Success) {
         $depth = [int]$depthMatch.Groups[1].Value
         if ($depth -ge 2) {
-            Write-Ok "subagent_depth is $depth (self-sub-sessions enabled)"
+            Write-Ok "subagent_depth is $depth (depth-2 self/UX prototype calls enabled)"
         }
         else {
-            Write-Warn "subagent_depth is $depth; self-sub-sessions require >= 2"
+            Write-Warn "subagent_depth is $depth; depth-2 self/UX prototype calls require >= 2"
         }
     }
     else {

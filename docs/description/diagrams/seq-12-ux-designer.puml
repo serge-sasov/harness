@@ -6,6 +6,7 @@ title S-12 UX design (ux-designer)
 actor "User" as user
 participant "harness\nprimary lead" as primary
 participant "harness-ux-designer" as ux
+participant "harness-coder\n(prototype pages)" as coder
 participant "docs/ux" as docs
 participant "MCP\nplantuml-render" as puml
 participant "harness-qa-vision" as vision
@@ -18,11 +19,16 @@ ux -> docs : screens-*.md\nscreen inventory and states
 ux -> docs : wireframes-*.puml
 ux -> puml : check_syntax + render_file
 puml --> ux : wireframes-*.svg
-ux -> docs : ui-spec-*.md\nlayout, components, validation, a11y
-ux -> docs : prototype/<slug>/index.html\nstatic, offline, relative links
-ux -> ux : self-check IDs, states,\nempty/loading/error, no secrets
-ux --> orch : UX artifacts + CHECKPOINT CP-1 reached
-orch -> vision : visual review of SVG + prototype screenshots
+ux -> docs : ui-spec-*.md + scenario coverage\nlayout, components, a11y, waivers
+loop each in-scope UC-E2E-NNN, one page at a time
+  ux -> coder : task: implement uc-e2e-NNN.html\nbrief, states, local assets
+  coder -> docs : prototype/<slug>/uc-e2e-NNN.html
+  coder --> ux : page path + offline/link/state check
+end
+ux -> docs : prototype/<slug>/index.html\ncatalog + assets, relative links
+ux -> ux : validate coverage, links, no CDNs,\nno secrets, all states
+ux --> orch : UX artifacts + CHECKPOINT CP-2 reached
+orch -> vision : visual review of SVG + scenario screenshots
 vision --> orch : findings
 user -> docs : review flows, wireframes, prototype\nedit artifacts at checkpoint
 @enduml

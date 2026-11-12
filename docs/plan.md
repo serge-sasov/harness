@@ -2,7 +2,9 @@
 
 Process rules: `harness/process.md`.
 Workflows: `harness/workflows/feature.md`, `harness/workflows/bugfix.md`.
-Diagram: `docs/activity.puml`. Updated after every task (process section 9).
+Derived diagram: `docs/activity.puml` is informational only; re-render it from this
+board after every task (process section 9). Never use it to determine status,
+dependencies, the active task, acceptance, checkpoint decisions, or routing.
 
 ## Status legend
 
@@ -16,6 +18,8 @@ Diagram: `docs/activity.puml`. Updated after every task (process section 9).
 | `blocked` | orange `#FFB347` | external blocker |
 
 At most one task is active (`in_progress` or `awaiting_review`) across both workflows.
+This board and the task cards/checkpoints are authoritative; activity colors are
+derived visualizations only.
 
 ## Board
 

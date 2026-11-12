@@ -22,7 +22,7 @@ Use `workflow: feature` for:
 | A-01 | Requirements analysis | Collect/refine FR/NFR, constraints, questions, glossary; atomic `R-NNN` | analyst | `docs/analysis/requirements-*.md`, `questions-*.md`, `glossary.md` | P-00 | Always | CP-1 |
 | A-02 | E2E use cases and data | Derive e2e scenarios, assign `UC-E2E-NNN`, describe steps/data/expectations and traceability; produce YAML dataset in 2-3 UC chunks; one CP-2 after all chunks validate | analyst | `docs/analysis/e2e-use-cases-*.md`, `e2e-test-data-*.yaml` | A-01 | If e2e in scope; otherwise waiver | CP-2 |
 | U-01 | UX flows and screens | Personas, journeys, information architecture, screen inventory, screen states | ux-designer | `docs/ux/user-flows-*.md`, `screens-*.md` (+ optional `.puml/.svg`) | A-01, A-02 | If UI in scope; otherwise waiver | CP-1 |
-| U-02 | UX wireframes, prototype, UI spec | Salt wireframes, static HTML prototype, interaction/accessibility/UI copy, design tokens | ux-designer | `docs/ux/wireframes-*.puml/.svg`, `ui-spec-*.md`, `prototype/<slug>/index.html` | U-01 | If UI in scope | CP-2 |
+| U-02 | UX wireframes, prototype, UI spec | Salt wireframes, static HTML prototype with one page per `UC-E2E`, interaction/accessibility/UI copy, design tokens; coder may implement prototype pages | ux-designer (+ harness-coder) | `docs/ux/wireframes-*.puml/.svg`, `ui-spec-*.md`, `prototype/<slug>/index.html`, `prototype/<slug>/uc-e2e-*.html`, `prototype/<slug>/assets/*` | U-01 | If UI in scope | CP-2 |
 | R-01 | Architecture and contracts | ADR with alternatives, API/formats/errors, module boundaries, decomposition | architect | `docs/architecture/adr-*.md`, `contracts-*.md` | A-01, A-02, U-02 | Always; UX input if UI | CP-1 |
 | R-02 | Diagrams and handoff | Component/sequence diagrams, `check_syntax` + render, module handoff to coder | architect | `docs/architecture/*.puml`, `*.svg` | R-01 | Always | CP-2 |
 | I-01 | Implementation and unit/integration tests | Code per ADR/contracts, tests, CI/CD, local run | coder | `src/`, `tests/`, `Dockerfile`, `docker-compose*.yml`, `Makefile` | R-02, U-02 | Always | CP-1 |
@@ -30,7 +30,7 @@ Use `workflow: feature` for:
 | Q-01 | E2E plan and coverage | Requirement -> UC -> test matrix, test data validation, execution approach | qa | `docs/qa/e2e-plan-*.md` | A-02, I-02 | If e2e in scope | CP-1 |
 | Q-02 | QA and acceptance | Run tests/e2e, evidence, defects, text/code/vision review, final verdict | qa (+ qa-vision) | `docs/qa/e2e-report-*.md`, `docs/qa/review-T-XXX.md`, `vision-review-*` | Q-01, I-02, I-01, R-02, U-02 | Always; e2e part if in scope | CP-2 |
 | D-01 | Documentation | README/runbook/guides, ADR finalization, document e2e/UX/checkpoint process | doc-writer | `README.md`, `docs/guides/*`, finalized ADRs | R-02, I-01, U-02, Q-02 | Per card | CP-1 |
-| F-01 | Final acceptance and closure | Verify acceptance, update plan/card/activity/SVG, bug links, commit | orchestrator + lead | `docs/plan.md`, card, `docs/activity.puml/.svg`, git commit | Q-02, D-01 | Always | CP-F |
+| F-01 | Final acceptance and closure | Verify acceptance, update plan/card, re-render activity/SVG as derived, bug links, commit | orchestrator + lead | `docs/plan.md`, card, `docs/activity.puml/.svg`, git commit | Q-02, D-01 | Always | CP-F |
 
 ## Task graph
 
@@ -52,6 +52,10 @@ Rules:
 - `P-00` closes at `CP-F`; its `Artifacts` lists the created cards.
 - Cross-stage dependencies are explicit; no task starts before all predecessors
   are `done`.
+- In U-02, `ux-designer` may delegate prototype page implementation to
+  `harness-coder` under the process exception (depth 2, sequential, coder writes
+  only `docs/ux/prototype/<slug>/**`); U-02 remains one UX task and one
+  checkpoint.
 - The orchestrator must not create a second active task.
 
 ## Default checkpoints
@@ -75,5 +79,7 @@ Rules:
 - Requirements are atomic and traceable to use cases, UX screens, tests, and QA
   evidence.
 - No `done` without all acceptance items and `CP-F`.
+- `docs/activity.puml`/`.svg` are derived visualizations, never acceptance or
+  status evidence; the plan/card/checkpoints are authoritative.
 - A feature that reveals a defect in existing behavior may create a linked
   `BUG-XXX`; the feature task must not silently absorb an unrelated bugfix.

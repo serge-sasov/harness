@@ -7,7 +7,9 @@ Execute task `$ARGUMENTS` per `harness/process.md` and its workflow file.
 
 Verify `harness/process.md`, `docs/plan.md`, and the workflow file; if missing,
 stop and suggest `/harness-init`. `$ARGUMENTS` must be exactly one task ID
-(`T-XXX`); multiple IDs, a range, or `all` -> stop without changes.
+(`T-XXX`); multiple IDs, a range, or `all` -> stop without changes. Determine
+status only from the plan, card, checkpoint files, bug cards, workflow files,
+and Git evidence; `docs/activity.puml` and its derivatives are informational.
 
 1. Read `docs/plan.md` and the card. Determine `workflow` (`feature` or
    `bugfix`; missing legacy value means `feature`) and `stage`; load
@@ -21,7 +23,9 @@ stop and suggest `/harness-init`. `$ARGUMENTS` must be exactly one task ID
      `harness-orchestrator` and call exactly one role. Pass the card's `chunks`
      and `budget` fields; if chunks are planned, run the next unfinished chunk
      and use a fresh role session per chunk. Stop at the checkpoint only after
-     the final chunk passes validation.
+     the final chunk passes validation. For a UX task, the `ux-designer` may
+     call `harness-coder` for prototype pages; this is a nested call within the
+     same UX task, not a second role or parallel work.
    - `awaiting_review`: read `docs/checkpoints/T-XXX-CP-N.md` and the user edits.
      Without an explicit `approved` decision, stop and ask; never infer approval.
      On `approved`, finalize at `CP-F` or set `in_progress` and continue past an
@@ -39,8 +43,8 @@ stop and suggest `/harness-init`. `$ARGUMENTS` must be exactly one task ID
    checkpoint after the final chunk; the orchestrator records failed attempts
    per chunk.
    The orchestrator creates/updates the checkpoint file, sets `awaiting_review`,
-   updates the board/card/activity/SVG, updates the bug status when applicable,
-   and commits the snapshot. The lead reports artifacts and the review checklist
+   updates plan/card, re-renders activity/SVG as derived artifacts, updates the
+   bug status when applicable, and commits the snapshot. The lead reports artifacts and the review checklist
    to the user and ends the run. A task becomes `done` only after the final role
    checkpoint and `CP-F` approval.
 6. Close via `harness-orchestrator`: success -> `done`, update artifacts, bug

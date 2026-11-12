@@ -37,8 +37,10 @@ Detailed guide: [`docs/guides/harness-global.md`](docs/guides/harness-global.md)
 - `docs/checkpoints/` - user checkpoint decisions, edits, and remarks
 - `docs/qa/` - QA plans, reviews, and smoke reports
 - `docs/analysis/` - requirements, e2e use cases and YAML test data
-- `docs/ux/` - user flows, screens, wireframes, UI spec, HTML prototypes
-- `docs/activity.puml` / `activity.svg` - activity diagram
+- `docs/ux/` - user flows, screens, wireframes, UI spec, prototype catalog, and
+  one HTML page per `UC-E2E-NNN`
+- `docs/activity.puml` / `activity.svg` - derived activity diagram, informational
+  only; never a status, dependency, acceptance, or routing source
 - `requirements/` - initial requirements
 
 ## Role models
@@ -90,7 +92,8 @@ project, run:
 3. `/harness-run T-XXX` - execute the task until the next checkpoint.
 4. Review/edit artifacts in `docs/checkpoints/T-XXX-CP-N.md`, record a decision,
    then run `/harness-run T-XXX` again to resume.
-5. `/harness-board-update all` - sync the board and activity when no task is active.
+5. `/harness-board-update all` - sync the board, then re-render the derived
+   activity when no task is active.
 6. `/harness-board-report` - summary without changes, including pending reviews
    and the bug queue.
 
@@ -102,18 +105,21 @@ and suggests `/harness-init`.
 1. The harness lead reads the card's `workflow` and `stage`, loads
    `harness/workflows/<workflow>.md`, checks dependencies, and verifies that no
    task is active across either workflow.
-2. `harness-orchestrator` sets the task to `in_progress` and updates the board.
+2. `harness-orchestrator` sets the task to `in_progress` in the plan/card and
+   re-renders the derived activity.
 3. The role performs the stage strictly per the card's `acceptance` and stops at
-   each declared checkpoint.
+   each declared checkpoint. A UX task may call `harness-coder` for prototype
+   pages under the single cross-role exception.
 4. At a checkpoint the orchestrator records `docs/checkpoints/T-XXX-CP-N.md`,
-   sets `awaiting_review`, updates artifacts, and commits the snapshot; the user
-   reviews/edits artifacts and records a decision.
+   sets `awaiting_review`, updates plan/card/checkpoints, re-renders activity as
+   derived, and commits the snapshot; the user reviews/edits artifacts and
+   records a decision.
 5. `/harness-run T-XXX` resumes the task: `approved` continues the role,
    `changes_requested` returns to the same checkpoint. Silence is not approval.
 6. After the final checkpoint and mandatory `CP-F` approval,
    `harness-orchestrator` accepts the result.
-7. On success - `done`, board/card/activity/SVG update, and commit; on failure -
-   `failed`, up to 3 attempts, then `blocked` and escalation.
+7. On success - `done`, plan/card update, derived activity/SVG re-render, and
+   commit; on failure - `failed`, up to 3 attempts, then `blocked` and escalation.
 
 ### Feature workflow
 
@@ -139,16 +145,21 @@ no status/dependency changes, preemption, or parallel execution are allowed.
 - The analyst formalizes `UC-E2E-NNN` use cases and a machine-readable YAML
   dataset in `docs/analysis/`.
 - The UX designer produces user flows, screens, PlantUML wireframes, a UI spec,
-  and a static HTML prototype in `docs/ux/`.
+  and a static offline HTML prototype in `docs/ux/`: `index.html` plus one
+  `uc-e2e-NNN.html` page per in-scope use case (or a recorded waiver). Prototype
+  page implementation may be delegated to `harness-coder` one page at a time;
+  coder writes only `docs/ux/prototype/<slug>/**`, and UX validates the result.
 - The architect maps screens/use cases to contracts; the coder implements
   deterministic e2e tests and an isolated runner; QA builds the coverage
   matrix, runs the suite, and reports traceability and defects.
 
 ## Versions
 
-- Current version: `2.3.0` (generation/context budgets, chunked A-02 and coding,
-  self-sub-sessions for analyst/coder, `subagent_depth: 2`, budget and e2e data
-  validators).
+- Current version: `2.4.0` (per-scenario UX HTML pages with the single
+  `ux-designer -> harness-coder` prototype exception, and the derived/informational
+  activity rule; includes 2.3.0 generation/context budgets, chunked A-02 and
+  coding, self-sub-sessions for analyst/coder, `subagent_depth: 2`, budget and e2e
+  data validators).
 - The global version is stored in `~/.config/opencode/harness/version.json`.
 - A project records the version in `harness/version.json` during `/harness-init`.
 - `/harness-doctor` warns about version divergence.
@@ -185,7 +196,10 @@ issue files in the task commit. Secrets are never written to issues.
 - Harness is not used for ordinary tasks: activation only via `/harness-feature`,
   `/harness-bug`, `/harness-run`, or service commands.
 - At most one task is active across both workflows; feature and bugfix never run
-  in parallel and cannot preempt each other.
+  in parallel and cannot preempt each other. Cross-role calls are forbidden
+  except `ux-designer -> harness-coder` for prototype pages (depth 2, sequential).
+- `docs/activity.puml/.svg` are derived visualizations; status and routing are
+  taken only from the plan, cards, checkpoints, bug cards, workflows, and Git.
 - `git push`, `git tag`, history rewrite, and prod deployment are forbidden.
 - E2E tests target local/staging only, use isolated data, and must clean up.
 - Checkpoints require an explicit user decision; a silence keeps the task in

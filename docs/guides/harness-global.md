@@ -49,7 +49,10 @@ The script:
 These rules allow any primary agent to explicitly call harness roles.
 `subagent_depth: 2` lets `harness-analyst` and `harness-coder` spawn
 self-sub-sessions of their own role for chunked work. Roles do not call other
-roles: each role keeps `"*": "deny"` and only analyst/coder add a self-allow.
+roles, with one exception: `harness-ux-designer` has
+`task: {"*": "deny", "harness-coder": "allow"}` and may delegate prototype page
+implementation to one coder child at a time. All other roles keep `"*": "deny"`;
+coder writes only `docs/ux/prototype/**` in that mode.
 The primary `harness` agent keeps its own allow rules.
 
 If `opencode.jsonc` contains comments, the script does not edit the file
@@ -125,7 +128,7 @@ backs up to `.harness-backup-<timestamp>/`.
 | `/harness-feature <slug> [e2e] [ux]` | create a pending `P-00` feature planning task |
 | `/harness-bug <report or BUG-XXX>` | create/triage a `BUG-XXX` card and pending bugfix tasks |
 | `/harness-run T-XXX` | execute a task until a checkpoint, or resume after review |
-| `/harness-board-update all / T-XXX` | sync the board, cards, bug index, checkpoints, activity, and SVG when no task is active |
+| `/harness-board-update all / T-XXX` | sync plan/cards/bugs/checkpoints/commits, then re-render the derived activity and SVG when no task is active |
 | `/harness-board-report` | read-only board/bug summary, including pending reviews |
 | `/harness-doctor` | check the installation and the project |
 
@@ -136,7 +139,7 @@ Run flow:
   -> harness-orchestrator: register pending planning/bugfix work only
 /harness-run T-XXX
   -> primary agent harness (marker, workflow, depends_on, active-task checks)
-  -> harness-orchestrator (in_progress, board, bug status, activity, SVG)
+  -> harness-orchestrator (in_progress, board, bug status, derived activity/SVG)
   -> harness-analyst | harness-ux-designer | harness-architect |
     harness-coder | harness-qa | harness-qa-vision | harness-doc-writer
   -> role stops: CHECKPOINT CP-N reached
@@ -165,7 +168,8 @@ Flow:
 1. The role stops at the declared checkpoint and reports
    `CHECKPOINT <ID> reached`.
 2. The orchestrator writes the checkpoint file, sets the task to
-   `awaiting_review`, updates the board/activity/SVG, and commits a snapshot.
+   `awaiting_review`, updates plan/card/checkpoints, re-renders activity/SVG as
+   derived, and commits a snapshot.
 3. The user reviews artifacts, edits files if needed, and records a decision:
    `approved`, `changes_requested`, or no decision (keep reviewing).
 4. `/harness-run T-XXX` resumes:
@@ -186,7 +190,10 @@ Status colors: `pending` `#D3D3D3`, `in_progress` `#FFE082`,
   and `docs/analysis/e2e-test-data-<slug>.yaml` (schema `harness-e2e/1`).
 - UX designer: `docs/ux/user-flows-<slug>.md`, `screens-<slug>.md`,
   `wireframes-<slug>.puml/.svg`, `ui-spec-<slug>.md`, and
-  `docs/ux/prototype/<slug>/index.html` plus optional screenshots.
+  `docs/ux/prototype/<slug>/index.html` with one `uc-e2e-NNN.html` page per
+  in-scope use case (or a recorded waiver), local `assets/`, and optional
+  screenshots. The UX designer may delegate page code to `harness-coder` one page
+  at a time; coder writes only the prototype area and UX accepts the result.
 - Architect: contracts cover the screen IDs, use-case IDs, and the e2e
   environment/data consumption.
 - Coder: `tests/e2e/`, an isolated runner (for example `scripts/e2e.ps1`), and
@@ -215,7 +222,9 @@ Bugfix evidence:
 2. Global `permission.task` allows any primary agent to explicitly call
    `harness-*`; roles do not call each other (`task: deny`), except
    `harness-analyst` and `harness-coder` may spawn self-sub-sessions of their own
-   role for decomposed chunks (`subagent_depth: 2`, sequential, no grandchildren).
+   role for decomposed chunks (`subagent_depth: 2`, sequential, no grandchildren),
+   and `harness-ux-designer` may call `harness-coder` for prototype pages (depth
+   2, one child at a time, coder writes only `docs/ux/prototype/**`).
 3. Marker files `harness/process.md` and `docs/plan.md` are mandatory.
 4. Harness instructions are not added to the global `AGENTS.md`.
 5. The `harness` skill has an explicit description and is not auto-invoked.
@@ -305,7 +314,9 @@ manually from the template.
 
 ## 6. Versions and pins
 
-- Current version: `2.3.0` (generation/context budgets, chunked A-02 and coding,
+- Current version: `2.4.0` (per-scenario UX HTML pages with the
+  `ux-designer -> harness-coder` exception, and the derived/informational activity
+  rule; includes 2.3.0 generation/context budgets, chunked A-02 and coding,
   self-sub-sessions for analyst/coder, `subagent_depth: 2`, budget and e2e data
   validators).
 - Global version: `~/.config/opencode/harness/version.json`.
@@ -365,6 +376,7 @@ manually (the script prints a reminder).
 | config was not patched | `opencode.jsonc` contains comments | add `permission.task` allows and top-level `subagent_depth: 2` manually; without comments, rerun install |
 | `task` fails with `Subagent depth limit reached` | `subagent_depth` is missing/1, or compaction handoff created a child continuation session | run install to set `subagent_depth: 2`; update/disable the handoff plugin; start a fresh root session and resume `/harness-run` |
 | analyst/coder self-sub-session is denied | global `permission.task` or the role's self allow is missing | run install, restart opencode, check `/harness-doctor` for self-session and cross-role checks |
+| UX prototype delegation is denied | UX agent lacks the `harness-coder` task allow or `subagent_depth` is below 2 | update/install agents, restart opencode, check `/harness-doctor` for the expected UX -> coder allow |
 | role writes exceed the budget or hit `finish=length` | artifact was generated in one oversized call | split the chunk per `process.md` 11.1; use `harness/scripts/check-budget.ps1` and a fresh role session |
 | QA returns an empty report or `finish=length` | configured `limit.context` is above the real `num_ctx`, or output budget is too small | run `/harness-doctor`, compare `ollama show <model>` with `limit.context`, reduce reads, resume the same session |
 | `rag_sync` times out or returns `Sync already running` | indexing exceeds the local-rag MCP timeout; the lock remains | verify new content with `rag_search`, retry after the lock releases; consider a larger `local-rag` timeout; record an issue if it persists |
@@ -382,8 +394,9 @@ manually (the script prints a reminder).
 | version differs | the project was initialized by an older version | update the project deliberately; see pin |
 
 `/harness-doctor` checks the global installation, `permission.task` allows,
-`**/` path variants, the issue registry and index, the compaction handoff
-plugin, the model `num_ctx` against `limit.context`, and the `local-rag` MCP
+the expected `ux-designer -> harness-coder` exception, `**/` path variants, the
+issue registry and index, the compaction handoff plugin, the model `num_ctx`
+against `limit.context`, and the `local-rag` MCP
 timeout. Use `-SkipModelProbe` for a fast run without Ollama probes.
 
 ## 9. Migration to opencode V2

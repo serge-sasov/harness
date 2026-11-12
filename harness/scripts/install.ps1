@@ -365,7 +365,7 @@ if (-not $SkipConfig) {
                 Write-Utf8NoBom -Path $configPath -Text $depthNew
                 try {
                     Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json | Out-Null
-                    Write-Host "subagent_depth set to 2 (self-sub-sessions enabled)."
+                    Write-Host "subagent_depth set to 2 (depth-2 self/UX prototype calls enabled)."
                 }
                 catch {
                     Copy-Item -LiteralPath $depthBackup -Destination $configPath -Force

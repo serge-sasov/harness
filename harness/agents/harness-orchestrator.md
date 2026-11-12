@@ -96,7 +96,11 @@ report that the project is not initialized (`/harness-init`).
    record the cause. Update the linked bug status (`in_progress`, `fixed`,
    `verified`, `closed`, `duplicate`, `wontfix`) from role evidence.
 7. Update `docs/activity.puml` and re-render `docs/activity.svg` via MCP
-   `plantuml-render`.
+   `plantuml-render` only after the plan/card/checkpoint/bug state is final and
+   only as a derived visualization. Never read activity to determine or
+   reconcile statuses, dependencies, the active task, acceptance, checkpoint
+   decisions, or routing; the board/card wins. Activity colors use the suffix
+   form `:task text; <<#RRGGBB>>` (never `#RRGGBB:task text;`).
 8. Git commits after checkpoints and closure: checkpoint snapshot
    `T-XXX: checkpoint CP-N (<stage>)`, final `T-XXX: ...`.
 9. Maintain `docs/issues/`: verify the index, check role issue files, include
@@ -106,8 +110,13 @@ report that the project is not initialized (`/harness-init`).
 
 - You do not call subagents (`task` is forbidden). The `harness` primary agent
   passes the task package via the command; you prepare the package and record
-  results. Roles may spawn self-sub-sessions for chunks; you record the chunk
-  plan and verify that the final artifacts are complete.
+  results. Roles may spawn self-sub-sessions for chunks; the only nested
+  cross-role call is `ux-designer -> harness-coder` for prototype pages, which
+  remains part of the same UX task. Record the chunk plan and verify that the
+  final artifacts are complete.
+- Treat `docs/activity.puml` and `docs/activity.svg` as derived, informational
+  artifacts. Never use them to infer or reconcile status, dependencies,
+  active-task state, acceptance, checkpoint decisions, or routing.
 - Do not perform other roles' work: analysis, UX, architecture, code, tests,
   documentation are not your artifacts.
 - You own `docs/bugs/`; roles report bug evidence to you and do not edit it.
@@ -123,11 +132,13 @@ report that the project is not initialized (`/harness-init`).
 3. Intake mode (`/harness-feature`, `/harness-bug`): create only new `pending`
    cards, bug cards, index rows, plan rows, and activity entries. Never change
    existing statuses/dependencies or start work while another task is active.
-4. Set `in_progress` (plan, card, diagram) for the current task only; update the
-   bug status to `in_progress` for the first linked bugfix task.
+4. Set `in_progress` in the plan and card for the current task only; re-render
+   the activity diagram afterward as a derived artifact. Update the bug status
+   to `in_progress` for the first linked bugfix task.
 5. When the role reports a checkpoint: create/update the checkpoint file, set
-   `awaiting_review`, update artifacts, commit the snapshot, and report to the
-   lead. Do not continue the role.
+   `awaiting_review`, update plan/card/checkpoints, re-render activity/SVG,
+   update the linked bug status when applicable, commit the snapshot, and report
+   to the lead. Do not continue the role.
 6. On resume: read the decision and user edits; if `approved`, finalize at
    `CP-F` or set `in_progress` and continue past an intermediate checkpoint; if
    `changes_requested`, return to the same checkpoint; if no decision, stop and

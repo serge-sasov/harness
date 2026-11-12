@@ -136,7 +136,8 @@ if (-not (Test-Path -LiteralPath $PlanPath)) {
 
 Process rules: `harness/process.md`.
 Workflows: `harness/workflows/feature.md`, `harness/workflows/bugfix.md`.
-Diagram: `docs/activity.puml`. Updated after every task.
+Derived diagram: `docs/activity.puml`. Informational only; update it from the
+board after every task, never use it as a status source.
 
 ## Status legend
 
@@ -168,6 +169,8 @@ skinparam ActivityBorderColor #555555
 skinparam ArrowColor #555555
 title Local harness - task plan
 
+' Derived visualization only; the board/card is authoritative.
+' Status color: :task text; <<#RRGGBB>> (prefix #RRGGBB:text; is deprecated)
 start
 :No tasks;
 stop
