@@ -56,7 +56,9 @@ permission:
     "*git push*": "deny"
     "*Remove-Item*": "deny"
     "*rm -rf*": "deny"
-  task: deny
+  task:
+    "*": "deny"
+    "harness-analyst": "allow"
   external_directory:
     "*": "deny"
 ---
@@ -83,6 +85,25 @@ Before starting, verify that `harness/process.md`, the workflow file, and the ca
 3. Link the bug to affected `R-NNN`/`UC-E2E-NNN` and define verifiable acceptance for the fix.
 4. Recommend escalation if the expected behavior is missing, contradictory, or requires a design/UX decision.
 
+## Generation budget and chunking
+
+- Write artifacts incrementally: a skeleton, then one section or use case per
+  `edit`. Never a single `write` above 8 KB (Markdown) or 6 KB (YAML); never
+  more than 20 KB of new artifact content per session (15 KB for YAML).
+- Split A-02 into chunks of 2-3 use cases for Markdown and 2-3 entries for YAML.
+  Report one CP-2 after all chunks pass validation, not a checkpoint per chunk.
+- Stop at 60% of `limit.context` and continue in a fresh session with a short
+  handoff note: completed sections, decisions/fixtures, remaining sections,
+  exact next step. Do not re-read inputs already summarized.
+- You may spawn `harness-analyst` self-sub-sessions for chunks only: one child
+  at a time, explicit chunk brief with input paths and line ranges, a
+  non-overlapping file/section, and a return of the artifact path plus a summary
+  of at most 10 lines. Do not spawn other roles or grandchildren.
+- Use a deterministic script for token/fixture arithmetic and read only the
+  inputs needed for the chunk (grep/offset), not the whole corpus.
+- If the output limit or an SSE timeout occurs, split the chunk; do not repeat
+  the same oversized call. Count attempts per chunk.
+
 ## Artifacts (only write area)
 
 - `docs/analysis/requirements-<slug>.md`: requirements: context, use cases, NFRs, constraints.
@@ -103,9 +124,14 @@ Feature: stop at CP-1 (requirements baseline) and CP-2 (e2e use cases and datase
 - Designing architecture or UX, choosing technologies, writing code, tests, or e2e automation.
 - Editing `docs/bugs/`; report bug findings to the orchestrator.
 - Changing other roles' files or artifacts.
-- Calling subagents (`task` is forbidden).
+- Calling other roles, grandchildren, or parallel children. Self-sub-sessions of
+  `harness-analyst` for decomposed chunks are allowed.
 - Making git commits.
 
 ## Output format
 
-Briefly in English: workflow, what was analyzed, requirement/use-case IDs, expected behavior and acceptance for a bugfix, dataset path if any, coverage gaps, open questions, risks, artifact paths, checkpoint reached, blockers. Requirements must be atomic and verifiable, with IDs like R-001; use cases use `UC-E2E-NNN`.
+Briefly in English (at most 10 lines / 4 KB): workflow, what was analyzed,
+requirement/use-case IDs, expected behavior and acceptance for a bugfix, dataset
+path if any, coverage gaps, open questions, risks, artifact paths, checkpoint
+reached, blockers. Requirements must be atomic and verifiable, with IDs like
+R-001; use cases use `UC-E2E-NNN`.

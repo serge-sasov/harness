@@ -98,6 +98,12 @@ Before starting, verify that `harness/process.md`, the workflow file, and the ca
 - Links: relative paths inside the repository.
 - Do not add secrets or real credentials to examples (environment variables only).
 
+## Generation budget
+
+Follow `harness/process.md` 11.1: at most 8 KB per Markdown write/edit, 20 KB of
+new content per session, stop at 60% of `limit.context`. Write guides/README
+updates incrementally and split documents above the budget.
+
 ## Checkpoints
 
 Stop at CP-1 (documentation/changelog draft) if declared. Do not continue past a checkpoint; report artifacts and a verification checklist. After user approval, read `docs/checkpoints/T-XXX-CP-N.md`, the user remarks, and `git diff` since the snapshot; preserve user edits.

@@ -28,9 +28,10 @@ The script:
    `~/.config/opencode/`;
 2. backs up changed files to
    `~/.config/opencode/backups/harness-install-<timestamp>/`;
-3. adds or updates permissions in `opencode.jsonc`:
+3. adds or updates `subagent_depth` and permissions in `opencode.jsonc`:
 
 ```jsonc
+"subagent_depth": 2,
 "permission": {
   "task": {
     "harness-orchestrator": "allow",
@@ -46,8 +47,10 @@ The script:
 ```
 
 These rules allow any primary agent to explicitly call harness roles.
-Roles do not call each other: they keep `task: deny`. The primary `harness`
-agent keeps its own allow rules.
+`subagent_depth: 2` lets `harness-analyst` and `harness-coder` spawn
+self-sub-sessions of their own role for chunked work. Roles do not call other
+roles: each role keeps `"*": "deny"` and only analyst/coder add a self-allow.
+The primary `harness` agent keeps its own allow rules.
 
 If `opencode.jsonc` contains comments, the script does not edit the file
 automatically; it prints a ready snippet for manual insertion.
@@ -187,7 +190,8 @@ Status colors: `pending` `#D3D3D3`, `in_progress` `#FFE082`,
 - Architect: contracts cover the screen IDs, use-case IDs, and the e2e
   environment/data consumption.
 - Coder: `tests/e2e/`, an isolated runner (for example `scripts/e2e.ps1`), and
-  a dataset validator (for example `scripts/validate-e2e-data.py`).
+  a dataset validator (for example `scripts/validate-e2e-data.py`; the baseline
+  `harness/scripts/validate-e2e-data.py` is copied by `/harness-init`).
 - QA: `docs/qa/e2e-plan-<slug>.md` (coverage matrix), `e2e-report-<slug>.md`
   (run evidence and defects), and `review-T-XXX.md` (verdict).
 
@@ -209,7 +213,9 @@ Bugfix evidence:
 
 1. Explicit `/harness-*` commands; harness is not the default agent.
 2. Global `permission.task` allows any primary agent to explicitly call
-   `harness-*`; roles do not call each other (`task: deny`).
+   `harness-*`; roles do not call each other (`task: deny`), except
+   `harness-analyst` and `harness-coder` may spawn self-sub-sessions of their own
+   role for decomposed chunks (`subagent_depth: 2`, sequential, no grandchildren).
 3. Marker files `harness/process.md` and `docs/plan.md` are mandatory.
 4. Harness instructions are not added to the global `AGENTS.md`.
 5. The `harness` skill has an explicit description and is not auto-invoked.
@@ -299,8 +305,9 @@ manually from the template.
 
 ## 6. Versions and pins
 
-- Current version: `2.2.1` (feature/bugfix workflows, BUG registry, new commands,
-  reliability checks in `/harness-doctor`, and issue-registry enforcement).
+- Current version: `2.3.0` (generation/context budgets, chunked A-02 and coding,
+  self-sub-sessions for analyst/coder, `subagent_depth: 2`, budget and e2e data
+  validators).
 - Global version: `~/.config/opencode/harness/version.json`.
 - Project version: `harness/version.json`, created by `/harness-init`.
 - `/harness-doctor` warns when the versions differ.
@@ -338,8 +345,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/uninstall.ps
 
 The script removes only global `harness-*` files, the skill, and
 `~/.config/opencode/harness`; project `harness/` and `docs/` are not touched.
-`permission.task` rules in `opencode.jsonc` must be removed manually (the
-script prints a reminder).
+`permission.task` rules and `subagent_depth` in `opencode.jsonc` must be removed
+manually (the script prints a reminder).
 
 ## 8. Troubleshooting
 
@@ -355,8 +362,10 @@ script prints a reminder).
 | write `.gitignore` is blocked | `.gitignore` is outside the role's write area | use `harness-orchestrator` or `harness-coder` |
 | workspace root `/` | opencode was not started from the project root / wrong cwd | start from the project, check `git rev-parse --show-toplevel` |
 | old agents bypass gating | `.opencode/agents/analyst.md` etc. remain | remove old copies or rename to `harness-*` |
-| config was not patched | `opencode.jsonc` contains comments | add `permission.task` with allow manually; without comments, rerun install (it adds missing entries) |
-| `task` fails with `Subagent depth limit reached` | compaction handoff created a child continuation session | do not run the role inline; update/disable the handoff plugin, start a new root session, resume `/harness-run`; doctor checks the plugin |
+| config was not patched | `opencode.jsonc` contains comments | add `permission.task` allows and top-level `subagent_depth: 2` manually; without comments, rerun install |
+| `task` fails with `Subagent depth limit reached` | `subagent_depth` is missing/1, or compaction handoff created a child continuation session | run install to set `subagent_depth: 2`; update/disable the handoff plugin; start a fresh root session and resume `/harness-run` |
+| analyst/coder self-sub-session is denied | global `permission.task` or the role's self allow is missing | run install, restart opencode, check `/harness-doctor` for self-session and cross-role checks |
+| role writes exceed the budget or hit `finish=length` | artifact was generated in one oversized call | split the chunk per `process.md` 11.1; use `harness/scripts/check-budget.ps1` and a fresh role session |
 | QA returns an empty report or `finish=length` | configured `limit.context` is above the real `num_ctx`, or output budget is too small | run `/harness-doctor`, compare `ollama show <model>` with `limit.context`, reduce reads, resume the same session |
 | `rag_sync` times out or returns `Sync already running` | indexing exceeds the local-rag MCP timeout; the lock remains | verify new content with `rag_search`, retry after the lock releases; consider a larger `local-rag` timeout; record an issue if it persists |
 | issue files are missing from the index | a record was created outside `docs/issues/` or manually | move it to `docs/issues/`, add the index row, rerun `/harness-doctor` |

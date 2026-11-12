@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Status | current |
-| Date | 2026-11-11 |
-| Version | 2.2.1 |
+| Date | 2026-11-12 |
+| Version | 2.3.0 |
 | Scope | local multi-agent harness (feature + bugfix workflows) + pilot "Mini-CRUD service" |
 | Requirements source | [`requirements/initial.txt`](../../requirements/initial.txt) |
 | Process rules | [`harness/process.md`](../../harness/process.md) |
@@ -50,7 +50,9 @@ multi-user operation, pagination, and note search.
 3. **One active task** - feature and bugfix never run in parallel and cannot
    preempt each other.
 4. **Role isolation** - each role writes only to its area and stays within task
-   boundaries; nested subagent calls are forbidden.
+   boundaries; cross-role calls and grandchildren are forbidden. `harness-analyst`
+   and `harness-coder` may spawn self-sub-sessions of their own role for chunked
+   work (depth 2, sequential).
 5. **Deterministic acceptance** - a task closes only by the card's `acceptance`
    criteria and explicit `CP-F` approval; failure is recorded in `Blockers`.
 6. **User control** - every task stops at checkpoints; user edits and decisions
@@ -137,7 +139,8 @@ allowed for orchestrator and coder. All roles may create harness issue files in
 reported to the orchestrator, which owns `docs/bugs/**`.
 
 Common prohibitions: editing `~/.config/opencode/**`, secrets in code/logs/commits,
-nested subagent calls, access outside drive `C:`, production deployment.
+cross-role calls, grandchildren, access outside drive `C:`, production deployment.
+Generation budgets and chunking are defined in `harness/process.md` 11.1.
 
 ### 2.4 Sources of truth and artifacts
 
@@ -283,7 +286,7 @@ the analyst e2e dataset are accepted; the task includes a local run target.
 Source: [`diagrams/seq-05-coder.puml`](diagrams/seq-05-coder.puml).
 
 **Result:** code in `src/`, unit/integration tests, `tests/e2e/`, a dataset
-validator (`scripts/validate-e2e-data.py`), an isolated e2e runner
+validator (`harness/scripts/validate-e2e-data.py` baseline), an isolated e2e runner
 (`scripts/e2e.ps1` or `make e2e`) with seed/cleanup and per-`UC-E2E` results,
 CI/CD preparation (`Dockerfile`, compose, Makefile), green tests, and a locally
 running service. **Errors:** failing tests are fixed without weakening
@@ -738,8 +741,10 @@ are required.
 | card has no workflow/stage | legacy or malformed card | add a valid workflow/stage; bugfix also needs `bug`/`severity` |
 | bug cannot be reproduced | insufficient report/evidence | keep `BUG-XXX` `new` or `blocked`; request reproduction data |
 | product bug was filed in `docs/issues/` | wrong registry | move it to `docs/bugs/`; keep harness issues separate |
-| `task` fails with `Subagent depth limit` | compaction handoff created a child continuation | do not run the role inline; fix/disable the handoff plugin, start a new root session, resume `/harness-run` |
-| QA returns an empty report or `finish=length` | `limit.context` is above the real `num_ctx` or output budget is small | run `/harness-doctor`, compare `ollama show` with `limit.context`, reduce reads, resume the same session |
+| `task` fails with `Subagent depth limit` | `subagent_depth` is missing/1, or compaction handoff created a child continuation | run install to set `subagent_depth: 2`; fix/disable the handoff plugin, start a new root session, resume `/harness-run` |
+| QA returns an empty report or `finish=length` | `limit.context` is above the real `num_ctx` or output budget is small | run `/harness-doctor`, compare `ollama show` with `limit.context`, chunk the artifact per `process.md` 11.1, resume in a fresh session |
+| analyst/coder self-sub-session is denied | global `permission.task` or the role self allow is missing | run install, restart opencode, check `/harness-doctor` |
+| artifact exceeds the budget | oversized single generation | split the chunk, use `harness/scripts/check-budget.ps1`, start a fresh role session |
 | `rag_sync` times out or returns `Sync already running` | indexing exceeds the local-rag MCP timeout | verify with `rag_search`, retry after the lock releases; consider a larger timeout |
 | issue files are missing from the index | a record was created outside `docs/issues/` | move it to `docs/issues/`, add the row, rerun `/harness-doctor` |
 

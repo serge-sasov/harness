@@ -146,14 +146,15 @@ no status/dependency changes, preemption, or parallel execution are allowed.
 
 ## Versions
 
-- Current version: `2.2.1` (feature/bugfix workflows, BUG cards, new commands,
-  reliability checks in `/harness-doctor`, and issue-registry enforcement).
+- Current version: `2.3.0` (generation/context budgets, chunked A-02 and coding,
+  self-sub-sessions for analyst/coder, `subagent_depth: 2`, budget and e2e data
+  validators).
 - The global version is stored in `~/.config/opencode/harness/version.json`.
 - A project records the version in `harness/version.json` during `/harness-init`.
 - `/harness-doctor` warns about version divergence.
 - `/harness-doctor` also checks issue-index consistency, role `**/` path
   variants, the compaction handoff plugin, model `num_ctx` vs `limit.context`,
-  and the `local-rag` MCP timeout.
+  `subagent_depth`, self-session allows, and the `local-rag` MCP timeout.
 - A global update affects all projects. To freeze the version in a specific
   project, a vendor copy of agents and commands can later be enabled in
   `.opencode/`.

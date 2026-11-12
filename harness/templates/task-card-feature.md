@@ -13,6 +13,8 @@
 | artifacts | comma-separated output artifact paths |
 | e2e | required / not applicable (reason) |
 | ux | required / not applicable (reason) |
+| chunks | planned chunks and ownership (e.g., A-02a: UC-001..003; A-02b: UC-004..008) |
+| budget | max_write_kb / max_session_kb / context_stop_pct (defaults: 8/20/60, YAML 6/15/60, code 12/40/65) |
 | issues | ISSUE-... (links to docs/issues/ if problems occurred) |
 | commit | commit hash after completion |
 

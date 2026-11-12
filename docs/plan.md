@@ -49,6 +49,7 @@ At most one task is active (`in_progress` or `awaiting_review`) across both work
 | T-027 | feature | Version 2.2.0, init/install/doctor, bug registry | orchestrator | T-026 | done | - | `harness/scripts/`, `version.json`, `docs/bugs/` | working tree |
 | T-028 | feature | Update README, guide, and description for workflows | doc-writer | T-027 | done | - | `README.md`, `docs/guides/harness-global.md`, `docs/description/README.md` | working tree |
 | T-029 | feature | Bugfix/feature diagrams, activity, HTML rebuild | architect | T-028 | done | - | `docs/description/diagrams/`, `index.html`, `docs/activity.*`, `docs/qa/vision-review-T-029.md` | working tree |
+| T-030 | feature | Harness 2.3.0: budgets, chunking, self-sub-sessions | orchestrator | T-029 | awaiting_review | - | `harness/process.md`, agents/templates, install/doctor, validators | working tree |
 | T-022 | feature | Harness 2.2.1 smoke test: feature + bugfix | qa | T-019, T-021, T-029 | pending | - | `docs/qa/smoke-2.2.1.md` | - |
 
 ## Board rules

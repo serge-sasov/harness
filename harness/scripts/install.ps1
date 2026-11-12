@@ -6,7 +6,8 @@
 .DESCRIPTION
   Copies agents, commands, skill, workflows, and templates to ~/.config/opencode,
   backs up changed files, and adds or repairs permission rules for harness agents
-  in opencode.jsonc (if the file has no comments).
+  plus the top-level subagent_depth for self-sub-sessions in opencode.jsonc
+  (if the file has no comments).
 
 .PARAMETER SkipConfig
   Do not modify opencode.jsonc; only print the ready JSON snippet.
@@ -112,6 +113,24 @@ function Add-MissingTaskAllows {
     return $Raw.Substring(0, $block.Start + 1) + $newInner + $Raw.Substring($block.End)
 }
 
+function Set-SubagentDepth {
+    param(
+        [Parameter(Mandatory = $true)][string]$Raw,
+        [int]$Minimum = 2
+    )
+    $match = [regex]::Match($Raw, '"subagent_depth"\s*:\s*(\d+)')
+    if ($match.Success) {
+        $current = [int]$match.Groups[1].Value
+        if ($current -ge $Minimum) { return $Raw }
+        return [regex]::Replace($Raw, '("subagent_depth"\s*:\s*)\d+', ('${1}' + $Minimum), 'None')
+    }
+    $top = [regex]::Match($Raw, '^\s*\{')
+    if (-not $top.Success) { return $Raw }
+    $insertAt = $top.Index + $top.Length
+    $entry = "`r`n  `"subagent_depth`": $Minimum,"
+    return $Raw.Substring(0, $insertAt) + $entry + $Raw.Substring($insertAt)
+}
+
 $SourceRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $UserProfile = [Environment]::GetFolderPath("UserProfile")
 $GlobalRoot = Join-Path $UserProfile ".config\opencode"
@@ -140,6 +159,8 @@ $requiredSource = @(
     (Join-Path $SourceRoot "templates\e2e-test-data.yaml"),
     (Join-Path $SourceRoot "templates\ux-spec.md"),
     (Join-Path $SourceRoot "scripts\new-issue.ps1"),
+    (Join-Path $SourceRoot "scripts\check-budget.ps1"),
+    (Join-Path $SourceRoot "scripts\validate-e2e-data.py"),
     (Join-Path $SourceRoot "process.md"),
     (Join-Path $SourceRoot "version.json")
 )
@@ -220,6 +241,7 @@ if (-not $SkipConfig) {
         $lines = @(
             "{",
             '  "$schema": "https://opencode.ai/config.json",',
+            '  "subagent_depth": 2,',
             '  "permission": {',
             '    "task": {'
         )
@@ -329,9 +351,37 @@ if (-not $SkipConfig) {
             }
         }
     }
+
+    if (Test-Path -LiteralPath $configPath) {
+        $depthRaw = Get-Content -LiteralPath $configPath -Raw
+        if ($depthRaw -match '(?m)^\s*//' -or $depthRaw -match '(?m)^\s*/\*') {
+            Write-Warning "opencode.jsonc contains comments; set top-level `"subagent_depth`": 2 manually."
+        }
+        else {
+            $depthNew = Set-SubagentDepth -Raw $depthRaw -Minimum 2
+            if ($depthNew -ne $depthRaw) {
+                $depthBackup = Join-Path $BackupRoot "opencode.jsonc.before-depth"
+                Copy-Item -LiteralPath $configPath -Destination $depthBackup -Force
+                Write-Utf8NoBom -Path $configPath -Text $depthNew
+                try {
+                    Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json | Out-Null
+                    Write-Host "subagent_depth set to 2 (self-sub-sessions enabled)."
+                }
+                catch {
+                    Copy-Item -LiteralPath $depthBackup -Destination $configPath -Force
+                    throw "opencode.jsonc validation failed after subagent_depth update; file restored. $_"
+                }
+            }
+            else {
+                Write-Host "subagent_depth already >= 2."
+            }
+        }
+    }
 }
 else {
-    Write-Host "SkipConfig: add manually to the permission object:"
+    Write-Host "SkipConfig: add manually to the config:"
+    Write-Host '  "subagent_depth": 2,'
+    Write-Host "and to the permission object:"
     Write-Host '  "task": {'
     foreach ($id in $harnessIds) {
         Write-Host "    `"$id`": `"allow`","

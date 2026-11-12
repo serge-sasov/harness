@@ -124,21 +124,27 @@ ordinary tasks.
 5. Tell `harness-orchestrator` to set T-XXX `in_progress`, update
    plan/card/activity, and re-render SVG.
 6. Give the role: task ID, card path, workflow file, `acceptance`, `inputs`,
-   workflow applicability, checkpoint list, and shared rules in
-   `harness/process.md`. For bugfix, also give the `BUG-XXX` card and require
-   reproduction/root cause/failing regression before the fix. Require the role
-   to stop at the next checkpoint.
-7. When the role reports a checkpoint: instruct `harness-orchestrator` to
+   workflow applicability, checkpoint list, shared rules in
+   `harness/process.md`, and the `chunks`/`budget` fields. For bugfix, also give
+   the `BUG-XXX` card and require reproduction/root cause/failing regression
+   before the fix. Require the role to stop at the next checkpoint. A generator
+   role (analyst, coder) may process the chunks in self-sub-sessions; the lead
+   still routes cross-role work and must not run role work inline.
+7. After each role call, check the session for `finish=length`, SSE timeouts,
+   compaction, and context above the card's `context_stop_pct`. If any occurs,
+   stop the run and split the chunk; do not ask the role to repeat the same
+   oversized call.
+8. When the role reports a checkpoint: instruct `harness-orchestrator` to
    create/update the checkpoint file, set `awaiting_review`, update artifacts
    and the bug status when applicable, commit the snapshot, and report. Show the
    user: checkpoint ID, artifacts, review checklist, how to edit/comment, and
    resume command. End the run; do not continue the role.
-8. Close via `harness-orchestrator` only after the final role checkpoint and
+9. Close via `harness-orchestrator` only after the final role checkpoint and
    `CP-F` approval: success -> `done`, update task/bug artifacts, `git add` +
-   `git commit`; failure -> `failed`, cause in `Blockers`, up to 3 attempts, then
-   `blocked` and escalate; verify issues/index and bug index.
-9. Report status, workflow, checkpoint state, commit, unblocked tasks, blockers.
-   Do not start the next task automatically.
+   `git commit`; failure -> `failed`, cause in `Blockers`, up to 3 attempts per
+   chunk, then `blocked` and escalate; verify issues/index and bug index.
+10. Report status, workflow, checkpoint state, commit, unblocked tasks,
+    blockers. Do not start the next task automatically.
 
 ## Boundaries
 
@@ -147,8 +153,12 @@ ordinary tasks.
   not perform the role work inline: start a new root session, record the issue,
   and resume via `/harness-run`.
 - If a role call is cut by a client timeout after artifacts were written, resume
-  the same session; a timeout alone is not a task failure.
-- Do not call subagents outside the harness role list.
+  the same session; a timeout alone is not a task failure. If it happened during
+  an oversized single generation, split the chunk and use a fresh session.
+- Do not call subagents outside the harness role list. Generator roles may spawn
+  self-sub-sessions of their own role for chunks (depth 2, sequential); the lead
+  must verify `subagent_depth: 2` and self-allow in the role before relying on
+  it.
 - Do not start a second run/task, preempt a feature with a bugfix, or run
   `board-update` while a task is active (`in_progress` or `awaiting_review`).
 - Do not close a task without `CP-F` approval; do not infer user approval from

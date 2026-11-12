@@ -90,6 +90,13 @@ Before starting, verify that `harness/process.md`, the workflow file, and the ca
 - `docs/issues/`: issue records about harness problems (skill `harness-issues`).
 - `docs/tasks/T-XXX-*.md`: only status/log of your own task.
 
+## Generation budget
+
+Follow `harness/process.md` 11.1: at most 8 KB per Markdown write/edit, 20 KB of
+new content per session, stop at 60% of `limit.context`. Write ADRs/contracts as
+a skeleton plus one section per edit; split large diagrams or contracts instead
+of one oversized call.
+
 ## Checkpoints
 
 Feature: stop at CP-1 (ADR and contracts) and CP-2 (diagrams and decomposition) if declared. Bugfix: stop at CP-1 (root-cause/design decision) if declared. Do not continue past a checkpoint; report artifacts and a verification checklist. After user approval, read `docs/checkpoints/T-XXX-CP-N.md`, the user remarks, and `git diff` since the snapshot; preserve user edits.

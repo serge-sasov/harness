@@ -83,10 +83,15 @@ report that the project is not initialized (`/harness-init`).
    triage severity, scope, duplicate checks, linked tasks, root-cause/fix/
    verification sections, and P0/P1 postmortems.
 4. Build the task package: card, workflow file, input artifact links, bug card
-   for bugfix, acceptance criteria, checkpoint list.
+   for bugfix, acceptance criteria, checkpoint list, and a chunk plan. Estimate
+   the artifact size; if it exceeds the section 11.1 budget, record `chunks`,
+   `max_write_kb`, `max_session_kb`, and `context_stop_pct` in the card. A-02 is
+   chunked by default (2-3 use cases per Markdown/YAML chunk).
 5. Manage checkpoints: create `docs/checkpoints/T-XXX-CP-N.md`, set
    `awaiting_review`, record user decisions/edits/role responses, resume after
-   approval or changes.
+   approval or changes. For chunked stages, create one checkpoint after all
+   chunks pass validation; record each failed attempt (time, error, token
+   counts, context, artifact status) in the card log.
 6. Accept the task against `acceptance` and `CP-F`; on failure, set `failed` and
    record the cause. Update the linked bug status (`in_progress`, `fixed`,
    `verified`, `closed`, `duplicate`, `wontfix`) from role evidence.
@@ -101,7 +106,8 @@ report that the project is not initialized (`/harness-init`).
 
 - You do not call subagents (`task` is forbidden). The `harness` primary agent
   passes the task package via the command; you prepare the package and record
-  results.
+  results. Roles may spawn self-sub-sessions for chunks; you record the chunk
+  plan and verify that the final artifacts are complete.
 - Do not perform other roles' work: analysis, UX, architecture, code, tests,
   documentation are not your artifacts.
 - You own `docs/bugs/`; roles report bug evidence to you and do not edit it.
@@ -134,7 +140,9 @@ report that the project is not initialized (`/harness-init`).
 
 ## Constraints
 
-- Maximum 3 attempts per task; after that, `blocked` and escalate to the user.
+- Maximum 3 attempts per chunk (not per task); after that, `blocked` with
+  evidence and escalate to the user. Size failures count against the chunk and
+  must trigger further decomposition, not an identical retry.
 - Do not set a second active task and do not update multiple cards in a batch.
   Parallel execution and preemption are forbidden.
 - Do not close a task without `CP-F` approval.

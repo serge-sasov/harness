@@ -106,6 +106,13 @@ Before starting, verify that `harness/process.md`, the workflow file, and the ca
 - PlantUML sources pass MCP `plantuml-render` `check_syntax`; SVG is rendered next to the `.puml`.
 - UX artifacts are consistent with e2e use cases, requirements, architecture contracts, and the bug card for UI defects.
 
+## Generation budget
+
+Follow `harness/process.md` 11.1: at most 8 KB per Markdown write/edit and 12 KB
+per HTML/PlantUML write/edit, 20-40 KB of new content per session, stop at 60-65%
+of `limit.context`. Build specs and prototypes incrementally, one section or
+screen at a time; never generate the whole prototype in one call.
+
 ## Checkpoints
 
 Feature: stop at CP-1 (flows and screens) and CP-2 (wireframes, prototype, UI spec) if declared. Bugfix: stop at CP-1 (UI impact/fix spec) if declared. Do not continue past a checkpoint; report artifacts and a verification checklist. After user approval, read `docs/checkpoints/T-XXX-CP-N.md`, the user remarks, and `git diff` since the snapshot; preserve user edits.

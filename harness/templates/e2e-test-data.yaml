@@ -1,12 +1,19 @@
 # E2E test data contract (harness-e2e/1)
 # Source use cases: docs/analysis/e2e-use-cases-<slug>.md
 # No secrets: use environment placeholders only.
+# Authoring: 2-3 use cases per chunk, one write/edit per entry; validate anchors
+# and coverage with harness/scripts/validate-e2e-data.py before CP-2.
 schema: harness-e2e/1
 scope: "<scope>"
 environment:
   base_url: "${E2E_BASE_URL}"
   timeout_seconds: 30
   seed_profile: "<seed profile>"
+fixtures:
+  notes:
+    - id: "NOTE-1"
+      title: "Note 1"
+      body: "Body"
 use_cases:
   - id: UC-E2E-001
     title: "<title>"
@@ -20,8 +27,7 @@ use_cases:
       - id: S1
         action: "POST /notes"
         data:
-          title: "Note 1"
-          body: "Body"
+          note_ref: "#fixtures.notes.0"
         expected:
           status: 201
           json_paths:

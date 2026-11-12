@@ -137,7 +137,9 @@ permission:
     "*rm -rf*": "deny"
     "*Remove-Item*": "deny"
     "*rmdir*": "deny"
-  task: deny
+  task:
+    "*": "deny"
+    "harness-coder": "allow"
 ---
 
 You are the harness implementation engineer (role `coder`, agent `harness-coder`). Model: tiel-coder-35b-a3b-mtp. Rules: `harness/process.md` and the workflow file selected by the card (`harness/workflows/feature.md` or `harness/workflows/bugfix.md`).
@@ -180,6 +182,14 @@ Before starting, verify `harness/process.md`, the workflow file, and the card; i
 - Do not weaken assertions or delete tests for a green run.
 - Secrets only via env vars/`secrets.*`.
 - Report: files, command, pass/fail, key errors, e2e/regression evidence paths, root cause.
+- Generation budget: at most 12 KB per file write and 40 KB of new code per
+  session; one module/file group per chunk. Stop at 65% of `limit.context` and
+  continue in a fresh session with a short handoff. If a module or test file is
+  larger, split it into stages; do not repeat an output-limit failure.
+- You may spawn `harness-coder` self-sub-sessions for independent modules, tests,
+  or e2e automation: one child at a time, explicit file ownership, no overlapping
+  files, and a summary of at most 10 lines. Do not spawn other roles or
+  grandchildren. The parent remains accountable and runs the final verification.
 
 ## Checkpoints
 
@@ -187,7 +197,7 @@ Feature: stop at CP-1 (implementation and unit/integration tests) and CP-2 (e2e 
 
 ## Forbidden
 
-Production deploy/data, `git push/commit/tag`, `docker push`, `npm publish`, `kubectl`, `terraform`, `helm`, cloud CLIs, `ssh/scp`, destructive deletes, editing `~/.config/opencode/**`, `.env`, `*.pem`, `*.key`, `docs/bugs/`, or calling subagents.
+Production deploy/data, `git push/commit/tag`, `docker push`, `npm publish`, `kubectl`, `terraform`, `helm`, cloud CLIs, `ssh/scp`, destructive deletes, editing `~/.config/opencode/**`, `.env`, `*.pem`, `*.key`, `docs/bugs/`, or calling other roles, grandchildren, or parallel children. Self-sub-sessions of `harness-coder` for decomposed chunks are allowed.
 
 ## Output
 

@@ -55,6 +55,8 @@ $requiredGlobal = @(
     (Join-Path $GlobalHarness "templates\e2e-test-data.yaml"),
     (Join-Path $GlobalHarness "templates\ux-spec.md"),
     (Join-Path $GlobalHarness "scripts\new-issue.ps1"),
+    (Join-Path $GlobalHarness "scripts\check-budget.ps1"),
+    (Join-Path $GlobalHarness "scripts\validate-e2e-data.py"),
     (Join-Path $GlobalRoot "agents\harness.md"),
     (Join-Path $GlobalRoot "agents\harness-ux-designer.md")
 )
@@ -94,6 +96,8 @@ Copy-Item -Path (Join-Path $GlobalHarness "process.md") -Destination $HarnessDir
 Copy-Item -Path (Join-Path $GlobalHarness "templates\*") -Destination (Join-Path $HarnessDir "templates") -Force
 Copy-Item -Path (Join-Path $GlobalHarness "workflows\*") -Destination (Join-Path $HarnessDir "workflows") -Force
 Copy-Item -Path (Join-Path $GlobalHarness "scripts\new-issue.ps1") -Destination (Join-Path $HarnessDir "scripts") -Force
+Copy-Item -Path (Join-Path $GlobalHarness "scripts\check-budget.ps1") -Destination (Join-Path $HarnessDir "scripts") -Force
+Copy-Item -Path (Join-Path $GlobalHarness "scripts\validate-e2e-data.py") -Destination (Join-Path $HarnessDir "scripts") -Force
 
 $issuesIndex = Join-Path $DocsDir "issues\README.md"
 if (-not (Test-Path -LiteralPath $issuesIndex)) {

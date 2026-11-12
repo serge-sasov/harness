@@ -63,6 +63,9 @@ Write-Host ""
 Write-Host "Backup: $BackupRoot"
 Write-Host "Project harness/ and docs/ were not modified."
 Write-Host ""
+Write-Host "Do not forget to remove subagent_depth (if not needed by other agents):"
+Write-Host '  "subagent_depth": 2'
+Write-Host ""
 Write-Host "Do not forget to remove the permission.task block from ~/.config/opencode/opencode.jsonc:"
 Write-Host '  "task": {'
 Write-Host '    "harness-orchestrator": "deny",'

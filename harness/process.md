@@ -16,7 +16,9 @@ here; workflow-specific stages and task graphs live in
 - Before work, `harness` checks for `harness/process.md`, the selected workflow
   file, and `docs/plan.md`; if missing, stop and ask for `/harness-init`.
 - Global permissions allow any primary agent to call `harness-*` subagents.
-  Roles must not call each other (`task: deny`); the primary agent routes.
+  Roles must not call other roles. A generator role may spawn a self-sub-session
+  of its own role for a decomposed chunk (depth 2, sequential) when its agent
+  declares `task` self-allow; the primary agent routes all cross-role work.
 - Role permissions include relative and `**/...` path variants: edit/write match
   absolute paths, so a blanket deny needs a specific allow for the full path.
 - Harness problems go only to `docs/issues/`; product defects go to `docs/bugs/`.
@@ -203,6 +205,13 @@ here; workflow-specific stages and task graphs live in
 - The YAML dataset is the machine-readable test contract: schema, environment
   placeholders (no secrets), use-case entries, steps, data, expected values,
   cleanup.
+- A-02 is chunked by default: 2-3 use cases per Markdown chunk and 2-3 entries
+  per YAML chunk. Each chunk is authored in a separate role session with the
+  budget in section 11.1; one CP-2 checkpoint is reported after all chunks pass
+  validation.
+- The analyst validates YAML syntax, UC coverage, and cross-reference anchors
+  before CP-2; `harness/scripts/validate-e2e-data.py` (copied by `/harness-init`)
+  is the baseline, and a project-specific validator may extend it.
 - The coder owns e2e automation for features: tests consume the YAML dataset and
   provide a deterministic local runner (`scripts/e2e.ps1` or equivalent), data
   validation, isolation, cleanup, and machine-readable results.
@@ -272,15 +281,23 @@ here; workflow-specific stages and task graphs live in
 - Max 3 fix attempts; then `blocked` and escalate.
 - A bug that cannot be reproduced after 3 attempts is `blocked` with evidence,
   not a speculative fix.
-- Empty subagent result or `finish=length` = failed attempt; record in the card
-  log; do not leave `in_progress`.
+- Empty subagent result or `finish=length` = failed attempt; record it in the
+  card log with time, error, token counts, context size, and artifact status.
+  Do not leave the task `in_progress` and do not repeat the same oversized call.
+- After the second size-related failure (output limit, SSE timeout on a large
+  generation, or a write above the budget), split the chunk further. The third
+  attempt must use a smaller chunk, not the same call.
+- Count attempts per chunk, not per task. A chunk that still fails after 3
+  attempts is `blocked` with evidence; other chunks may continue only after the
+  lead records the blocker in the card.
 - If `task` fails with `Subagent depth limit` or a routing/permission error, do
   not perform the role work inline. Stop, start a new root session or fix the
   routing tool/plugin, record an issue, and resume via `/harness-run`.
 - A client timeout or canceled role call is not a failed attempt when the role
   already wrote its artifact and the session can be resumed; resume the same
-  session. Mark `failed` only after 3 attempts without a usable artifact or
-  verdict.
+  session. If the timeout happened during an oversized single generation, split
+  the chunk and resume in a fresh session instead of repeating the call. Mark
+  `failed` only after 3 attempts without a usable artifact or verdict.
 - Before a long role run, compare the actual `num_ctx` (`ollama show <model>`)
   with `limit.context` in `~/.config/opencode/opencode.jsonc`; configured
   context greater than the actual value is a blocker for that role.
@@ -294,6 +311,39 @@ here; workflow-specific stages and task graphs live in
 - Keep the failure cause in the log after fixing.
 - A user `changes_requested` at a checkpoint is not a failure; it returns the
   task to `in_progress` for fixes. A user rejection sets `failed`.
+
+### 11.1 Generation and context budget
+
+These limits are mandatory for all roles. A role that cannot satisfy them must
+stop and request decomposition instead of attempting a larger write.
+
+| Artifact | Max per write/edit | Max new content per role session | Chunk size | Stop at context |
+|---|---|---|---|---|
+| Markdown docs (analyst, architect, ux-designer, qa, doc-writer) | 8 KB | 20 KB | 2-3 use cases or one section | 60% of `limit.context` |
+| YAML e2e data | 6 KB | 15 KB | 2-3 use-case entries | 60% of `limit.context` |
+| Code (coder) | 12 KB | 40 KB | one module/file group | 65% of `limit.context` |
+| Any final report | 4 KB | - | - | - |
+
+- Never create a large artifact in one `write`. Write a skeleton and fill it
+  with one `edit` per section or use case.
+- An artifact larger than 40 KB must be split into parts or generated in several
+  role sessions; above 80 KB, split it into separate files.
+- Do not use compaction as a decomposition tool. If compaction happens during
+  artifact generation, stop, record the state, and continue in a fresh session
+  with a handoff note.
+- Use a deterministic script for arithmetic and fixtures; do not spend model
+  reasoning re-deriving numbers a script can compute.
+- Read only the inputs needed for the chunk (grep/offset), not the whole corpus;
+  after a handoff, do not re-read inputs that are already summarized.
+- The orchestrator estimates the artifact size at planning time and records
+  `chunks`, `max_write_kb`, `max_session_kb`, and `context_stop_pct` in the card.
+- A generator role may process chunks in self-sub-sessions: same role only, one
+  child at a time, explicit chunk brief, non-overlapping file or section, and a
+  return of the artifact path plus a summary of at most 10 lines. The parent
+  remains accountable and must not read the full artifact into its own context;
+  it validates with grep, a script, or targeted reads.
+- A child session must not spawn another child; the global `subagent_depth` is 2
+  and grandchildren are forbidden.
 
 ## 12. Role artifacts
 
@@ -320,8 +370,10 @@ orchestrator; roles do not edit `docs/bugs/`.
 - Production actions: `git push`, `docker push`, deployment outside
   local/staging, production migrations.
 - Secrets/tokens/keys in code, logs, or commits.
-- Nested subagent calls (`task: deny` on roles; `harness` allows only harness
-  roles).
+- Cross-role subagent calls and grandchildren. Self-sub-sessions of the same
+  role are allowed only for decomposed chunks, one at a time, when the agent
+  declares `task` self-allow and the global `subagent_depth` is 2. `harness`
+  allows only harness roles.
 - Parallel task execution: >1 active task, concurrent `/harness-run`, batch or
   parallel `task`, feature/bugfix preemption, or `board-update` while a task is
   active.

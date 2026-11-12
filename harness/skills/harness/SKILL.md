@@ -91,7 +91,9 @@ Tasks run strictly sequentially across both workflows: at most one active task (
 
 Every task has at least one checkpoint; `CP-F` is mandatory before `done`. At a checkpoint the role stops, the orchestrator creates the checkpoint file and sets `awaiting_review`, and the user reviews/edits artifacts and records a decision. Without explicit approval, the task stays `awaiting_review`.
 
-A task is closed only by the card's `acceptance` criteria and `CP-F` approval. On failure, set `failed` with the cause in `Blockers`; up to 3 attempts, then `blocked`. A bug that cannot be reproduced after 3 attempts is `blocked` with evidence, not a speculative fix.
+A task is closed only by the card's `acceptance` criteria and `CP-F` approval. On failure, set `failed` with the cause in `Blockers`; up to 3 attempts per chunk, then `blocked`. A bug that cannot be reproduced after 3 attempts is `blocked` with evidence, not a speculative fix.
+
+Generation is budgeted per `process.md` 11.1: A-02 and large code stages are chunked, artifacts are written incrementally, and a role stops at the context threshold with a handoff. `harness-analyst` and `harness-coder` may spawn self-sub-sessions of their own role for chunks (depth 2, sequential, no grandchildren); other roles must not call subagents.
 
 For any harness problem, blocker, or workaround, use the `harness-issues` skill and create a record in `docs/issues/`; the orchestrator updates the index and includes the issue in the task commit. `/harness-doctor` verifies that every issue file is indexed and that no issue lives in a root `harness-issues/` directory.
 

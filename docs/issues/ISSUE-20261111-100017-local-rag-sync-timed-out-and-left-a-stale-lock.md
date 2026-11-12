@@ -58,3 +58,4 @@ docs/description/README.md, docs/architecture/adr-002-harness-e2e-ux-checkpoints
 - 2026-11-11T10:00:17.8524821+03:00: detected
 - 2026-11-11T10:58:00+03:00: reproduced after the 2.2.0 docs/diagram update; MCP sync timed out again, status still shows the previous sync.
 - 2026-11-11T13:33:18+03:00: reproduced during the 2.2.1 reliability update; a targeted `rag_sync` timed out, the retry returned `Sync already running; skipped.`, and `rag_search` still returned the old `T-022-smoke-test-2.2.0.md` content.
+- 2026-11-12T10:03:00+03:00: reproduced during the T-030 2.3.0 update; `harness` sync timed out and the ai-task-tracker retry returned `Sync already running; skipped.` Status still showed the previous sync and a reduced chunk count.

@@ -127,7 +127,9 @@ $globalFiles = @(
     (Join-Path $GlobalHarness "templates\e2e-use-case.md"),
     (Join-Path $GlobalHarness "templates\e2e-test-data.yaml"),
     (Join-Path $GlobalHarness "templates\ux-spec.md"),
-    (Join-Path $GlobalHarness "scripts\new-issue.ps1")
+    (Join-Path $GlobalHarness "scripts\new-issue.ps1"),
+    (Join-Path $GlobalHarness "scripts\check-budget.ps1"),
+    (Join-Path $GlobalHarness "scripts\validate-e2e-data.py")
 )
 $missingGlobal = @()
 foreach ($file in $globalFiles) {
@@ -207,6 +209,47 @@ if (Test-Path -LiteralPath $configPath) {
     else {
         Write-Warn "no permission.task block in opencode.jsonc; run install.ps1 for explicit allow rules"
     }
+
+    $selfSessionRoles = @("harness-analyst", "harness-coder")
+    $crossRole = @()
+    foreach ($agentFile in $agentFiles) {
+        $roleName = [System.IO.Path]::GetFileNameWithoutExtension($agentFile.Name)
+        $inTask = $false
+        $taskAllows = @()
+        foreach ($line in (Get-Content -LiteralPath $agentFile.FullName)) {
+            if ($line -match '^\s{2}([A-Za-z0-9_-]+):') {
+                $inTask = ($Matches[1] -eq "task")
+                continue
+            }
+            if ($line -match '^[A-Za-z0-9_-]+:') { $inTask = $false; continue }
+            if ($inTask) {
+                $allowMatch = [regex]::Match($line, '^\s+"([^"]+)"\s*:\s*"allow"')
+                if ($allowMatch.Success) { $taskAllows += $allowMatch.Groups[1].Value }
+            }
+        }
+        if ($selfSessionRoles -contains $roleName) {
+            if ($taskAllows -contains $roleName) {
+                Write-Ok "$roleName may spawn self-sub-sessions"
+            }
+            else {
+                Write-Warn "$roleName lacks self task allow; chunked self-sub-sessions will fail"
+            }
+        }
+        if ($roleName -ne "harness") {
+            foreach ($allowed in $taskAllows) {
+                if ($allowed -like "harness-*" -and $allowed -ne $roleName) {
+                    $crossRole += "$roleName -> $allowed"
+                }
+            }
+        }
+    }
+    if ($crossRole.Count -eq 0) {
+        Write-Ok "no cross-role task allows"
+    }
+    else {
+        Write-Warn "cross-role task allows found: $($crossRole -join '; ')"
+    }
+
     if ($config -match '"plantuml-render"') { Write-Ok "MCP plantuml-render configured" } else { Write-Warn "MCP plantuml-render not found in config" }
     if ($config -match '"local-rag"') { Write-Ok "MCP local-rag configured" } else { Write-Warn "MCP local-rag not found in config" }
     if ($config -match 'qwen3\.8:27b-64k') { Write-Ok "model qwen3.8:27b-64k declared" } else { Write-Warn "model qwen3.8:27b-64k not found in config" }
@@ -278,8 +321,17 @@ if (Test-Path -LiteralPath $configPath) {
         Write-Info "no qwen-compaction-handoff.js plugin; compaction depth check skipped"
     }
     $depthMatch = [regex]::Match($config, '"subagent_depth"\s*:\s*(\d+)')
-    if ($depthMatch.Success -and [int]$depthMatch.Groups[1].Value -lt 1) {
-        Write-Warn "experimental.subagent_depth is $($depthMatch.Groups[1].Value); root sessions cannot launch role subagents"
+    if ($depthMatch.Success) {
+        $depth = [int]$depthMatch.Groups[1].Value
+        if ($depth -ge 2) {
+            Write-Ok "subagent_depth is $depth (self-sub-sessions enabled)"
+        }
+        else {
+            Write-Warn "subagent_depth is $depth; self-sub-sessions require >= 2"
+        }
+    }
+    else {
+        Write-Warn "subagent_depth not set; run install.ps1 or add top-level `"subagent_depth`": 2"
     }
 
     $ragKey = [regex]::Match($config, '"local-rag"\s*:\s*\{')
@@ -373,6 +425,14 @@ if ((Test-Path -LiteralPath $marker) -and (Test-Path -LiteralPath $plan)) {
     }
     else {
         Write-Warn "missing harness/templates/issue.md or harness/scripts/new-issue.ps1; run /harness-init -Force"
+    }
+    $budgetScript = Join-Path $Project "harness\scripts\check-budget.ps1"
+    $e2eValidator = Join-Path $Project "harness\scripts\validate-e2e-data.py"
+    if ((Test-Path -LiteralPath $budgetScript) -and (Test-Path -LiteralPath $e2eValidator)) {
+        Write-Ok "budget check and e2e data validator available in the project"
+    }
+    else {
+        Write-Warn "missing harness/scripts/check-budget.ps1 or validate-e2e-data.py; run /harness-init -Force"
     }
     $newTemplates = @(
         "checkpoint.md", "e2e-use-case.md", "e2e-test-data.yaml", "ux-spec.md",

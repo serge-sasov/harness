@@ -16,6 +16,8 @@
 | artifacts | regression test, code/tests, `docs/qa/review-T-XXX.md` |
 | e2e | required / not applicable (reason) |
 | ux | required / not applicable (reason) |
+| chunks | planned chunks and ownership (for large reproduction/fix/test work) |
+| budget | max_write_kb / max_session_kb / context_stop_pct (defaults: 8/20/60, code 12/40/65) |
 | issues | ISSUE-... (links to docs/issues/ if problems occurred) |
 | commit | commit hash after completion |
 

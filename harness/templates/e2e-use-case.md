@@ -47,3 +47,7 @@
 - Every functional requirement is covered by a use case or has an explicit `out_of_scope` entry.
 - Every use case has test data, expected results, and cleanup.
 - Use-case IDs are stable and are referenced by QA and coder artifacts.
+- Authoring is chunked: no more than 3 use cases per role session; write a
+  skeleton and fill one section per edit, never the whole catalog in one call.
+- Cross-reference anchors (`#fixtures.*`, `#UC-E2E-*`) must exist in the YAML
+  dataset and are checked by `harness/scripts/validate-e2e-data.py`.
