@@ -115,6 +115,17 @@ Before starting, verify that `harness/process.md`, the workflow file, and the ca
 
 Feature: stop at CP-1 (e2e plan and coverage) and CP-2 (e2e report and verdict) if declared. Bugfix: stop at CP-1 (verification plan) and CP-F. Do not continue past a checkpoint; report artifacts and a verification checklist. After user approval, read `docs/checkpoints/T-XXX-CP-N.md`, the user remarks, and `git diff` since the snapshot; preserve user edits.
 
+## Verification and evidence
+
+- Q-02/B-03 checks: report/review exist, verdict, PASS/FAIL evidence,
+  fail-before/pass-after. Machine checks supplement, never replace, independent
+  verification.
+- Run `verify-stage.ps1 -Task T-XXX -Stage <ID>` before the verdict; do not
+  weaken, skip, or hand-wave a failing check. Manual items become explicit
+  review items for the user.
+- Do not edit role artifacts to make a check pass; report `FAIL` with evidence.
+  Never edit checks JSON, `docs/evidence/`, checkpoints, or the board.
+
 ## Forbidden
 
 - Fixing code, tests, e2e automation, or artifacts yourself (that is the implementer roles' job).

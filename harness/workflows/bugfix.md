@@ -44,14 +44,18 @@ summary, verification, and postmortem link. The orchestrator owns it.
 
 ## Stage table
 
-| ID | Stage | Content | Role | Artifacts | Depends on | Applicability | Checkpoint |
-|---|---|---|---|---|---|---|---|
-| B-00 | Triage | Validate report, severity, scope, duplicate check, affected requirements/UC, task links, escalation decision | orchestrator | `docs/bugs/BUG-XXX-*.md`, `docs/bugs/README.md`, pending task cards | Report, board | Always | bug status `triaged` |
-| B-01 | Reproduction and root cause | Reproduce on base revision, write a failing regression test, identify root cause | coder | `tests/regression/` or existing suite, card log | B-00 | Always; analyst task if expected behavior unclear | CP-1 |
-| B-02 | Minimal fix and regression | Minimal fix, regression test passes, relevant suites pass, no unrelated changes | coder | code, tests, card log | B-01 | Always; architect task if design-level | CP-2 |
-| B-03 | Independent verification | Reproduce/verify fail-before, verify pass-after, run regression, verdict | qa | `docs/qa/review-T-XXX.md` | B-02 | Always | CP-1 report, CP-F |
-| B-04 | Docs/changelog | Changelog, guide, or ADR note if behavior/docs changed | doc-writer | `CHANGELOG.md`, `docs/guides/*` | B-02 | Optional | CP-1 |
-| B-05 | Closure and postmortem | Update bug status, plan/card, re-render activity as derived, commit; P0/P1 postmortem | orchestrator + lead | `docs/bugs/BUG-XXX-*.md`, `docs/bugs/README.md`, plan/card, git commit | B-03, B-04 if present | Always; postmortem for P0/P1 | CP-F |
+| ID | Stage | Content | Role | Artifacts | Checks (`harness/checks/bugfix.json`) | Depends on | Applicability | Checkpoint |
+|---|---|---|---|---|---|---|---|---|
+| B-00 | Triage | Validate report, severity, scope, duplicate check, affected requirements/UC, task links, escalation decision | orchestrator | `docs/bugs/BUG-XXX-*.md`, `docs/bugs/README.md`, pending task cards | bug-card-exist, bug-index-exist, bug-card-fields, bug-task-links | Report, board | Always | bug status `triaged` |
+| B-01 | Reproduction and root cause | Reproduce on base revision, write a failing regression test, identify root cause | coder | `tests/regression/` or existing suite, card log | reproduction-tests-exist, reproduction-logged | B-00 | Always; analyst task if expected behavior unclear | CP-1 |
+| B-02 | Minimal fix and regression | Minimal fix, regression test passes, relevant suites pass, no unrelated changes | coder | code, tests, card log | fix-src-exist, regression-tests-exist, fix-no-todo, fix-no-secrets | B-01 | Always; architect task if design-level | CP-2 |
+| B-03 | Independent verification | Reproduce/verify fail-before, verify pass-after, run regression, verdict | qa | `docs/qa/review-T-XXX.md` | qa-review-exist, qa-verdict, qa-fail-before-pass-after | B-02 | Always | CP-1 report, CP-F |
+| B-04 | Docs/changelog | Changelog, guide, or ADR note if behavior/docs changed | doc-writer | `CHANGELOG.md`, `docs/guides/*` | changelog-exist, guides-exist | B-02 | Optional | CP-1 |
+| B-05 | Closure and postmortem | Update bug status, plan/card, re-render activity as derived, commit; P0/P1 postmortem | orchestrator + lead | `docs/bugs/BUG-XXX-*.md`, `docs/bugs/README.md`, plan/card, git commit | bug-closed-status, postmortem-optional, closure-board, closure-activity, closure-manual (manual) | B-03, B-04 if present | Always; postmortem for P0/P1 | CP-F |
+
+Universal checks run for every stage: `artifacts-exist`, `artifact-hashes`.
+Preview with `harness/scripts/verify-stage.ps1 -Task T-XXX -Stage <ID>`; close a
+checkpoint with `harness/scripts/stage-done.ps1`.
 
 ## Task graph
 
@@ -123,6 +127,7 @@ QA:
 
 Closure:
 
+- machine checks report `FAIL=0` and `UNCHECKED=0`; manual items are user-decided;
 - bug status is correct (`fixed`/`verified`/`closed`/`duplicate`/`wontfix`);
 - bug index links to all tasks and the fix commit;
 - P0/P1 postmortem exists;

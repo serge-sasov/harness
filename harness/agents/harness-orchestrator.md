@@ -53,6 +53,11 @@ permission:
     "git add *": "allow"
     "git commit *": "allow"
     "*new-issue.ps1*": "allow"
+    "*verify-artifacts.ps1*": "allow"
+    "*verify-stage.ps1*": "allow"
+    "*stage-done.ps1*": "allow"
+    "*board-update.ps1*": "allow"
+    "*measure-tokens.ps1*": "allow"
     "git push*": "deny"
     "git tag*": "deny"
     "git reset*": "deny"
@@ -87,9 +92,11 @@ report that the project is not initialized (`/harness-init`).
    the artifact size; if it exceeds the section 11.1 budget, record `chunks`,
    `max_write_kb`, `max_session_kb`, and `context_stop_pct` in the card. A-02 is
    chunked by default (2-3 use cases per Markdown/YAML chunk).
-5. Manage checkpoints: create `docs/checkpoints/T-XXX-CP-N.md`, set
-   `awaiting_review`, record user decisions/edits/role responses, resume after
-   approval or changes. For chunked stages, create one checkpoint after all
+5. Manage checkpoints with `harness/scripts/stage-done.ps1`: it runs the checks,
+   writes the checks JSON/evidence ledger/checkpoint, applies P2, updates
+   plan/card/activity, and commits the snapshot. Preview with
+   `verify-stage.ps1`. Record user decisions/edits/role responses and resume
+   after approval or changes. For chunked stages, close one checkpoint after all
    chunks pass validation; record each failed attempt (time, error, token
    counts, context, artifact status) in the card log.
 6. Accept the task against `acceptance` and `CP-F`; on failure, set `failed` and
@@ -101,8 +108,10 @@ report that the project is not initialized (`/harness-init`).
    reconcile statuses, dependencies, the active task, acceptance, checkpoint
    decisions, or routing; the board/card wins. Activity colors use the suffix
    form `:task text; <<#RRGGBB>>` (never `#RRGGBB:task text;`).
-8. Git commits after checkpoints and closure: checkpoint snapshot
-   `T-XXX: checkpoint CP-N (<stage>)`, final `T-XXX: ...`.
+8. Git commits after checkpoints and closure: `stage-done.ps1` makes the
+   snapshot commit `T-XXX: checkpoint CP-N (<stage>)` and the recording commit
+   `T-XXX: record CP-N snapshot <hash>`; the final task commit is
+   `T-XXX: ...`; board maintenance uses `chore: board update (...)`.
 9. Maintain `docs/issues/`: verify the index, check role issue files, include
    them in the task commit. Never mix product bugs into the issue index.
 
@@ -135,10 +144,13 @@ report that the project is not initialized (`/harness-init`).
 4. Set `in_progress` in the plan and card for the current task only; re-render
    the activity diagram afterward as a derived artifact. Update the bug status
    to `in_progress` for the first linked bugfix task.
-5. When the role reports a checkpoint: create/update the checkpoint file, set
-   `awaiting_review`, update plan/card/checkpoints, re-render activity/SVG,
-   update the linked bug status when applicable, commit the snapshot, and report
-   to the lead. Do not continue the role.
+5. When the role reports a checkpoint: run
+   `harness/scripts/stage-done.ps1 -Task T-XXX -Checkpoint CP-N`. It runs the
+   registry checks, writes the checks JSON/ledger/checkpoint, applies P2, updates
+   plan/card/activity, and commits the snapshot. Update the linked bug status in
+   a separate `chore: bug ...` commit. Do not continue the role. P2 auto-approves
+   only intermediate checkpoints with `FAIL=0`, `UNCHECKED=0`, `MANUAL=0`, and
+   `hold: false`; `CP-F` and any manual item wait for the user.
 6. On resume: read the decision and user edits; if `approved`, finalize at
    `CP-F` or set `in_progress` and continue past an intermediate checkpoint; if
    `changes_requested`, return to the same checkpoint; if no decision, stop and
@@ -160,5 +172,10 @@ report that the project is not initialized (`/harness-init`).
 - Do not close a P0/P1 bug without a postmortem.
 - Do not overwrite user edits made at a checkpoint; record conflicts and
   resolution.
+- Do not hand-edit machine fields: checks JSON results, `docs/evidence/` hash
+  rows, checkpoint `snapshot_commit`/`generated_by`, or board/card
+  `Usage`/`Commit`. Rerun `stage-done.ps1` or `board-update.ps1`.
+- Do not waive a `FAIL`/`UNCHECKED` result with prose; fix the artifact or the
+  registry and record why in the card log.
 - Do not rewrite git history (`reset`, `rebase`); do not run `push`/`tag`.
 - Do not include secrets, `.env`, or unrelated files in a commit.

@@ -1,0 +1,55 @@
+{
+  "workflow": "bugfix",
+  "stages": {
+    "B-00": {
+      "artifacts": ["docs/bugs/BUG-*.md", "docs/bugs/README.md", "docs/tasks/T-*.md"],
+      "checks": [
+        { "id": "bug-card-exist", "type": "file-exists", "params": { "globs": ["docs/bugs/BUG-*.md"], "minCount": 1 } },
+        { "id": "bug-index-exist", "type": "file-exists", "params": { "globs": ["docs/bugs/README.md"], "minCount": 1 } },
+        { "id": "bug-card-fields", "type": "pattern-present", "params": { "globs": ["docs/bugs/BUG-*.md"], "patterns": ["| id |", "| severity |", "| status |"], "scope": "card" } },
+        { "id": "bug-task-links", "type": "pattern-present", "params": { "globs": ["docs/bugs/BUG-*.md"], "patterns": ["T-"], "scope": "card" } }
+      ]
+    },
+    "B-01": {
+      "artifacts": ["tests/", "docs/tasks/T-*.md"],
+      "checks": [
+        { "id": "reproduction-tests-exist", "type": "file-exists", "params": { "globs": ["tests/**/*"], "minCount": 1 } },
+        { "id": "reproduction-logged", "type": "pattern-present", "params": { "glob": "docs/tasks/T-*.md", "patterns": ["reproduc", "root cause"], "ignoreCase": true, "scope": "card" } }
+      ]
+    },
+    "B-02": {
+      "artifacts": ["src/", "tests/"],
+      "checks": [
+        { "id": "fix-src-exist", "type": "file-exists", "params": { "globs": ["src/**/*"], "minCount": 1 } },
+        { "id": "regression-tests-exist", "type": "file-exists", "params": { "globs": ["tests/**/*"], "minCount": 1 } },
+        { "id": "fix-no-todo", "type": "pattern-absent", "params": { "source": "card.artifacts", "patterns": ["TODO", "FIXME"] } },
+        { "id": "fix-no-secrets", "type": "pattern-absent", "params": { "source": "card.artifacts", "patterns": ["BEGIN PRIVATE KEY", "password=", "api_key="] } }
+      ]
+    },
+    "B-03": {
+      "artifacts": ["docs/qa/review-T-*.md"],
+      "checks": [
+        { "id": "qa-review-exist", "type": "file-exists", "params": { "globs": ["docs/qa/review-T-*.md"], "minCount": 1 } },
+        { "id": "qa-verdict", "type": "pattern-present", "params": { "globs": ["docs/qa/review-T-*.md"], "patterns": ["Verdict"], "ignoreCase": true, "scope": "card" } },
+        { "id": "qa-fail-before-pass-after", "type": "pattern-present", "params": { "globs": ["docs/qa/review-T-*.md"], "patterns": ["before", "after"], "ignoreCase": true, "scope": "card" } }
+      ]
+    },
+    "B-04": {
+      "artifacts": ["CHANGELOG.md", "docs/guides/*"],
+      "checks": [
+        { "id": "changelog-exist", "type": "file-exists", "params": { "globs": ["CHANGELOG.md"], "minCount": 0 } },
+        { "id": "guides-exist", "type": "file-exists", "params": { "globs": ["docs/guides/*.md"], "minCount": 0 } }
+      ]
+    },
+    "B-05": {
+      "artifacts": ["docs/bugs/BUG-*.md", "docs/bugs/README.md", "docs/plan.md"],
+      "checks": [
+        { "id": "bug-closed-status", "type": "pattern-present", "params": { "globs": ["docs/bugs/BUG-*.md"], "regex": "(fixed|verified|closed)", "scope": "card" } },
+        { "id": "postmortem-optional", "type": "file-exists", "params": { "globs": ["docs/bugs/*postmortem*.md"], "minCount": 0 } },
+        { "id": "closure-board", "type": "board-consistency", "params": {} },
+        { "id": "closure-activity", "type": "activity-derived", "params": {} },
+        { "id": "closure-manual", "type": "manual", "params": { "reason": "independent verification and postmortem quality are consistent" } }
+      ]
+    }
+  }
+}

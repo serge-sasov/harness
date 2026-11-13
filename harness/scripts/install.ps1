@@ -145,6 +145,7 @@ $requiredSource = @(
     (Join-Path $SourceRoot "commands\harness-run.md"),
     (Join-Path $SourceRoot "commands\harness-feature.md"),
     (Join-Path $SourceRoot "commands\harness-bug.md"),
+    (Join-Path $SourceRoot "commands\harness-stage-done.md"),
     (Join-Path $SourceRoot "skills\harness\SKILL.md"),
     (Join-Path $SourceRoot "skills\harness-issues\SKILL.md"),
     (Join-Path $SourceRoot "workflows\feature.md"),
@@ -158,9 +159,19 @@ $requiredSource = @(
     (Join-Path $SourceRoot "templates\e2e-use-case.md"),
     (Join-Path $SourceRoot "templates\e2e-test-data.yaml"),
     (Join-Path $SourceRoot "templates\ux-spec.md"),
+    (Join-Path $SourceRoot "templates\plan-row.md"),
     (Join-Path $SourceRoot "scripts\new-issue.ps1"),
     (Join-Path $SourceRoot "scripts\check-budget.ps1"),
     (Join-Path $SourceRoot "scripts\validate-e2e-data.py"),
+    (Join-Path $SourceRoot "scripts\harness-lib.ps1"),
+    (Join-Path $SourceRoot "scripts\verify-artifacts.ps1"),
+    (Join-Path $SourceRoot "scripts\verify-stage.ps1"),
+    (Join-Path $SourceRoot "scripts\stage-done.ps1"),
+    (Join-Path $SourceRoot "scripts\board-update.ps1"),
+    (Join-Path $SourceRoot "scripts\measure-tokens.ps1"),
+    (Join-Path $SourceRoot "checks\engine.json"),
+    (Join-Path $SourceRoot "checks\feature.json"),
+    (Join-Path $SourceRoot "checks\bugfix.json"),
     (Join-Path $SourceRoot "process.md"),
     (Join-Path $SourceRoot "version.json")
 )
@@ -218,6 +229,7 @@ Copy-Item -Path (Join-Path $SourceRoot "version.json") -Destination $globalHarne
 Copy-Item -Path (Join-Path $SourceRoot "templates") -Destination $globalHarness -Recurse -Force
 Copy-Item -Path (Join-Path $SourceRoot "workflows") -Destination $globalHarness -Recurse -Force
 Copy-Item -Path (Join-Path $SourceRoot "scripts") -Destination $globalHarness -Recurse -Force
+Copy-Item -Path (Join-Path $SourceRoot "checks") -Destination $globalHarness -Recurse -Force
 
 if ([string]::IsNullOrWhiteSpace($ConfigPath)) {
     $configPath = Join-Path $GlobalRoot "opencode.jsonc"

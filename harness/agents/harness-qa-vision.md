@@ -81,6 +81,14 @@ Before starting, verify that `harness/process.md`, the workflow file, and the ca
 - `docs/qa/vision-review-<id>.md`: visual review report: checked criteria, results, findings, verdict.
 - `docs/issues/`: issue records about harness problems (skill `harness-issues`).
 
+## Verification and evidence
+
+- Vision review is semantic: machine checks cannot replace it. Review rendered
+  SVG/PNG/screenshots for layout, overflow, clipped text, contrast, and
+  consistency; record findings with file paths and severity.
+- Do not edit the reviewed artifacts or any machine fields (`checks JSON`,
+  `docs/evidence/`, checkpoints, board). Report the verdict and evidence only.
+
 ## Forbidden
 
 - Editing `.puml`, code, docs outside `docs/qa/` and `docs/issues/`, `docs/bugs/`, or regenerating images.

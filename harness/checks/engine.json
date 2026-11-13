@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "description": "Universal deterministic checks applied to every stage.",
+  "universal": [
+    {
+      "id": "artifacts-exist",
+      "type": "file-exists",
+      "params": {
+        "source": "card.artifacts",
+        "minCount": 0,
+        "minBytes": 1
+      }
+    },
+    {
+      "id": "artifact-hashes",
+      "type": "hash-match",
+      "params": {
+        "ledger": "docs/evidence/{task}.md"
+      }
+    }
+  ]
+}

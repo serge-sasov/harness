@@ -16,21 +16,25 @@ Use `workflow: feature` for:
 
 ## Stage table
 
-| ID | Stage | Content | Role | Artifacts | Depends on | Applicability | Checkpoint |
-|---|---|---|---|---|---|---|---|
-| P-00 | Feature planning | Fix scope, inputs, e2e/UX applicability, checkpoint list; create the task graph and cards | orchestrator | `docs/plan.md`, `docs/tasks/T-XXX-*.md` | Predecessor tasks | Always | CP-1 plan, CP-F |
-| A-01 | Requirements analysis | Collect/refine FR/NFR, constraints, questions, glossary; atomic `R-NNN` | analyst | `docs/analysis/requirements-*.md`, `questions-*.md`, `glossary.md` | P-00 | Always | CP-1 |
-| A-02 | E2E use cases and data | Derive e2e scenarios, assign `UC-E2E-NNN`, describe steps/data/expectations and traceability; produce YAML dataset in 2-3 UC chunks; one CP-2 after all chunks validate | analyst | `docs/analysis/e2e-use-cases-*.md`, `e2e-test-data-*.yaml` | A-01 | If e2e in scope; otherwise waiver | CP-2 |
-| U-01 | UX flows and screens | Personas, journeys, information architecture, screen inventory, screen states | ux-designer | `docs/ux/user-flows-*.md`, `screens-*.md` (+ optional `.puml/.svg`) | A-01, A-02 | If UI in scope; otherwise waiver | CP-1 |
-| U-02 | UX wireframes, prototype, UI spec | Salt wireframes, static HTML prototype with one page per `UC-E2E`, interaction/accessibility/UI copy, design tokens; coder may implement prototype pages | ux-designer (+ harness-coder) | `docs/ux/wireframes-*.puml/.svg`, `ui-spec-*.md`, `prototype/<slug>/index.html`, `prototype/<slug>/uc-e2e-*.html`, `prototype/<slug>/assets/*` | U-01 | If UI in scope | CP-2 |
-| R-01 | Architecture and contracts | ADR with alternatives, API/formats/errors, module boundaries, decomposition | architect | `docs/architecture/adr-*.md`, `contracts-*.md` | A-01, A-02, U-02 | Always; UX input if UI | CP-1 |
-| R-02 | Diagrams and handoff | Component/sequence diagrams, `check_syntax` + render, module handoff to coder | architect | `docs/architecture/*.puml`, `*.svg` | R-01 | Always | CP-2 |
-| I-01 | Implementation and unit/integration tests | Code per ADR/contracts, tests, CI/CD, local run | coder | `src/`, `tests/`, `Dockerfile`, `docker-compose*.yml`, `Makefile` | R-02, U-02 | Always | CP-1 |
-| I-02 | E2E automation | Tests from YAML, runner, data validator, isolated environment and cleanup; split by module/test group per process 11.1 | coder | `tests/e2e/`, `scripts/e2e.ps1`, `scripts/validate-e2e-data.py` | I-01, A-02, R-02 | If e2e in scope | CP-2 |
-| Q-01 | E2E plan and coverage | Requirement -> UC -> test matrix, test data validation, execution approach | qa | `docs/qa/e2e-plan-*.md` | A-02, I-02 | If e2e in scope | CP-1 |
-| Q-02 | QA and acceptance | Run tests/e2e, evidence, defects, text/code/vision review, final verdict | qa (+ qa-vision) | `docs/qa/e2e-report-*.md`, `docs/qa/review-T-XXX.md`, `vision-review-*` | Q-01, I-02, I-01, R-02, U-02 | Always; e2e part if in scope | CP-2 |
-| D-01 | Documentation | README/runbook/guides, ADR finalization, document e2e/UX/checkpoint process | doc-writer | `README.md`, `docs/guides/*`, finalized ADRs | R-02, I-01, U-02, Q-02 | Per card | CP-1 |
-| F-01 | Final acceptance and closure | Verify acceptance, update plan/card, re-render activity/SVG as derived, bug links, commit | orchestrator + lead | `docs/plan.md`, card, `docs/activity.puml/.svg`, git commit | Q-02, D-01 | Always | CP-F |
+| ID | Stage | Content | Role | Artifacts | Checks (`harness/checks/feature.json`) | Depends on | Applicability | Checkpoint |
+|---|---|---|---|---|---|---|---|---|
+| P-00 | Feature planning | Fix scope, inputs, e2e/UX applicability, checkpoint list; create the task graph and cards | orchestrator | `docs/plan.md`, `docs/tasks/T-XXX-*.md` | plan-board, cards-exist, card-fields, deps-acyclic | Predecessor tasks | Always | CP-1 plan, CP-F |
+| A-01 | Requirements analysis | Collect/refine FR/NFR, constraints, questions, glossary; atomic `R-NNN` | analyst | `docs/analysis/requirements-*.md`, `questions-*.md`, `glossary.md` | requirements-exist, requirements-ids, requirements-atomic, open-questions | P-00 | Always | CP-1 |
+| A-02 | E2E use cases and data | Derive e2e scenarios, assign `UC-E2E-NNN`, describe steps/data/expectations and traceability; produce YAML dataset in 2-3 UC chunks; one CP-2 after all chunks validate | analyst | `docs/analysis/e2e-use-cases-*.md`, `e2e-test-data-*.yaml` | e2e-use-cases-exist, e2e-yaml-exist, e2e-yaml-valid, uc-ids, requirement-coverage | A-01 | If e2e in scope; otherwise waiver | CP-2 |
+| U-01 | UX flows and screens | Personas, journeys, information architecture, screen inventory, screen states | ux-designer | `docs/ux/user-flows-*.md`, `screens-*.md` (+ optional `.puml/.svg`) | user-flows-exist, screens-exist, screen-ids, flows-requirements, screens-states | A-01, A-02 | If UI in scope; otherwise waiver | CP-1 |
+| U-02 | UX wireframes, prototype, UI spec | Salt wireframes, static HTML prototype with one page per `UC-E2E`, interaction/accessibility/UI copy, design tokens; coder may implement prototype pages | ux-designer (+ harness-coder) | `docs/ux/wireframes-*.puml/.svg`, `ui-spec-*.md`, `prototype/<slug>/index.html`, `prototype/<slug>/uc-e2e-*.html`, `prototype/<slug>/assets/*` | wireframes-exist, wireframe-syntax, wireframe-svg, wireframe-coverage, ui-spec-exist, ui-spec-uc-coverage, proto-index, proto-page-count, proto-structure, proto-links, proto-local-links, proto-offline, proto-assets, ux-traceability, proto-ru-single-user (manual) | U-01 | If UI in scope | CP-2 |
+| R-01 | Architecture and contracts | ADR with alternatives, API/formats/errors, module boundaries, decomposition | architect | `docs/architecture/adr-*.md`, `contracts-*.md` | adr-exist, adr-sections, contracts-exist, architecture-requirement-trace | A-01, A-02, U-02 | Always; UX input if UI | CP-1 |
+| R-02 | Diagrams and handoff | Component/sequence diagrams, `check_syntax` + render, module handoff to coder | architect | `docs/architecture/*.puml`, `*.svg` | diagram-syntax, diagram-svg | R-01 | Always | CP-2 |
+| I-01 | Implementation and unit/integration tests | Code per ADR/contracts, tests, CI/CD, local run | coder | `src/`, `tests/`, `Dockerfile`, `docker-compose*.yml`, `Makefile` | src-exist, tests-exist, no-todo, no-secrets | R-02, U-02 | Always | CP-1 |
+| I-02 | E2E automation | Tests from YAML, runner, data validator, isolated environment and cleanup; split by module/test group per process 11.1 | coder | `tests/e2e/`, `scripts/e2e.ps1`, `scripts/validate-e2e-data.py` | e2e-tests-exist, e2e-runner-exist, e2e-validator-exist, e2e-cleanup, e2e-no-production | I-01, A-02, R-02 | If e2e in scope | CP-2 |
+| Q-01 | E2E plan and coverage | Requirement -> UC -> test matrix, test data validation, execution approach | qa | `docs/qa/e2e-plan-*.md` | e2e-plan-exist, e2e-plan-matrix, e2e-plan-uc-coverage | A-02, I-02 | If e2e in scope | CP-1 |
+| Q-02 | QA and acceptance | Run tests/e2e, evidence, defects, text/code/vision review, final verdict | qa (+ qa-vision) | `docs/qa/e2e-report-*.md`, `docs/qa/review-T-XXX.md`, `vision-review-*` | e2e-report-exist, qa-review-exist, qa-verdict, qa-report-results | Q-01, I-02, I-01, R-02, U-02 | Always; e2e part if in scope | CP-2 |
+| D-01 | Documentation | README/runbook/guides, ADR finalization, document e2e/UX/checkpoint process | doc-writer | `README.md`, `docs/guides/*`, finalized ADRs | readme-exist, readme-sections, guides-exist, changelog-exist | R-02, I-01, U-02, Q-02 | Per card | CP-1 |
+| F-01 | Final acceptance and closure | Verify acceptance, update plan/card, re-render activity/SVG as derived, bug links, commit | orchestrator + lead | `docs/plan.md`, card, `docs/activity.puml/.svg`, git commit | final-artifacts, final-board, final-activity, final-traceability-manual (manual) | Q-02, D-01 | Always | CP-F |
+
+Universal checks run for every stage: `artifacts-exist`, `artifact-hashes`.
+Preview with `harness/scripts/verify-stage.ps1 -Task T-XXX -Stage <ID>`; close a
+checkpoint with `harness/scripts/stage-done.ps1`.
 
 ## Task graph
 
@@ -78,6 +82,9 @@ Rules:
 - Every feature task has an explicit `e2e` and `ux` decision with a reason.
 - Requirements are atomic and traceable to use cases, UX screens, tests, and QA
   evidence.
+- Machine checks must report `FAIL=0` and `UNCHECKED=0`; `MANUAL` items are
+  listed for the user and are never auto-approved. Intermediate checkpoints may
+  be approved by policy P2 only when `MANUAL=0` and `hold: false`.
 - No `done` without all acceptance items and `CP-F`.
 - `docs/activity.puml`/`.svg` are derived visualizations, never acceptance or
   status evidence; the plan/card/checkpoints are authoritative.

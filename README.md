@@ -10,6 +10,7 @@ project) and `bugfix` (restore expected behavior with a failing regression test)
 Both share one board, one role set, one status model, and one active task.
 
 Detailed guide: [`docs/guides/harness-global.md`](docs/guides/harness-global.md).
+Usage manual (RU, HTML): [`docs/manual/index.html`](docs/manual/index.html).
 
 ## Contents
 
@@ -21,26 +22,34 @@ Detailed guide: [`docs/guides/harness-global.md`](docs/guides/harness-global.md)
   `harness-architect`, `harness-coder`, `harness-qa`, `harness-qa-vision`,
   `harness-doc-writer`)
 - `harness/commands/` - opencode commands: `/harness-feature`, `/harness-bug`,
-  `/harness-run`, `/harness-board-update`, `/harness-board-report`,
-  `/harness-init`, `/harness-doctor`
+  `/harness-run`, `/harness-stage-done`, `/harness-board-update`,
+  `/harness-board-report`, `/harness-init`, `/harness-doctor`
 - `harness/skills/harness/SKILL.md` - global skill with a short workflow
 - `harness/skills/harness-issues/SKILL.md` - harness issue tracking skill
 - `harness/templates/` - artifact templates (feature/bugfix task cards, bug card,
   adr, plan-row, issue, checkpoint, e2e-use-case, e2e-test-data, ux-spec)
+- `harness/checks/` - deterministic verification registry (`engine.json`,
+  `feature.json`, `bugfix.json`)
 - `harness/scripts/` - `install.ps1`, `init.ps1`, `doctor.ps1`,
-  `uninstall.ps1`, `new-issue.ps1`
+  `uninstall.ps1`, `new-issue.ps1`, `verify-artifacts.ps1`, `verify-stage.ps1`,
+  `stage-done.ps1`, `board-update.ps1`, `measure-tokens.ps1`
 - `harness/version.json` - installation version
 - `docs/bugs/` - product bug registry (`BUG-XXX` cards + index)
 - `docs/issues/` - harness problem log (one MD per issue + index)
 - `docs/plan.md` - shared board: workflow, status, role, dependencies, bug link
 - `docs/tasks/` - task cards (one MD file per task)
-- `docs/checkpoints/` - user checkpoint decisions, edits, and remarks
+- `docs/checkpoints/` - user checkpoint decisions, edits, remarks, and machine
+  check results (`*.checks.json`)
+- `docs/evidence/` - append-only SHA256 ledger per task (`T-XXX.md`)
+- `docs/metrics/` - measured token usage reports
 - `docs/qa/` - QA plans, reviews, and smoke reports
 - `docs/analysis/` - requirements, e2e use cases and YAML test data
 - `docs/ux/` - user flows, screens, wireframes, UI spec, prototype catalog, and
   one HTML page per `UC-E2E-NNN`
 - `docs/activity.puml` / `activity.svg` - derived activity diagram, informational
   only; never a status, dependency, acceptance, or routing source
+- `docs/manual/` - practical usage manual (RU) with scenario map, artifact map,
+  checklists, and a self-contained full-width HTML version
 - `requirements/` - initial requirements
 
 ## Role models
@@ -67,7 +76,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/install.ps1
 
 The script:
 
-1. copies agents, commands, skills, workflows, templates, and scripts to
+1. copies agents, commands, skills, workflows, templates, checks, and scripts to
    `~/.config/opencode/`;
 2. backs up modified files to `~/.config/opencode/backups/`;
 3. adds or updates the `permission.task` allow rule for `harness-*` roles in
@@ -85,15 +94,17 @@ Harness is not enabled automatically: `default_agent` stays unchanged. In the
 project, run:
 
 1. `/harness-init` - creates `harness/process.md`, `harness/version.json`,
-   `harness/templates/`, `harness/workflows/`, `docs/plan.md`,
-   `docs/activity.puml`, `docs/bugs/`, and the directory skeleton.
+   `harness/templates/`, `harness/workflows/`, `harness/checks/`,
+   `harness/scripts/`, `docs/plan.md`, `docs/activity.puml`, `docs/bugs/`,
+   `docs/evidence/`, `docs/metrics/`, and the directory skeleton.
 2. Start work with `/harness-feature <slug> [e2e] [ux]` or
    `/harness-bug <report or BUG-XXX>`; both only register pending work.
 3. `/harness-run T-XXX` - execute the task until the next checkpoint.
-4. Review/edit artifacts in `docs/checkpoints/T-XXX-CP-N.md`, record a decision,
-   then run `/harness-run T-XXX` again to resume.
-5. `/harness-board-update all` - sync the board, then re-render the derived
-   activity when no task is active.
+4. Review/edit artifacts in `docs/checkpoints/T-XXX-CP-N.md` and record a
+   decision, or let policy P2 close an intermediate checkpoint when all checks
+   are clean (`/harness-stage-done T-XXX`); then run `/harness-run T-XXX` again.
+5. `/harness-board-update all` - sync the board from checkpoint files when no
+   task is active.
 6. `/harness-board-report` - summary without changes, including pending reviews
    and the bug queue.
 
@@ -110,10 +121,12 @@ and suggests `/harness-init`.
 3. The role performs the stage strictly per the card's `acceptance` and stops at
    each declared checkpoint. A UX task may call `harness-coder` for prototype
    pages under the single cross-role exception.
-4. At a checkpoint the orchestrator records `docs/checkpoints/T-XXX-CP-N.md`,
-   sets `awaiting_review`, updates plan/card/checkpoints, re-renders activity as
-   derived, and commits the snapshot; the user reviews/edits artifacts and
-   records a decision.
+4. At a checkpoint the orchestrator runs `stage-done.ps1`: it executes the
+   registry checks, writes the checks JSON, SHA256 ledger, and checkpoint,
+   applies policy P2, updates plan/card/activity, and commits the snapshot. An
+   intermediate checkpoint with `FAIL=0`, `UNCHECKED=0`, `MANUAL=0`, and
+   `hold: false` is approved automatically (`auto (P2)`); manual items or CP-F
+   wait for the user.
 5. `/harness-run T-XXX` resumes the task: `approved` continues the role,
    `changes_requested` returns to the same checkpoint. Silence is not approval.
 6. After the final checkpoint and mandatory `CP-F` approval,
@@ -155,11 +168,10 @@ no status/dependency changes, preemption, or parallel execution are allowed.
 
 ## Versions
 
-- Current version: `2.4.0` (per-scenario UX HTML pages with the single
-  `ux-designer -> harness-coder` prototype exception, and the derived/informational
-  activity rule; includes 2.3.0 generation/context budgets, chunked A-02 and
-  coding, self-sub-sessions for analyst/coder, `subagent_depth: 2`, budget and e2e
-  data validators).
+- Current version: `2.5.0` (deterministic check engine, SHA256 evidence ledger,
+  `/harness-stage-done` with policy P2, executable acceptance criteria, token
+  usage metrics; includes 2.4.0 per-scenario UX HTML pages and the derived
+  activity rule, and 2.3.0 generation/context budgets).
 - The global version is stored in `~/.config/opencode/harness/version.json`.
 - A project records the version in `harness/version.json` during `/harness-init`.
 - `/harness-doctor` warns about version divergence.
@@ -203,7 +215,7 @@ issue files in the task commit. Secrets are never written to issues.
 - `git push`, `git tag`, history rewrite, and prod deployment are forbidden.
 - E2E tests target local/staging only, use isolated data, and must clean up.
 - Checkpoints require an explicit user decision; a silence keeps the task in
-  `awaiting_review`.
+  `awaiting_review` (P2 only auto-approves clean intermediate checkpoints).
 - If `opencode.jsonc` contains comments, `install.ps1` cannot patch it: add the
   printed `harness-ux-designer` allow rule manually and restart opencode.
 - Models and MCP (`plantuml-render`, `local-rag`) must be available locally.

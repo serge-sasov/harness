@@ -16,23 +16,23 @@ forbidden while a task is active. New pending work is registered only through
 `/harness-feature` or `/harness-bug`.
 
 1. Give `harness-orchestrator` the task:
-   - read `docs/plan.md`, the cards `docs/tasks/T-*.md`,
-     `docs/checkpoints/T-*.md`, `docs/bugs/BUG-*.md`, `docs/bugs/README.md`,
-     the workflow files, and Git evidence;
+   - run `harness/scripts/board-update.ps1 -All -DryRun` (or `-Task T-XXX
+     -DryRun`) and report the planned changes; the script derives status from
+     checkpoint files (`CP-F approved -> done`; any `awaiting_review ->
+     awaiting_review`) and refuses a real run while a task is active.
+   - then run `board-update.ps1 -All` (or `-Task T-XXX`). It updates plan/card
+     status, re-renders `docs/activity.*`, and commits
+     `chore: board update (...)`.
+   - use `-SyncFields` only when the board `Artifacts`/`Commit` cells should be
+     replaced from the card; otherwise status is the only reconciled field.
+   - validate: every approved checkpoint has
+     `docs/checkpoints/T-XXX-CP-N.checks.json`; `docs/evidence/T-XXX.md` has the
+     latest hashes; `docs/bugs/README.md` matches the bug cards; no machine
+     field was hand-edited.
    - do not read `docs/activity.puml` or its derivatives as a reconciliation
-     input; they are informational visualizations, not status evidence;
-   - reconcile task statuses with the authoritative sources, including
-     `awaiting_review` and checkpoint decisions;
-   - validate `workflow`, `stage`, and `bug` links against the workflow files;
-   - reconcile bug statuses with linked tasks and QA evidence; keep
-     `docs/bugs/README.md` in sync;
-   - ensure every checkpoint in a card has a matching `docs/checkpoints/` file
-     and a recorded decision;
-   - fill the `Commit` column with actual hashes from `git log --oneline`;
-   - only after reconciliation, update colors in `docs/activity.puml` using
-     `:task text; <<#RRGGBB>>` and re-render `docs/activity.svg` via MCP
-     `plantuml-render`; verify the SVG has no `syntax is deprecated` banner;
-   - commit `chore: board update ($ARGUMENTS)`.
+     input; they are informational visualizations, not status evidence.
+   - fill the `Commit` column only with hashes that exist in `git log`; never
+     invent a hash.
 2. Do not edit files yourself; that is the orchestrator's job.
-3. Report: which task/bug statuses changed, checkpoint mismatches, which commits
-   were recorded, and the SVG path.
+3. Report: which task/bug statuses changed, checkpoint mismatches, missing
+   checks JSON, which commits were recorded, and the SVG path.

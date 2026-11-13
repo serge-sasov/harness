@@ -9,7 +9,7 @@ metadata:
 
 ## When to use
 
-Only when the user explicitly asks to run harness or execute `/harness-run`, `/harness-feature`, `/harness-bug`, `/harness-board-update`, or `/harness-board-report` in a project that has `harness/process.md` and `docs/plan.md`.
+Only when the user explicitly asks to run harness or execute `/harness-run`, `/harness-stage-done`, `/harness-feature`, `/harness-bug`, `/harness-board-update`, or `/harness-board-report` in a project that has `harness/process.md` and `docs/plan.md`.
 
 Do not use for ordinary development, analysis, or documentation tasks.
 
@@ -30,9 +30,10 @@ Before any action:
 - `/harness-feature <slug> [e2e] [ux]`: create a pending `feature` planning task (`P-00`); does not start work.
 - `/harness-bug <report or BUG-XXX>`: create/triage a `BUG-XXX` card and pending bugfix tasks; does not start work.
 - `/harness-run T-XXX`: execute or resume exactly one task from either workflow.
-- `/harness-board-update all|T-XXX`: board reconciliation when no task is active.
+- `/harness-stage-done T-XXX [CP-N]`: run checks, write the ledger/checkpoint, apply P2, and commit the snapshot.
+- `/harness-board-update all|T-XXX`: reconcile the board from checkpoint files when no task is active.
 - `/harness-board-report`: read-only board report.
-- `/harness-doctor`: installation and project health check, including issue index, model context, compaction plugin, and RAG timeout checks.
+- `/harness-doctor`: installation and project health check, including engine self-test, registry completeness, issue index, model context, compaction plugin, and RAG timeout checks.
 
 Explicit only; `default_agent` is never switched to harness.
 
@@ -71,7 +72,9 @@ The lead does not edit files itself; the orchestrator handles the board, bug reg
 - `docs/plan.md`: board, the single source of truth for work scope;
 - `docs/tasks/T-XXX-*.md`: feature/bugfix task cards with inputs, applicability, `workflow`, `stage`, and checkpoints;
 - `docs/bugs/BUG-XXX-*.md` and `docs/bugs/README.md`: product bug reports and index, owned by the orchestrator;
-- `docs/checkpoints/T-XXX-CP-N.md`: user review decisions, edits, and remarks;
+- `docs/checkpoints/T-XXX-CP-N.md`: user review decisions, edits, remarks, and `*.checks.json` machine results;
+- `docs/evidence/T-XXX.md`: append-only SHA256 ledger; `docs/metrics/`: token usage reports;
+- `harness/checks/`: deterministic registry (`engine.json`, `feature.json`, `bugfix.json`);
 - `docs/activity.puml` / `.svg`: derived visual progress aid only, never a
   status/routing/acceptance source; colors use `:task text; <<#RRGGBB>>`;
 - `harness/workflows/`: feature and bugfix stage tables/task graphs;
@@ -93,7 +96,7 @@ Tasks run strictly sequentially across both workflows: at most one active task (
 
 Status decisions use the plan, task cards, checkpoints, bug cards, workflow files, and Git evidence. `docs/activity.puml`, `docs/activity.svg`, and derivatives are informational only; never use them to determine or reconcile status, dependencies, active task, acceptance, checkpoint decisions, or routing. If activity disagrees with the board/card, the board/card wins and activity is re-rendered.
 
-Every task has at least one checkpoint; `CP-F` is mandatory before `done`. At a checkpoint the role stops, the orchestrator creates the checkpoint file and sets `awaiting_review`, and the user reviews/edits artifacts and records a decision. Without explicit approval, the task stays `awaiting_review`.
+Every task has at least one checkpoint; `CP-F` is mandatory before `done`. At a checkpoint the role stops and the orchestrator runs `stage-done.ps1`, which executes the registry checks, writes the checks JSON and evidence ledger, renders the checkpoint, and applies policy P2. An intermediate checkpoint with `FAIL=0`, `UNCHECKED=0`, `MANUAL=0`, and `hold: false` is approved by `auto (P2)`; manual items, failed/unchecked checks, `hold: true`, and `CP-F` wait for the user. Without explicit approval, the task stays `awaiting_review`.
 
 A task is closed only by the card's `acceptance` criteria and `CP-F` approval. On failure, set `failed` with the cause in `Blockers`; up to 3 attempts per chunk, then `blocked`. A bug that cannot be reproduced after 3 attempts is `blocked` with evidence, not a speculative fix.
 

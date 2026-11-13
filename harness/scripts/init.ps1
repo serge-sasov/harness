@@ -57,6 +57,15 @@ $requiredGlobal = @(
     (Join-Path $GlobalHarness "scripts\new-issue.ps1"),
     (Join-Path $GlobalHarness "scripts\check-budget.ps1"),
     (Join-Path $GlobalHarness "scripts\validate-e2e-data.py"),
+    (Join-Path $GlobalHarness "scripts\harness-lib.ps1"),
+    (Join-Path $GlobalHarness "scripts\verify-artifacts.ps1"),
+    (Join-Path $GlobalHarness "scripts\verify-stage.ps1"),
+    (Join-Path $GlobalHarness "scripts\stage-done.ps1"),
+    (Join-Path $GlobalHarness "scripts\board-update.ps1"),
+    (Join-Path $GlobalHarness "scripts\measure-tokens.ps1"),
+    (Join-Path $GlobalHarness "checks\engine.json"),
+    (Join-Path $GlobalHarness "checks\feature.json"),
+    (Join-Path $GlobalHarness "checks\bugfix.json"),
     (Join-Path $GlobalRoot "agents\harness.md"),
     (Join-Path $GlobalRoot "agents\harness-ux-designer.md")
 )
@@ -88,16 +97,16 @@ New-Item -ItemType Directory -Force -Path $HarnessDir | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $HarnessDir "templates") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $HarnessDir "workflows") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $HarnessDir "scripts") | Out-Null
-foreach ($sub in @("tasks", "analysis", "ux", "architecture", "qa", "guides", "issues", "checkpoints", "bugs")) {
+New-Item -ItemType Directory -Force -Path (Join-Path $HarnessDir "checks") | Out-Null
+foreach ($sub in @("tasks", "analysis", "ux", "architecture", "qa", "guides", "issues", "checkpoints", "bugs", "evidence", "metrics")) {
     New-Item -ItemType Directory -Force -Path (Join-Path $DocsDir $sub) | Out-Null
 }
 
 Copy-Item -Path (Join-Path $GlobalHarness "process.md") -Destination $HarnessDir -Force
 Copy-Item -Path (Join-Path $GlobalHarness "templates\*") -Destination (Join-Path $HarnessDir "templates") -Force
 Copy-Item -Path (Join-Path $GlobalHarness "workflows\*") -Destination (Join-Path $HarnessDir "workflows") -Force
-Copy-Item -Path (Join-Path $GlobalHarness "scripts\new-issue.ps1") -Destination (Join-Path $HarnessDir "scripts") -Force
-Copy-Item -Path (Join-Path $GlobalHarness "scripts\check-budget.ps1") -Destination (Join-Path $HarnessDir "scripts") -Force
-Copy-Item -Path (Join-Path $GlobalHarness "scripts\validate-e2e-data.py") -Destination (Join-Path $HarnessDir "scripts") -Force
+Copy-Item -Path (Join-Path $GlobalHarness "scripts\*") -Destination (Join-Path $HarnessDir "scripts") -Force
+Copy-Item -Path (Join-Path $GlobalHarness "checks\*") -Destination (Join-Path $HarnessDir "checks") -Force
 
 $issuesIndex = Join-Path $DocsDir "issues\README.md"
 if (-not (Test-Path -LiteralPath $issuesIndex)) {
@@ -154,8 +163,8 @@ At most one task is active (`in_progress` or `awaiting_review`) across both work
 
 ## Board
 
-| ID | Workflow | Task | Role | Dependencies | Status | Bug | Artifacts | Commit |
-|---|---|---|---|---|---|---|---|---|
+| ID | Workflow | Task | Role | Dependencies | Status | Bug | Artifacts | Usage | Commit |
+|---|---|---|---|---|---|---|---|---|---|
 '@
     Write-Utf8NoBom -Path $PlanPath -Text ($plan + "`r`n")
 }
@@ -200,12 +209,14 @@ File name: `T-XXX-<slug>.md`. Status and log live in the card.
 Cards declare `workflow`, `stage`, `inputs`, e2e/UX or bug/severity applicability,
 and at least one checkpoint; `CP-F` is mandatory.
 Product bugs live in `docs/bugs/`; harness problems live in `docs/issues/`.
-Checkpoint reviews are recorded in `docs/checkpoints/T-XXX-CP-N.md` from `harness/templates/checkpoint.md`.
+Checkpoint reviews are recorded in `docs/checkpoints/T-XXX-CP-N.md` and closed
+with `harness/scripts/stage-done.ps1`; machine hashes live in
+`docs/evidence/T-XXX.md`, usage reports in `docs/metrics/`.
 '@
     Write-Utf8NoBom -Path $tasksReadme -Text ($text + "`r`n")
 }
 
-foreach ($sub in @("analysis", "ux", "architecture", "qa", "guides", "checkpoints")) {
+foreach ($sub in @("analysis", "ux", "architecture", "qa", "guides", "checkpoints", "evidence", "metrics")) {
     $keep = Join-Path $DocsDir "$sub\.gitkeep"
     if (-not (Test-Path -LiteralPath $keep)) {
         Write-Utf8NoBom -Path $keep -Text ""

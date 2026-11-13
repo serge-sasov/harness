@@ -1,0 +1,133 @@
+{
+  "workflow": "feature",
+  "stages": {
+    "P-00": {
+      "artifacts": ["docs/plan.md", "docs/tasks/T-*.md"],
+      "checks": [
+        { "id": "plan-board", "type": "headings-required", "params": { "glob": "docs/plan.md", "headings": ["## Board"] } },
+        { "id": "cards-exist", "type": "file-exists", "params": { "globs": ["docs/tasks/T-*.md"], "minCount": 1 } },
+        { "id": "card-fields", "type": "card-fields", "params": {} },
+        { "id": "deps-acyclic", "type": "deps-acyclic", "params": {} }
+      ]
+    },
+    "A-01": {
+      "artifacts": ["docs/analysis/requirements-*.md", "docs/analysis/questions-*.md", "docs/analysis/glossary.md"],
+      "checks": [
+        { "id": "requirements-exist", "type": "file-exists", "params": { "globs": ["docs/analysis/requirements-*.md"], "minCount": 1 } },
+        { "id": "requirements-ids", "type": "ids-unique", "params": { "globs": ["docs/analysis/requirements-*.md"], "regex": "R-\\d{3}", "definitions": true, "scope": "card" } },
+        { "id": "requirements-atomic", "type": "pattern-present", "params": { "globs": ["docs/analysis/requirements-*.md"], "patterns": ["R-"], "scope": "card" } },
+        { "id": "open-questions", "type": "file-exists", "params": { "globs": ["docs/analysis/questions-*.md"], "minCount": 0 } }
+      ]
+    },
+    "A-02": {
+      "artifacts": ["docs/analysis/e2e-use-cases-*.md", "docs/analysis/e2e-test-data-*.yaml"],
+      "checks": [
+        { "id": "e2e-use-cases-exist", "type": "file-exists", "params": { "globs": ["docs/analysis/e2e-use-cases-*.md"], "minCount": 1 } },
+        { "id": "e2e-yaml-exist", "type": "file-exists", "params": { "globs": ["docs/analysis/e2e-test-data-*.yaml"], "minCount": 1 } },
+        { "id": "e2e-yaml-valid", "type": "python-validator", "params": { "script": "harness/scripts/validate-e2e-data.py", "globs": ["docs/analysis/e2e-test-data-*.yaml"], "useCasesGlob": "docs/analysis/e2e-use-cases-*.md" } },
+        { "id": "uc-ids", "type": "ids-unique", "params": { "globs": ["docs/analysis/e2e-use-cases-*.md"], "regex": "UC-E2E-\\d{3}", "definitions": true, "scope": "card" } },
+        { "id": "requirement-coverage", "type": "id-coverage", "params": { "source": { "globs": ["docs/analysis/requirements-*.md"] }, "targets": { "globs": ["docs/analysis/e2e-use-cases-*.md", "docs/analysis/e2e-test-data-*.yaml"] }, "regex": "R-\\d{3}" } }
+      ]
+    },
+    "U-01": {
+      "artifacts": ["docs/ux/user-flows-*.md", "docs/ux/screens-*.md"],
+      "checks": [
+        { "id": "user-flows-exist", "type": "file-exists", "params": { "globs": ["docs/ux/user-flows-*.md"], "minCount": 1 } },
+        { "id": "screens-exist", "type": "file-exists", "params": { "globs": ["docs/ux/screens-*.md"], "minCount": 1 } },
+        { "id": "screen-ids", "type": "ids-unique", "params": { "globs": ["docs/ux/screens-*.md"], "regex": "S-\\d{2}", "definitions": true, "scope": "card" } },
+        { "id": "flows-requirements", "type": "pattern-present", "params": { "globs": ["docs/ux/user-flows-*.md"], "patterns": ["R-"], "scope": "card" } },
+        { "id": "screens-states", "type": "pattern-present", "params": { "globs": ["docs/ux/screens-*.md"], "patterns": ["empty", "loading", "success", "error"], "ignoreCase": true, "scope": "card" } }
+      ]
+    },
+    "U-02": {
+      "artifacts": ["docs/ux/wireframes-*.puml", "docs/ux/wireframes-*.svg", "docs/ux/ui-spec-*.md", "docs/ux/prototype/*/index.html", "docs/ux/prototype/*/uc-e2e-*.html", "docs/ux/prototype/*/assets/*"],
+      "checks": [
+        { "id": "wireframes-exist", "type": "file-exists", "params": { "globs": ["docs/ux/wireframes-*.puml"], "minCount": 1 } },
+        { "id": "wireframe-syntax", "type": "puml-syntax", "params": { "globs": ["docs/ux/wireframes-*.puml"] } },
+        { "id": "wireframe-svg", "type": "svg-fresh", "params": { "globs": ["docs/ux/wireframes-*.puml"] } },
+        { "id": "wireframe-coverage", "type": "id-coverage", "params": { "source": { "globs": ["docs/ux/screens-*.md"] }, "targets": { "globs": ["docs/ux/wireframes-*.puml"] }, "regex": "S-\\d{2}" } },
+        { "id": "ui-spec-exist", "type": "file-exists", "params": { "globs": ["docs/ux/ui-spec-*.md"], "minCount": 1 } },
+        { "id": "ui-spec-uc-coverage", "type": "id-coverage", "params": { "source": { "globs": ["docs/analysis/e2e-use-cases-*.md"] }, "targets": { "globs": ["docs/ux/ui-spec-*.md"] }, "regex": "UC-E2E-\\d{3}" } },
+        { "id": "proto-index", "type": "file-exists", "params": { "globs": ["docs/ux/prototype/*/index.html"], "minCount": 1 } },
+        { "id": "proto-page-count", "type": "count-match", "params": { "sourceGlobs": ["docs/analysis/e2e-use-cases-*.md"], "sourceRegex": "UC-E2E-\\d{3}", "targetGlobs": ["docs/ux/prototype/*/uc-e2e-*.html"] } },
+        { "id": "proto-structure", "type": "html-structure", "params": { "globs": ["docs/ux/prototype/*/uc-e2e-*.html"], "lang": "ru" } },
+        { "id": "proto-links", "type": "index-pages-links", "params": { "indexGlobs": ["docs/ux/prototype/*/index.html"], "pagesGlobs": ["docs/ux/prototype/*/uc-e2e-*.html"] } },
+        { "id": "proto-local-links", "type": "html-links-exist", "params": { "globs": ["docs/ux/prototype/*/*.html"] } },
+        { "id": "proto-offline", "type": "pattern-absent", "params": { "globs": ["docs/ux/prototype/*/*.html", "docs/ux/prototype/*/assets/*"], "patterns": ["http://", "https://", "fetch(", "XMLHttpRequest", "WebSocket", "localStorage", "sessionStorage"] } },
+        { "id": "proto-assets", "type": "file-exists", "params": { "globs": ["docs/ux/prototype/*/assets/*"], "minCount": 1 } },
+        { "id": "ux-traceability", "type": "id-coverage", "params": { "source": { "globs": ["docs/analysis/e2e-use-cases-*.md"] }, "targets": { "globs": ["docs/ux/ui-spec-*.md", "docs/ux/screens-*.md", "docs/ux/prototype/*/uc-e2e-*.html"] }, "regex": "UC-E2E-\\d{3}" } },
+        { "id": "proto-ru-single-user", "type": "manual", "params": { "reason": "Прототип: интерфейс и тексты на русском, один пользователь без логина, ролей и сетевых запросов" } }
+      ]
+    },
+    "R-01": {
+      "artifacts": ["docs/architecture/adr-*.md", "docs/architecture/contracts-*.md"],
+      "checks": [
+        { "id": "adr-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/adr-*.md"], "minCount": 1 } },
+        { "id": "adr-sections", "type": "headings-required", "params": { "globs": ["docs/architecture/adr-*.md"], "headings": ["## Context", "## Decision", "## Alternatives", "## Consequences"], "scope": "card" } },
+        { "id": "contracts-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/contracts-*.md"], "minCount": 1 } },
+        { "id": "architecture-requirement-trace", "type": "id-coverage", "params": { "source": { "globs": ["docs/analysis/requirements-*.md"] }, "targets": { "globs": ["docs/architecture/adr-*.md", "docs/architecture/contracts-*.md"] }, "regex": "R-\\d{3}" } }
+      ]
+    },
+    "R-02": {
+      "artifacts": ["docs/architecture/*.puml", "docs/architecture/*.svg"],
+      "checks": [
+        { "id": "diagram-syntax", "type": "puml-syntax", "params": { "globs": ["docs/architecture/*.puml"], "scope": "card" } },
+        { "id": "diagram-svg", "type": "svg-fresh", "params": { "globs": ["docs/architecture/*.puml"], "scope": "card" } }
+      ]
+    },
+    "I-01": {
+      "artifacts": ["src/", "tests/", "Dockerfile", "docker-compose*.yml", "Makefile"],
+      "checks": [
+        { "id": "src-exist", "type": "file-exists", "params": { "globs": ["src/**/*"], "minCount": 1 } },
+        { "id": "tests-exist", "type": "file-exists", "params": { "globs": ["tests/**/*"], "minCount": 1 } },
+        { "id": "no-todo", "type": "pattern-absent", "params": { "source": "card.artifacts", "patterns": ["TODO", "TBD", "FIXME"] } },
+        { "id": "no-secrets", "type": "pattern-absent", "params": { "source": "card.artifacts", "patterns": ["BEGIN PRIVATE KEY", "password=", "api_key="] } }
+      ]
+    },
+    "I-02": {
+      "artifacts": ["tests/e2e/", "scripts/e2e.ps1", "scripts/validate-e2e-data.py"],
+      "checks": [
+        { "id": "e2e-tests-exist", "type": "file-exists", "params": { "globs": ["tests/e2e/**/*"], "minCount": 1 } },
+        { "id": "e2e-runner-exist", "type": "file-exists", "params": { "globs": ["scripts/e2e.ps1"], "minCount": 1 } },
+        { "id": "e2e-validator-exist", "type": "file-exists", "params": { "globs": ["scripts/validate-e2e-data.py"], "minCount": 1 } },
+        { "id": "e2e-cleanup", "type": "pattern-present", "params": { "globs": ["tests/e2e/**/*"], "patterns": ["cleanup"], "ignoreCase": true } },
+        { "id": "e2e-no-production", "type": "pattern-absent", "params": { "globs": ["tests/e2e/**/*"], "patterns": ["production.example", "prod-api"] } }
+      ]
+    },
+    "Q-01": {
+      "artifacts": ["docs/qa/e2e-plan-*.md"],
+      "checks": [
+        { "id": "e2e-plan-exist", "type": "file-exists", "params": { "globs": ["docs/qa/e2e-plan-*.md"], "minCount": 1 } },
+        { "id": "e2e-plan-matrix", "type": "pattern-present", "params": { "globs": ["docs/qa/e2e-plan-*.md"], "patterns": ["UC-E2E-", "R-"], "scope": "card" } },
+        { "id": "e2e-plan-uc-coverage", "type": "id-coverage", "params": { "source": { "globs": ["docs/analysis/e2e-use-cases-*.md"] }, "targets": { "globs": ["docs/qa/e2e-plan-*.md"] }, "regex": "UC-E2E-\\d{3}" } }
+      ]
+    },
+    "Q-02": {
+      "artifacts": ["docs/qa/e2e-report-*.md", "docs/qa/review-T-XXX.md", "docs/qa/vision-review-*.md"],
+      "checks": [
+        { "id": "e2e-report-exist", "type": "file-exists", "params": { "globs": ["docs/qa/e2e-report-*.md"], "minCount": 1 } },
+        { "id": "qa-review-exist", "type": "file-exists", "params": { "globs": ["docs/qa/review-T-*.md"], "minCount": 1 } },
+        { "id": "qa-verdict", "type": "pattern-present", "params": { "globs": ["docs/qa/review-T-*.md"], "patterns": ["Verdict"], "ignoreCase": true, "scope": "card" } },
+        { "id": "qa-report-results", "type": "pattern-present", "params": { "globs": ["docs/qa/e2e-report-*.md"], "patterns": ["PASS", "FAIL"], "ignoreCase": true, "scope": "card" } }
+      ]
+    },
+    "D-01": {
+      "artifacts": ["README.md", "docs/guides/*", "docs/architecture/adr-*.md"],
+      "checks": [
+        { "id": "readme-exist", "type": "file-exists", "params": { "globs": ["README.md"], "minCount": 1 } },
+        { "id": "readme-sections", "type": "pattern-present", "params": { "globs": ["README.md"], "patterns": ["## "] } },
+        { "id": "guides-exist", "type": "file-exists", "params": { "globs": ["docs/guides/*.md"], "minCount": 0 } },
+        { "id": "changelog-exist", "type": "file-exists", "params": { "globs": ["CHANGELOG.md"], "minCount": 0 } }
+      ]
+    },
+    "F-01": {
+      "artifacts": [],
+      "checks": [
+        { "id": "final-artifacts", "type": "file-exists", "params": { "source": "card.artifacts", "minCount": 0 } },
+        { "id": "final-board", "type": "board-consistency", "params": {} },
+        { "id": "final-activity", "type": "activity-derived", "params": {} },
+        { "id": "final-traceability-manual", "type": "manual", "params": { "reason": "semantic acceptance: requirements, UX, architecture, tests and QA evidence are consistent" } }
+      ]
+    }
+  }
+}

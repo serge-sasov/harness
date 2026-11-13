@@ -210,6 +210,17 @@ Before starting, verify `harness/process.md`, the workflow file, and the card; i
 
 Feature: stop at CP-1 (implementation and unit/integration tests) and CP-2 (e2e automation and local run) if declared. Bugfix: stop at CP-1 (reproduction/root cause and failing regression) and CP-2 (minimal fix/regression green) if declared. Do not continue past a checkpoint; report artifacts and a verification checklist. After user approval, read `docs/checkpoints/T-XXX-CP-N.md`, the user remarks, and `git diff` since the snapshot; preserve user edits.
 
+## Verification and evidence
+
+- I-01 checks: source/tests exist, no `TODO`/`FIXME` in artifacts, no secrets.
+  I-02 checks: e2e tests, runner, validator, cleanup, no production endpoints.
+  Bugfix checks cover reproduction, regression, and no-secret/no-TODO rules.
+- Prefer deterministic scripts for fixtures, arithmetic, and data validation;
+  run `verify-stage.ps1 -Task T-XXX -Stage <ID>` before reporting. Report a test
+  output summary, not full logs.
+- Never edit checks JSON, `docs/evidence/`, checkpoints, or the board; never
+  weaken a failing test or check to make it pass.
+
 ## Forbidden
 
 Production deploy/data, `git push/commit/tag`, `docker push`, `npm publish`, `kubectl`, `terraform`, `helm`, cloud CLIs, `ssh/scp`, destructive deletes, editing `~/.config/opencode/**`, `.env`, `*.pem`, `*.key`, `docs/bugs/`, `docs/ux/ui-spec-*.md`, `docs/ux/screens-*.md`, `docs/ux/wireframes-*`, or calling other roles, grandchildren, parallel children, or external network APIs in prototypes. Self-sub-sessions of `harness-coder` for decomposed top-level coder chunks are allowed; they are forbidden when coder is called by `ux-designer`.

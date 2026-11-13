@@ -107,6 +107,7 @@ $globalFiles = @(
     (Join-Path $GlobalRoot "commands\harness-feature.md"),
     (Join-Path $GlobalRoot "commands\harness-bug.md"),
     (Join-Path $GlobalRoot "commands\harness-run.md"),
+    (Join-Path $GlobalRoot "commands\harness-stage-done.md"),
     (Join-Path $GlobalRoot "commands\harness-board-update.md"),
     (Join-Path $GlobalRoot "commands\harness-board-report.md"),
     (Join-Path $GlobalRoot "commands\harness-doctor.md"),
@@ -129,7 +130,16 @@ $globalFiles = @(
     (Join-Path $GlobalHarness "templates\ux-spec.md"),
     (Join-Path $GlobalHarness "scripts\new-issue.ps1"),
     (Join-Path $GlobalHarness "scripts\check-budget.ps1"),
-    (Join-Path $GlobalHarness "scripts\validate-e2e-data.py")
+    (Join-Path $GlobalHarness "scripts\validate-e2e-data.py"),
+    (Join-Path $GlobalHarness "scripts\harness-lib.ps1"),
+    (Join-Path $GlobalHarness "scripts\verify-artifacts.ps1"),
+    (Join-Path $GlobalHarness "scripts\verify-stage.ps1"),
+    (Join-Path $GlobalHarness "scripts\stage-done.ps1"),
+    (Join-Path $GlobalHarness "scripts\board-update.ps1"),
+    (Join-Path $GlobalHarness "scripts\measure-tokens.ps1"),
+    (Join-Path $GlobalHarness "checks\engine.json"),
+    (Join-Path $GlobalHarness "checks\feature.json"),
+    (Join-Path $GlobalHarness "checks\bugfix.json")
 )
 $missingGlobal = @()
 foreach ($file in $globalFiles) {
@@ -141,6 +151,67 @@ if ($missingGlobal.Count -eq 0) {
 else {
     Write-Err "missing global harness files:"
     $missingGlobal | ForEach-Object { Write-Host "       $_" }
+}
+
+$engineScript = Join-Path $GlobalHarness "scripts\verify-artifacts.ps1"
+if (Test-Path -LiteralPath $engineScript) {
+    & powershell -NoProfile -ExecutionPolicy Bypass -File $engineScript -SelfTest | Out-Null
+    if ($LASTEXITCODE -eq 0) { Write-Ok "verification engine self-test passed" }
+    else { Write-Err "verification engine self-test failed; fix harness/scripts before running checkpoints" }
+}
+
+$checksRoot = Join-Path $GlobalHarness "checks"
+$requiredStages = @{
+    "feature" = @("P-00", "A-01", "A-02", "U-01", "U-02", "R-01", "R-02", "I-01", "I-02", "Q-01", "Q-02", "D-01", "F-01")
+    "bugfix"  = @("B-00", "B-01", "B-02", "B-03", "B-04", "B-05")
+}
+$enginePath = Join-Path $checksRoot "engine.json"
+if (Test-Path -LiteralPath $enginePath) {
+    try {
+        $engineJson = Get-Content -LiteralPath $enginePath -Raw | ConvertFrom-Json
+        $universalCount = @($engineJson.universal).Count
+        if ($universalCount -ge 2) { Write-Ok "engine registry has $universalCount universal check(s)" }
+        else { Write-Err "engine registry has fewer than 2 universal checks" }
+    }
+    catch { Write-Err "cannot parse engine.json: $_" }
+}
+else {
+    Write-Err "checks/engine.json not found"
+}
+foreach ($workflowName in @("feature", "bugfix")) {
+    $registryPath = Join-Path $checksRoot "$workflowName.json"
+    if (-not (Test-Path -LiteralPath $registryPath)) {
+        Write-Err "checks/$workflowName.json not found"
+        continue
+    }
+    try {
+        $registryJson = Get-Content -LiteralPath $registryPath -Raw | ConvertFrom-Json
+        $stages = @($registryJson.stages.PSObject.Properties.Name)
+        $missingStages = @($requiredStages[$workflowName] | Where-Object { $stages -notcontains $_ })
+        $emptyStages = @($registryJson.stages.PSObject.Properties | Where-Object {
+            @($_.Value.checks).Count -eq 0
+        } | ForEach-Object { $_.Name })
+        if ($missingStages.Count -eq 0 -and $emptyStages.Count -eq 0) {
+            Write-Ok "$workflowName registry has all $(@($requiredStages[$workflowName]).Count) stages with checks"
+        }
+        else {
+            if ($missingStages.Count -gt 0) { Write-Err "$workflowName registry missing stages: $($missingStages -join ', ')" }
+            if ($emptyStages.Count -gt 0) { Write-Err "$workflowName registry has stages without checks: $($emptyStages -join ', ')" }
+        }
+    }
+    catch { Write-Err "cannot parse $workflowName.json: $_" }
+}
+
+$leadAgentPath = Join-Path $GlobalRoot "agents\harness.md"
+if (Test-Path -LiteralPath $leadAgentPath) {
+    $leadText = Get-Content -LiteralPath $leadAgentPath -Raw
+    $scriptPatterns = @("*stage-done.ps1*", "*board-update.ps1*", "*measure-tokens.ps1*", "*verify-artifacts.ps1*", "*verify-stage.ps1*")
+    $missingPatterns = @($scriptPatterns | Where-Object { $leadText -notmatch [regex]::Escape($_) })
+    if ($missingPatterns.Count -eq 0) { Write-Ok "lead agent allows the five harness scripts" }
+    else { Write-Warn "lead agent is missing allow patterns: $($missingPatterns -join ', ')" }
+    if ($leadText -match '"git\*"\s*:\s*"allow"') {
+        Write-Warn "lead agent has a broad git allow pattern; review permission.bash manually"
+    }
 }
 
 $agentFiles = @(Get-ChildItem -LiteralPath (Join-Path $GlobalRoot "agents") -Filter "harness*.md" -File -ErrorAction SilentlyContinue)
@@ -484,6 +555,68 @@ if ((Test-Path -LiteralPath $marker) -and (Test-Path -LiteralPath $plan)) {
     }
     else {
         Write-Warn "missing docs directories: $($missingDirs -join ', '); run /harness-init -Force"
+    }
+    $projectChecks = Join-Path $Project "harness\checks"
+    $missingChecks = @(@("engine.json", "feature.json", "bugfix.json") | Where-Object {
+        -not (Test-Path -LiteralPath (Join-Path $projectChecks $_))
+    })
+    if ($missingChecks.Count -eq 0) {
+        Write-Ok "verification registry available in the project"
+    }
+    else {
+        Write-Warn "missing harness/checks: $($missingChecks -join ', '); run /harness-init -Force"
+    }
+    $projectScripts = @("harness-lib.ps1", "verify-artifacts.ps1", "verify-stage.ps1", "stage-done.ps1", "board-update.ps1", "measure-tokens.ps1")
+    $missingScripts = @($projectScripts | Where-Object {
+        -not (Test-Path -LiteralPath (Join-Path $Project "harness\scripts\$_"))
+    })
+    if ($missingScripts.Count -eq 0) {
+        Write-Ok "verification scripts available in the project"
+    }
+    else {
+        Write-Warn "missing harness/scripts: $($missingScripts -join ', '); run /harness-init -Force"
+    }
+    $missingEvidenceDirs = @(@("evidence", "metrics") | Where-Object {
+        -not (Test-Path -LiteralPath (Join-Path $Project "docs\$_"))
+    })
+    if ($missingEvidenceDirs.Count -eq 0) {
+        Write-Ok "docs/evidence and docs/metrics directories exist"
+    }
+    else {
+        Write-Warn "missing docs directories: $($missingEvidenceDirs -join ', '); run /harness-init -Force"
+    }
+    $checkpointDir = Join-Path $Project "docs\checkpoints"
+    $approvedWithoutChecks = @()
+    foreach ($cp in @(Get-ChildItem -LiteralPath $checkpointDir -Filter "T-*-CP-*.md" -File -ErrorAction SilentlyContinue)) {
+        $cpText = Get-Content -LiteralPath $cp.FullName -Raw
+        if ($cpText -match '^\|\s*status\s*\|\s*approved\s*\|' -and $cpText -match '^\|\s*checks_file\s*\|') {
+            $checksJson = $cp.FullName -replace '\.md$', '.checks.json'
+            if (-not (Test-Path -LiteralPath $checksJson)) { $approvedWithoutChecks += $cp.Name }
+        }
+    }
+    if ($approvedWithoutChecks.Count -eq 0) {
+        Write-Ok "approved checkpoints have machine checks JSON"
+    }
+    else {
+        Write-Warn "approved checkpoints without checks JSON: $($approvedWithoutChecks -join ', ')"
+    }
+    $libPath = Join-Path $GlobalHarness "scripts\harness-lib.ps1"
+    if (Test-Path -LiteralPath $libPath) {
+        . $libPath
+        $usageRows = @(Get-TaskUsage -ProjectPath $Project)
+        if ($usageRows.Count -gt 0) {
+            $totalIn = ($usageRows | Measure-Object -Property input -Sum).Sum
+            $unattributed = ($usageRows | Where-Object { $_.task -eq '~' } | Measure-Object -Property input -Sum).Sum
+            if ($totalIn -gt 0) {
+                $gapPct = [math]::Round(100 * $unattributed / $totalIn, 1)
+                if ($gapPct -gt 20) {
+                    Write-Warn "token attribution gap: $gapPct% of input tokens are unattributed; record an issue"
+                }
+                else {
+                    Write-Ok "token attribution gap is $gapPct% (<= 20%)"
+                }
+            }
+        }
     }
 }
 else {

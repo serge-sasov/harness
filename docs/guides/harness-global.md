@@ -3,12 +3,15 @@
 This document describes how to install the harness once for the current user
 and enable it in projects only by explicit command.
 
+Practical usage manual (RU, HTML): [`docs/manual/index.html`](../manual/index.html) —
+scenario map, artifact map, checklists, and troubleshooting.
+
 ## 1. What is global and what is per project
 
 | Part | Location | Contents |
 |---|---|---|
 | Harness tooling | `~/.config/opencode/` | `harness-*` agents, `/harness-*` commands, `harness` and `harness-issues` skills, workflow files, templates, scripts |
-| Project state | `<project>/` | `harness/process.md`, `harness/workflows/`, `harness/version.json`, `docs/plan.md`, `docs/tasks/`, `docs/bugs/`, artifacts, git |
+| Project state | `<project>/` | `harness/process.md`, `harness/workflows/`, `harness/checks/`, `harness/version.json`, `docs/plan.md`, `docs/tasks/`, `docs/bugs/`, `docs/evidence/`, `docs/metrics/`, artifacts, git |
 
 The board, task cards, bug registry, and artifacts cannot be global: they are
 project state. Only role definitions, commands, workflows, templates, and scripts
@@ -85,6 +88,10 @@ harness/
   workflows/
     feature.md
     bugfix.md
+  checks/
+    engine.json
+    feature.json
+    bugfix.json
   templates/
     task-card.md
     task-card-feature.md
@@ -97,6 +104,13 @@ harness/
     e2e-use-case.md
     e2e-test-data.yaml
     ux-spec.md
+  scripts/
+    verify-artifacts.ps1
+    verify-stage.ps1
+    stage-done.ps1
+    board-update.ps1
+    measure-tokens.ps1
+    harness-lib.ps1
 docs/
   plan.md
   activity.puml
@@ -109,6 +123,8 @@ docs/
   issues/
   bugs/
   checkpoints/
+  evidence/
+  metrics/
 ```
 
 `/harness-init` does not copy global agents or commands: the global
@@ -128,7 +144,8 @@ backs up to `.harness-backup-<timestamp>/`.
 | `/harness-feature <slug> [e2e] [ux]` | create a pending `P-00` feature planning task |
 | `/harness-bug <report or BUG-XXX>` | create/triage a `BUG-XXX` card and pending bugfix tasks |
 | `/harness-run T-XXX` | execute a task until a checkpoint, or resume after review |
-| `/harness-board-update all / T-XXX` | sync plan/cards/bugs/checkpoints/commits, then re-render the derived activity and SVG when no task is active |
+| `/harness-stage-done T-XXX [CP-N]` | run checks, write the ledger/checkpoint, apply P2, and commit the snapshot |
+| `/harness-board-update all / T-XXX` | sync plan/cards from checkpoint files, then re-render the derived activity when no task is active |
 | `/harness-board-report` | read-only board/bug summary, including pending reviews |
 | `/harness-doctor` | check the installation and the project |
 
@@ -143,8 +160,9 @@ Run flow:
   -> harness-analyst | harness-ux-designer | harness-architect |
     harness-coder | harness-qa | harness-qa-vision | harness-doc-writer
   -> role stops: CHECKPOINT CP-N reached
-  -> harness-orchestrator (checkpoint file, awaiting_review, snapshot commit)
-  -> user reviews/edits artifacts and records a decision
+  -> harness-orchestrator: stage-done.ps1 (checks, ledger, checkpoint, P2)
+  -> clean intermediate CP: approved (auto P2), task stays in_progress
+  -> manual items / FAIL / CP-F: awaiting_review; user decides
   -> /harness-run T-XXX (resume; repeat until CP-F)
   -> harness-orchestrator (acceptance, bug status, done/failed, final commit)
 ```
@@ -160,25 +178,32 @@ active; existing statuses and dependencies must not change.
 
 Every task card declares at least one checkpoint; `CP-F` (final acceptance) is
 mandatory before a task can be `done`. Checkpoint records live in
-`docs/checkpoints/T-XXX-CP-N.md` and are created from
-`harness/templates/checkpoint.md`.
+`docs/checkpoints/T-XXX-CP-N.md`; the machine part is rendered by
+`harness/scripts/stage-done.ps1`, the human part is the decision/remarks/edits.
 
 Flow:
 
 1. The role stops at the declared checkpoint and reports
    `CHECKPOINT <ID> reached`.
-2. The orchestrator writes the checkpoint file, sets the task to
-   `awaiting_review`, updates plan/card/checkpoints, re-renders activity/SVG as
-   derived, and commits a snapshot.
-3. The user reviews artifacts, edits files if needed, and records a decision:
+2. The orchestrator runs `stage-done.ps1`: it executes the registry checks,
+   writes `T-XXX-CP-N.checks.json`, appends SHA256 hashes to
+   `docs/evidence/T-XXX.md`, renders the checkpoint, applies policy P2, updates
+   plan/card/board machine fields, re-renders activity, and commits the snapshot.
+3. P2: an intermediate checkpoint with `FAIL=0`, `UNCHECKED=0`, `MANUAL=0`, and
+   `hold: false` becomes `approved` (`auto (P2)`) and the task stays
+   `in_progress`. Any manual item, failed/unchecked check, `hold: true`, or
+   `CP-F` sets `awaiting_review` for the user.
+4. The user reviews artifacts, edits files if needed, and records a decision:
    `approved`, `changes_requested`, or no decision (keep reviewing).
-4. `/harness-run T-XXX` resumes:
+5. `/harness-run T-XXX` resumes:
    - `approved` -> `in_progress`, the role continues to the next checkpoint;
    - `changes_requested` -> the role applies the requested changes and returns
      to the same checkpoint;
    - missing decision -> stop and ask; never infer approval.
-5. User edits are authoritative. The role reads the checkpoint file and the
+6. User edits are authoritative. The role reads the checkpoint file and the
    `git diff` since the snapshot before continuing and preserves those edits.
+7. `checks JSON`, `docs/evidence/`, checkpoint machine fields, and board/card
+   `Usage`/`Commit` are script-owned; never hand-edit them.
 
 Status colors: `pending` `#D3D3D3`, `in_progress` `#FFE082`,
 `awaiting_review` `#87CEFA`, `done` `#90EE90`, `failed` `#FF9090`, `blocked`
@@ -314,11 +339,10 @@ manually from the template.
 
 ## 6. Versions and pins
 
-- Current version: `2.4.0` (per-scenario UX HTML pages with the
-  `ux-designer -> harness-coder` exception, and the derived/informational activity
-  rule; includes 2.3.0 generation/context budgets, chunked A-02 and coding,
-  self-sub-sessions for analyst/coder, `subagent_depth: 2`, budget and e2e data
-  validators).
+- Current version: `2.5.0` (deterministic check engine, SHA256 evidence ledger,
+  `/harness-stage-done` with policy P2, executable acceptance, token usage
+  metrics; includes 2.4.0 per-scenario UX pages and the derived activity rule,
+  and 2.3.0 budgets/chunking).
 - Global version: `~/.config/opencode/harness/version.json`.
 - Project version: `harness/version.json`, created by `/harness-init`.
 - `/harness-doctor` warns when the versions differ.
@@ -384,6 +408,9 @@ manually (the script prints a reminder).
 | `new-issue.ps1` is missing | the project was initialized by an older version | run `/harness-init -Force` with backup |
 | checkpoint templates or `docs/checkpoints/` missing | the project was initialized by an older version | run `/harness-init -Force` with backup |
 | `harness/workflows/` or `docs/bugs/` missing | the project was initialized by an older version | run `/harness-init -Force` with backup |
+| `harness/checks/`, `verify-stage.ps1`, or `stage-done.ps1` missing | the project was initialized by an older version | run `/harness-init -Force` with backup |
+| approved checkpoint has no `.checks.json` | the checkpoint was hand-edited or produced by 2.4.0 | rerun `stage-done.ps1` for that checkpoint; do not hand-write status |
+| `stage-done.ps1` exits 2 | checks registry missing or a stage is not in the registry | check `harness/checks/*.json` and the card `workflow`/`stage`; rerun `/harness-init -Force` if the registry is missing |
 | task card has no `workflow`/`stage` | legacy 2.1.0 card | add `workflow: feature` and a stage, or recreate from the feature template; do not guess |
 | bugfix card has no bug link | invalid card for `workflow: bugfix` | stop; the orchestrator must set `bug: BUG-XXX` and `severity` |
 | bug cannot be reproduced | missing or unstable reproduction data | coder stops at `CP-1` with evidence; no speculative fix |
@@ -393,11 +420,13 @@ manually (the script prints a reminder).
 | e2e runner cannot read test data | missing or invalid YAML dataset | check `docs/analysis/e2e-test-data-<slug>.yaml`; run the coder validator |
 | version differs | the project was initialized by an older version | update the project deliberately; see pin |
 
-`/harness-doctor` checks the global installation, `permission.task` allows,
-the expected `ux-designer -> harness-coder` exception, `**/` path variants, the
-issue registry and index, the compaction handoff plugin, the model `num_ctx`
-against `limit.context`, and the `local-rag` MCP
-timeout. Use `-SkipModelProbe` for a fast run without Ollama probes.
+`/harness-doctor` checks the global installation, the verification engine
+self-test, registry completeness, script allow patterns, `permission.task`
+allows, the expected `ux-designer -> harness-coder` exception, `**/` path
+variants, the issue registry and index, approved checkpoints without checks
+JSON, token attribution, the compaction handoff plugin, the model `num_ctx`
+against `limit.context`, and the `local-rag` MCP timeout. Use `-SkipModelProbe`
+for a fast run without Ollama probes.
 
 ## 9. Migration to opencode V2
 

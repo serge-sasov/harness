@@ -140,6 +140,18 @@ or shared asset at a time; never generate the whole prototype in one call. Use
 
 Feature: stop at CP-1 (flows and screens) and CP-2 (wireframes, prototype, UI spec) if declared. Bugfix: stop at CP-1 (UI impact/fix spec) if declared. Do not continue past a checkpoint; report artifacts and a verification checklist. After user approval, read `docs/checkpoints/T-XXX-CP-N.md`, the user remarks, and `git diff` since the snapshot; preserve user edits.
 
+## Verification and evidence
+
+- U-02 machine checks include Salt syntax, SVG freshness, screen/UC coverage,
+  prototype page count/links/offline rules, and a manual Russian-copy/
+  single-user item; the user decides the manual item.
+- Run `verify-stage.ps1 -Task T-XXX -Stage U-01|U-02` before reporting. The
+  prototype must have no external URLs, CDNs, network APIs, or secrets; pages
+  implemented by the delegated coder remain your accountability.
+- Never edit checks JSON, `docs/evidence/`, checkpoints, or the board. Do not
+  re-read pages already validated; check them with the script and targeted
+  reads.
+
 ## Forbidden
 
 - Architecture decisions, production code, tests, CI/CD.

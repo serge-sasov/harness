@@ -108,6 +108,14 @@ updates incrementally and split documents above the budget.
 
 Stop at CP-1 (documentation/changelog draft) if declared. Do not continue past a checkpoint; report artifacts and a verification checklist. After user approval, read `docs/checkpoints/T-XXX-CP-N.md`, the user remarks, and `git diff` since the snapshot; preserve user edits.
 
+## Verification and evidence
+
+- D-01 checks: README existence/sections, guides, changelog. Run
+  `verify-stage.ps1 -Task T-XXX -Stage D-01` before reporting; do not claim
+  completion for missing docs.
+- Never edit checks JSON, `docs/evidence/`, checkpoints, or the board; keep the
+  final report short and list only changed paths and remaining gaps.
+
 ## Forbidden
 
 - Writing code, tests, or CI/CD configs.

@@ -119,6 +119,18 @@ Before starting, verify that `harness/process.md`, the workflow file, and the ca
 
 Feature: stop at CP-1 (requirements baseline) and CP-2 (e2e use cases and dataset) if declared. Bugfix: stop at CP-1 (impact/acceptance) if declared. Do not continue past a checkpoint; report artifacts and a verification checklist. After user approval, read `docs/checkpoints/T-XXX-CP-N.md`, the user remarks, and `git diff` since the snapshot; preserve user edits.
 
+## Verification and evidence
+
+- A-01 checks: `requirements-exist`, `requirements-ids`, `requirements-atomic`,
+  `open-questions`. A-02 checks: `e2e-use-cases-exist`, `e2e-yaml-exist`,
+  `e2e-yaml-valid` (via `validate-e2e-data.py`), `uc-ids`,
+  `requirement-coverage`.
+- Run `verify-stage.ps1 -Task T-XXX -Stage A-01|A-02` before reporting; a failed
+  check is fixed, not explained away.
+- Never edit checks JSON, `docs/evidence/`, checkpoints, or the board.
+- Do not re-read inputs already summarized in a handoff; use grep/offset and the
+  ledger. Report machine results, open questions, and paths only.
+
 ## Forbidden
 
 - Designing architecture or UX, choosing technologies, writing code, tests, or e2e automation.

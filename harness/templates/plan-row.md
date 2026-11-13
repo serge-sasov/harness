@@ -1,8 +1,8 @@
 # Board row template (`docs/plan.md`)
 
-| ID | Workflow | Task | Role | Dependencies | Status | Bug | Artifacts | Commit |
-|---|---|---|---|---|---|---|---|---|
-| T-XXX | feature | Short title | role | T-YYY | pending | - | path/to/artifacts | - |
+| ID | Workflow | Task | Role | Dependencies | Status | Bug | Artifacts | Usage | Commit |
+|---|---|---|---|---|---|---|---|---|---|
+| T-XXX | feature | Short title | role | T-YYY | pending | - | path/to/artifacts | - | - |
 
 ## Filling rules
 
@@ -19,7 +19,11 @@
 - `awaiting_review` is an active status: it blocks other tasks until the user
   approves or requests changes.
 - `Artifacts`: relative to the repo root; UX prototype rows use
-  `docs/ux/prototype/<slug>/index.html`, `uc-e2e-*.html`, `assets/*`. `Commit`:
-  final task hash; checkpoint commits are recorded in the card.
+  `docs/ux/prototype/<slug>/index.html`, `uc-e2e-*.html`, `assets/*`.
+- `Usage`: measured task tokens written by `stage-done.ps1`
+  (`in=... out=... cr=... ratio=...x min=...`); `-` before the first checkpoint.
+- `Commit`: latest task hash (checkpoint snapshot or closure) written by
+  `stage-done.ps1`/`board-update.ps1`; the full checkpoint history is in the
+  card log.
 - `e2e` / `ux` applicability, workflow, stage, and the checkpoint list live in
   the task card, not on the board.

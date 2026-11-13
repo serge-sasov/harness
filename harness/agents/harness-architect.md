@@ -107,6 +107,16 @@ Every diagram must pass MCP `plantuml-render`:
 1. `check_syntax`: no errors;
 2. `render_diagram`/`render_file`: SVG next to the .puml.
 
+## Verification and evidence
+
+- R-01 checks: ADR sections (`Context`, `Decision`, `Alternatives`,
+  `Consequences`), contracts, requirement trace. R-02 checks: `puml-syntax` and
+  `svg-fresh` (SVG newer than `.puml`, no deprecation banner).
+- Run `verify-stage.ps1 -Task T-XXX -Stage R-01|R-02` before reporting; a stale
+  SVG or missing ADR section fails the checkpoint.
+- Never edit checks JSON, `docs/evidence/`, checkpoints, or the board. Do not
+  re-read inputs already summarized in a handoff.
+
 ## Forbidden
 
 - Writing production code and tests (that is the `coder` role).

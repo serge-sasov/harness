@@ -42,11 +42,17 @@ and Git evidence; `docs/activity.puml` and its derivatives are informational.
    For chunked stages, the role reports the chunk plan status and then one
    checkpoint after the final chunk; the orchestrator records failed attempts
    per chunk.
-   The orchestrator creates/updates the checkpoint file, sets `awaiting_review`,
-   updates plan/card, re-renders activity/SVG as derived artifacts, updates the
-   bug status when applicable, and commits the snapshot. The lead reports artifacts and the review checklist
-   to the user and ends the run. A task becomes `done` only after the final role
-   checkpoint and `CP-F` approval.
+   The orchestrator runs `harness/scripts/stage-done.ps1 -Task T-XXX
+   -Checkpoint CP-N` (preview with `verify-stage.ps1`). It runs the checks,
+   writes the checks JSON/ledger/checkpoint, applies P2, updates
+   plan/card/activity, and commits the snapshot. Update the bug status in a
+   separate `chore: bug ...` commit. P2 auto-approves only intermediate
+   checkpoints with `FAIL=0`, `UNCHECKED=0`, `MANUAL=0`, and `hold: false`;
+   `CP-F` and manual items wait for the user. The lead reports machine results,
+   artifacts, manual items, and the review checklist to the user and ends the
+   run for a human checkpoint. A task becomes `done` only after the final role
+   checkpoint and `CP-F` approval; `-AutoApprove` is allowed only when the user
+   explicitly requested it for `CP-F` in this session and all checks are clean.
 6. Close via `harness-orchestrator`: success -> `done`, update artifacts, bug
    status (`fixed`/`verified`/`closed` as appropriate), and commit; failure ->
    `failed`, cause in `Blockers`, up to 3 attempts per chunk, then `blocked` and

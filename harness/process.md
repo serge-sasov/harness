@@ -10,8 +10,14 @@ here; workflow-specific stages and task graphs live in
   commands `/harness-*`, skill `harness`, templates, workflows, scripts.
 - A project receives harness only via `/harness-init`: `harness/process.md`,
   `harness/version.json`, `harness/templates/`, `harness/workflows/`,
-  `docs/plan.md`, `docs/activity.puml`, and the docs skeleton (`analysis`,
-  `ux`, `architecture`, `qa`, `guides`, `issues`, `checkpoints`, `bugs`).
+  `harness/checks/`, `harness/scripts/`, `docs/plan.md`, `docs/activity.puml`,
+  and the docs skeleton (`analysis`, `ux`, `architecture`, `qa`, `guides`,
+  `issues`, `checkpoints`, `bugs`, `evidence`, `metrics`).
+- Verification is deterministic: `harness/scripts/verify-artifacts.ps1` runs the
+  registry `harness/checks/engine.json` plus `harness/checks/<workflow>.json`.
+  Machine results are `PASS`, `FAIL`, `MANUAL`, `NOT_APPLICABLE`; declared
+  artifacts not covered by any check are `UNCHECKED`. Results are recorded in
+  `docs/checkpoints/T-XXX-CP-N.checks.json`; prose never replaces a check.
 - Activation is explicit only; `default_agent` is never switched to harness.
 - Before work, `harness` checks for `harness/process.md`, the selected workflow
   file, and `docs/plan.md`; if missing, stop and ask for `/harness-init`.
@@ -76,6 +82,19 @@ here; workflow-specific stages and task graphs live in
   contract, crosses modules, or affects a UI flow.
 - User edits made at a checkpoint are authoritative; roles must preserve them
   and report conflicts instead of overwriting.
+- Checkpoints are closed by `harness/scripts/stage-done.ps1`: it runs the
+  deterministic checks, writes the checks JSON, records artifact hashes in
+  `docs/evidence/T-XXX.md`, renders the checkpoint from machine data, applies
+  approval policy P2 (section 11.2), updates plan/card/board machine fields,
+  re-renders the derived activity diagram, and commits the snapshot.
+- Scripts own machine fields: checks, hashes, `base_commit`, `usage`,
+  `snapshot_commit`, `generated_by`, and the board `Status`/`Usage`/`Commit`
+  values. Roles own semantic fields (decision, remarks, role response, log).
+  Never hand-edit a machine field; rerun the script or `board-update.ps1`.
+- Token usage is measured per task from the local opencode database with
+  `measure-tokens.ps1` and recorded in `docs/metrics/`, the board `Usage` column,
+  and the card `usage` field. It is evidence for budgeting and later analysis,
+  never an acceptance criterion.
 
 ## 2. Role models
 
@@ -113,22 +132,28 @@ here; workflow-specific stages and task graphs live in
 ## 4. Plan, board, and bug registry
 
 - `docs/plan.md` columns:
-  `ID | Workflow | Task | Role | Dependencies | Status | Bug | Artifacts | Commit`.
+  `ID | Workflow | Task | Role | Dependencies | Status | Bug | Artifacts | Usage | Commit`.
 - Task cards use `harness/templates/task-card-feature.md` or
   `harness/templates/task-card-bugfix.md`; `task-card.md` is a deprecation
   pointer.
 - Shared card fields: `id, title, workflow, stage, role, status, depends_on,
-  inputs, artifacts, e2e, ux, checkpoints, issues, commit`.
+  inputs, artifacts, e2e, ux, chunks, budget, base_commit, usage, hold,
+  checkpoints, issues, commit`.
 - Bugfix cards add `bug, severity, profile`; feature cards add e2e/UX
   applicability. `profile: hotfix` is allowed only for P0/P1.
+- `hold: true` forces human review at every checkpoint, including intermediate
+  ones; it disables P2 auto-approval for that task.
+- `base_commit` is the revision a checkpoint diff is measured from; when absent,
+  the latest checkpoint snapshot is used, then the first commit of the task.
 - Task statuses: `pending`, `in_progress`, `awaiting_review`, `done`, `failed`,
   `blocked`.
 - Transitions: `pending -> in_progress`; `in_progress -> awaiting_review` at a
-  checkpoint; `awaiting_review -> in_progress` after approval or a change
-  request (intermediate checkpoints); `awaiting_review -> done` only after
-  `CP-F` approval; `awaiting_review -> failed` if the user rejects the task;
-  `in_progress -> failed`; `failed -> in_progress` after a fix; `* -> blocked`
-  on an external blocker.
+  checkpoint that needs a human; `in_progress -> in_progress` when P2
+  auto-approves an intermediate checkpoint; `awaiting_review -> in_progress`
+  after approval or a change request (intermediate checkpoints);
+  `awaiting_review -> done` only after `CP-F` approval; `awaiting_review ->
+  failed` if the user rejects the task; `in_progress -> failed`; `failed ->
+  in_progress` after a fix; `* -> blocked` on an external blocker.
 - Invariant: at most one active task (`in_progress` or `awaiting_review`) across
   both workflows; parallel execution and preemption are forbidden.
 - Product bugs: `docs/bugs/BUG-XXX-<slug>.md`, index `docs/bugs/README.md`;
@@ -154,32 +179,51 @@ here; workflow-specific stages and task graphs live in
 6. At a checkpoint, the role stops and reports `CHECKPOINT <ID> reached` with
    artifacts and a verification checklist. It must not continue past a
    checkpoint.
-7. Orchestrator creates `docs/checkpoints/T-XXX-CP-N.md`, sets
-   `awaiting_review`, updates plan/card/checkpoints, re-renders activity/SVG as
-   derived artifacts, updates the bug status when applicable, and commits the
-   checkpoint snapshot.
-8. The lead reports the checkpoint to the user: artifacts, checklist, how to
-   edit/comment, and resume command. The run ends; no auto-continue.
-9. On `/harness-run T-XXX` in `awaiting_review`: read the checkpoint file and
-   user edits. If no decision, stop and ask. If `approved`, finalize at `CP-F`
-   (step 10) or set `in_progress` and continue past an intermediate checkpoint.
-   If `changes_requested`, return to the same checkpoint after fixes.
-10. After the last role checkpoint and `CP-F` approval, verify acceptance, set
+7. Orchestrator runs
+   `harness/scripts/stage-done.ps1 -Task T-XXX -Checkpoint CP-N` (or
+   `verify-stage.ps1` first for a preview). The script runs the checks, writes
+   the checks JSON, records hashes, renders the checkpoint, applies policy P2
+   (section 11.2), updates the board/card machine fields, re-renders the derived
+   activity diagram, and commits the checkpoint snapshot.
+8. A checkpoint with `FAIL=0`, `UNCHECKED=0`, and `MANUAL=0` on an intermediate
+   stage is `approved` by `auto (P2)` and the task stays `in_progress`; any
+   other result sets `awaiting_review`. `CP-F` always waits for the user unless
+   the user explicitly requested `-AutoApprove` and all checks are clean. A card
+   with `hold: true` always waits for the user.
+9. The lead reports the checkpoint to the user: artifacts, machine results,
+   manual items, how to edit/comment, and resume command. The run ends; no
+   auto-continue for human checkpoints.
+10. On `/harness-run T-XXX` in `awaiting_review`: read the checkpoint file and
+    user edits. If no decision, stop and ask. If `approved`, finalize at `CP-F`
+    (step 11) or continue past an intermediate checkpoint. If
+    `changes_requested`, return to the same checkpoint after fixes.
+11. After the last role checkpoint and `CP-F` approval, verify acceptance, set
     `done`, log files/commands/results, update artifacts, update the linked bug
     status, and commit.
-11. For diagrams/screenshots, the lead also calls `harness-qa-vision`; the
+12. For diagrams/screenshots, the lead also calls `harness-qa-vision`; the
     orchestrator includes its findings in the single verdict.
 
 ## 6. Checkpoints and user verification
 
 - A checkpoint is a mandatory process interruption for user verification of
   artifacts, edits, and remarks.
-- Checkpoint file: `docs/checkpoints/T-XXX-CP-N.md`, created from
-  `harness/templates/checkpoint.md`.
+- Checkpoint file: `docs/checkpoints/T-XXX-CP-N.md`, rendered by
+  `stage-done.ps1` from machine data; machine check details live in
+  `docs/checkpoints/T-XXX-CP-N.checks.json`.
 - Checkpoint statuses: `awaiting_review`, `approved`, `changes_requested`.
-- Required fields: task, checkpoint, role, stage, artifacts, status,
-  requested_at, reviewer, decision, user remarks, user edits, role response,
-  next action, snapshot commit.
+- Required fields: task, workflow, bug, checkpoint, role, stage, artifacts,
+  status, requested_at, reviewed_at, reviewer, decision, snapshot_commit,
+  generated_by, checks_file, user remarks, user edits, role response,
+  next action, usage, diff stat.
+- Machine fields (`status`, `reviewed_at`, `reviewer` for auto approvals,
+  `snapshot_commit`, `generated_by`, `checks_file`, `usage`, `diff stat`) are
+  written by the script. Semantic fields (a human `decision`, remarks, edits,
+  role response) are written by the user or orchestrator.
+- Approval policy P2 (section 11.2): an intermediate checkpoint with
+  `FAIL=0`, `UNCHECKED=0`, `MANUAL=0`, and `hold: false` is approved
+  automatically as `auto (P2)`. Any manual item, failed/unchecked check, or
+  `hold: true` requires the user. `CP-F` always requires the user unless
+  `-AutoApprove` was explicitly requested and the same all-zero condition holds.
 - The user may edit artifacts directly and/or write remarks in the checkpoint
   file. Chat remarks may be transcribed by the orchestrator into the file.
 - The role must read the checkpoint decision, user remarks, and `git diff` since
@@ -188,6 +232,8 @@ here; workflow-specific stages and task graphs live in
 - The lead must not infer approval from silence, file changes, or unstated
   intent. Without an explicit `approved` decision, the task stays
   `awaiting_review`.
+- A checkpoint without its `.checks.json` or evidence ledger rows is invalid:
+  rerun `stage-done.ps1`; do not hand-write status or hashes.
 - Default checkpoints per role:
   - analyst: CP-1 requirements, CP-2 e2e use cases and dataset (feature);
     CP-1 impact/acceptance (bugfix escalation);
@@ -204,9 +250,10 @@ here; workflow-specific stages and task graphs live in
 - The checkpoint list is declared in the card; if omitted, the workflow and role
   defaults apply. Every working-role task needs at least one intermediate
   checkpoint; every task needs `CP-F`.
-- Commit a checkpoint snapshot before asking the user to review. Record
-  checkpoint commits in the card log; the final task commit is recorded on the
-  board.
+- Commit a checkpoint snapshot before asking the user to review; `stage-done.ps1`
+  performs the commit and then records the hash in the checkpoint, board, and
+  card. The board `Commit` column holds the latest task commit (checkpoint
+  snapshot or closure); the card log lists the full history.
 
 ## 7. E2E use cases and test data
 
@@ -274,12 +321,17 @@ here; workflow-specific stages and task graphs live in
 
 ## 9. Artifact updates (mandatory order)
 
-1. At a checkpoint: plan status `awaiting_review`, card status, checkpoint file,
-   bug card status when applicable, then derived activity color, commit snapshot.
-2. On resume/closure: `docs/plan.md`: status, artifacts, commit.
-3. Task card: status, log, blockers, checkpoint results.
-4. Bug card and `docs/bugs/README.md`: status, task links, root cause, fix,
-   verification; only the orchestrator edits them.
+1. At a checkpoint: run `stage-done.ps1`; it writes plan status, card status,
+   usage and commit, checkpoint file, checks JSON, evidence ledger rows, and the
+   derived activity color, then commits the snapshot. Do not edit those machine
+   fields by hand.
+2. Bug card and `docs/bugs/README.md`: status, task links, root cause, fix,
+   verification; only the orchestrator edits them. Product evidence is committed
+   separately as `chore: bug BUG-XXX ...` after the checkpoint snapshot.
+3. On resume/closure: `docs/plan.md`: status, artifacts, commit (via the script
+   or `board-update.ps1`).
+4. Task card: status, log, blockers, checkpoint results; semantic log lines are
+   role-owned, machine fields are script-owned.
 5. `docs/activity.puml`: update it only after steps 1-4, as a derived
    visualization of the board/card/checkpoint/bug state. Never read the
    existing activity content to reconcile statuses. Node status color is a
@@ -296,8 +348,10 @@ here; workflow-specific stages and task graphs live in
 
 - Repository root; default branch `master` unless the repo uses another default.
 - Commit after each meaningful task; at least one commit per task. Checkpoint
-  snapshots use `T-XXX: checkpoint CP-N (<stage>)`; the final task commit uses
-  `T-XXX: short description`; service changes use `chore: ...`.
+  snapshots use `T-XXX: checkpoint CP-N (<stage>)` and are made by
+  `stage-done.ps1`, which then records the hash in a follow-up
+  `T-XXX: record CP-N snapshot <hash>` commit. The final task commit uses
+  `T-XXX: short description`; board and bug maintenance use `chore: ...`.
 - Forbidden: `git push`, `git tag`, secrets/`.env`, history rewrite.
 - Include only task files; unrelated changes go in a separate commit.
 - User edits made between checkpoint runs are committed by the orchestrator on
@@ -382,12 +436,54 @@ stop and request decomposition instead of attempting a larger write.
   another child; depth 3 and all other cross-role calls are forbidden. The
   global `subagent_depth` must be 2.
 
+### 11.2 Verification and approval policy (P2)
+
+`stage-done.ps1` is the only writer of checkpoint status. The decision matrix:
+
+| Result | Intermediate CP | CP-F |
+|---|---|---|
+| `FAIL>0` or `UNCHECKED>0` | `awaiting_review`; no auto-approval | `awaiting_review` |
+| `MANUAL>0` | `awaiting_review`; user checks the listed items | `awaiting_review` |
+| all zero, `hold: false` | `approved` by `auto (P2)`; task stays `in_progress` | user approves; only explicit `-AutoApprove` may auto-approve |
+| `hold: true` | `awaiting_review` | `awaiting_review` |
+
+- `UNCHECKED` means a declared artifact is not covered by any check. Fix the
+  registry or the card; never mark it approved.
+- A failed check cannot be waived with prose. If the registry is wrong, fix the
+  registry and record why in the card log.
+- `-AutoApprove` is allowed only for `CP-F`, only when the user explicitly asked
+  for it in the current session, and only with `FAIL=0`, `UNCHECKED=0`,
+  `MANUAL=0`, and `hold: false`.
+- Manual checks are review items, not failures. The user decides them; the role
+  must not set their result.
+- Approval is never inferred from silence, file edits, an empty remarks section,
+  or a passing exit code alone.
+
+### 11.3 Evidence ledger, hashes, and usage
+
+- `docs/evidence/T-XXX.md` is the append-only hash ledger:
+  `| Checkpoint | Stage | Artifact | SHA256 | Recorded |`.
+  The latest row per path wins; a 64-hex SHA256 is required.
+- `hash-match` fails when a declared artifact differs from the latest recorded
+  hash after a checkpoint snapshot. Never edit or delete ledger rows to hide a
+  change; record a new checkpoint.
+- Checks JSON is machine evidence: `task`, `stage`, `workflow`, `base_commit`,
+  `results`, `summary`. Do not rewrite results by hand.
+- Usage comes from `measure-tokens.ps1` (local opencode database, sessions
+  attributed by task title). Record it in `docs/metrics/tokens-<slug>.md`, the
+  board `Usage` column, and the card `usage` field.
+- Unattributed sessions (`~`) are a measurement gap, not zero usage. If more
+  than 20% of a project's tokens are unattributed, `/harness-doctor` warns and
+  the orchestrator records an issue.
+- Token budgets in section 11.1 remain process limits; usage evidence never
+  overrides a failed check or an acceptance criterion.
+
 ## 12. Role artifacts
 
 | Role | Write area |
 |---|---|
 | harness | no files; reads board/cards/bugs, routes roles |
-| orchestrator | `docs/plan.md`, `docs/tasks/`, `docs/checkpoints/`, `docs/bugs/`, `docs/activity.puml`, `README.md`, `.gitignore` |
+| orchestrator | `docs/plan.md`, `docs/tasks/`, `docs/checkpoints/`, `docs/bugs/`, `docs/activity.puml`, `README.md`, `.gitignore`; `docs/evidence/` and `docs/metrics/` are machine-generated by scripts |
 | analyst | `docs/analysis/` |
 | ux-designer | `docs/ux/` |
 | architect | `docs/architecture/` |
@@ -399,7 +495,9 @@ stop and request decomposition instead of attempting a larger write.
 All roles may create `docs/issues/` records; the orchestrator verifies the
 index. The user may edit any artifact and checkpoint file during a checkpoint;
 the role must preserve those edits. Product bug evidence is reported to the
-orchestrator; roles do not edit `docs/bugs/`.
+orchestrator; roles do not edit `docs/bugs/`. The hash ledger
+`docs/evidence/T-XXX.md` and checks JSON are machine evidence: scripts append,
+roles never edit them.
 
 ## 13. Prohibitions
 
@@ -421,6 +519,13 @@ orchestrator; roles do not edit `docs/bugs/`.
   parallel `task`, feature/bugfix preemption, or `board-update` while a task is
   active.
 - Silently overwriting user edits made at a checkpoint.
+- Hand-editing machine fields: checks JSON results, ledger hashes, checkpoint
+  `snapshot_commit`/`generated_by`, or board/card `Usage`/`Commit`; bypassing a
+  `FAIL`/`UNCHECKED` result with prose; setting a checkpoint `status` without a
+  decision or a P2 all-zero result.
+- Deleting or rewriting evidence ledger rows or checkpoint snapshots.
+- Broadening harness `allow` patterns to `*`, `git*`, or `Remove-Item`; the five
+  approved script patterns are exact and doctor-checked.
 - Mixing product bugs (`docs/bugs/`) with harness problems (`docs/issues/`).
 - Access outside drive `C:` (see agent permissions).
 

@@ -8,6 +8,7 @@
 | stage | B-01 / B-02 / B-03 / B-04 / B-05 |
 | role | coder / qa / analyst / architect / ux-designer / doc-writer / orchestrator |
 | status | pending |
+| hold | false (true forces human review at every checkpoint) |
 | depends_on | T-YYY, T-ZZZ |
 | bug | BUG-XXX |
 | severity | P0 / P1 / P2 / P3 |
@@ -18,8 +19,10 @@
 | ux | required / not applicable (reason) |
 | chunks | planned chunks and ownership (for large reproduction/fix/test work) |
 | budget | max_write_kb / max_session_kb / context_stop_pct (defaults: 8/20/60, code 12/40/65) |
+| base_commit | commit hash the first checkpoint diff is measured from |
+| usage | measured token usage (filled by stage-done) |
 | issues | ISSUE-... (links to docs/issues/ if problems occurred) |
-| commit | commit hash after completion |
+| commit | latest commit hash (snapshot or closure) |
 
 ## Bug summary
 
@@ -39,13 +42,14 @@
 
 ## Checkpoints
 
-| ID | Stage | Artifacts | Status | Review file |
-|---|---|---|---|---|
-| CP-1 | reproduction/root cause | failing test + card log | pending | `docs/checkpoints/T-XXX-CP-1.md` |
-| CP-2 | fix/regression | code + tests | pending | `docs/checkpoints/T-XXX-CP-2.md` |
-| CP-F | final acceptance | all task artifacts | pending | `docs/checkpoints/T-XXX-CP-F.md` |
+| ID | Stage | Artifacts | Checks | Status | Review file |
+|---|---|---|---|---|---|
+| CP-1 | reproduction/root cause | failing test + card log | - | pending | `docs/checkpoints/T-XXX-CP-1.md` |
+| CP-2 | fix/regression | code + tests | - | pending | `docs/checkpoints/T-XXX-CP-2.md` |
+| CP-F | final acceptance | all task artifacts | - | pending | `docs/checkpoints/T-XXX-CP-F.md` |
 
 Statuses: `pending`, `awaiting_review`, `approved`, `changes_requested`.
+`Checks` is a machine summary `nP/nF/nM` written by `stage-done.ps1`.
 
 ## Blockers
 
