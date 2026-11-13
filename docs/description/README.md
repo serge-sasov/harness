@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Status | current |
-| Date | 2026-11-12 |
-| Version | 2.4.0 |
+| Date | 2026-11-13 |
+| Version | 2.6.0 |
 | Scope | local multi-agent harness (feature + bugfix workflows) + pilot "Mini-CRUD service" |
 | Requirements source | [`requirements/initial.txt`](../../requirements/initial.txt) |
 | Process rules | [`harness/process.md`](../../harness/process.md) |
@@ -12,7 +12,9 @@
 | HTML version | [`index.html`](index.html) |
 
 This document describes the solution end to end: purpose, architecture, scenario
-map, sequence diagrams for each scenario, the conceptual class model, and the
+map, sequence diagrams for each scenario, the conceptual class model, the
+architecture-design artifact package (component, scenario sequence, data,
+class, per-service swimlane diagrams and OpenAPI 3.x specifications), and the
 pilot case that confirmed the full cycle. All diagrams are embedded in the text;
 the PlantUML source is linked next to each one.
 
@@ -282,10 +284,15 @@ accepted; UX screen IDs/UI spec are available when the task has a UI.
 
 Source: [`diagrams/seq-04-architect.puml`](diagrams/seq-04-architect.puml).
 
-**Result:** an ADR from the template, component/sequence diagrams `.puml` + `.svg`,
-interface contracts, and decomposition for the coder. **Mandatory control:**
-every diagram passes `check_syntax`, then `render_file`; syntax errors are fixed
-before handoff. A decision without alternatives is not acceptable.
+**Result:** an ADR from the template, the overall architecture description
+`docs/architecture/architecture-<slug>.md` with `SCN`/`SVC`/`API` IDs,
+component and per-scenario sequence diagrams, data and class models, per-service
+swimlane diagrams, OpenAPI 3.x specifications, interface contracts, and
+decomposition for the coder. All diagrams and specs are linked from the
+architecture description. **Mandatory control:** every diagram passes
+`check_syntax`, then `render_file`; the registry checks scenario/service/API
+coverage, OpenAPI validity, and artifact links; syntax errors are fixed before
+handoff. A decision without alternatives is not acceptable.
 
 ### S-05. Implementation, unit and e2e tests (coder)
 
@@ -811,8 +818,9 @@ are required.
 | `harness/commands/*.md` | `/harness-*` commands |
 | `harness/skills/harness/SKILL.md` | global harness skill |
 | `harness/skills/harness-issues/SKILL.md` | problem and solution tracking skill |
-| `harness/templates/*` | feature/bugfix cards, bug card, ADR, plan-row, issue, checkpoint, e2e, UX templates |
-| `harness/scripts/*.ps1` | install, init, doctor, uninstall, new-issue |
+| `harness/templates/*` | feature/bugfix cards, bug card, ADR, architecture description, OpenAPI, plan-row, issue, checkpoint, e2e, UX templates |
+| `harness/scripts/*.ps1` | install, init, doctor, uninstall, new-issue, verification |
+| `harness/scripts/validate-*.py` | e2e dataset and OpenAPI 3.x validators |
 | `harness/version.json` | installation version |
 | `docs/plan.md` | task board with workflow and bug columns |
 | `docs/tasks/*.md` | task cards |
@@ -821,7 +829,7 @@ are required.
 | `docs/issues/` | harness problem and solution log |
 | `docs/analysis/` | pilot requirements, e2e UC/data |
 | `docs/ux/` | flows, screens, wireframes, UI spec, prototype catalog and per-scenario HTML pages |
-| `docs/architecture/` | ADRs, diagrams, contracts |
+| `docs/architecture/` | architecture description, ADRs, contracts, component/scenario/data/class/swimlane diagrams, OpenAPI specs |
 | `docs/qa/` | reviews, e2e plans/reports |
 | `docs/activity.puml/.svg` | derived plan activity diagram (informational) |
 | `docs/description/` | this description, diagrams, and HTML |

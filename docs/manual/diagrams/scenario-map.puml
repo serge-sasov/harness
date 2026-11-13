@@ -1,0 +1,25 @@
+@startmindmap
+skinparam defaultFontName Segoe UI
+title Карта сценариев использования harness (M-01..M-10, S-01..S-03)
+
+* Harness
+** Старт
+*** M-01 Новый проект\n/harness-init + /harness-feature\nполный feature-граф
+*** M-02 Feature в существующем\nпроекте (brownfield)\nRAG + impact analysis
+** Изменения
+*** M-03 Контракт / поведение\n(breaking change)\nADR + contracts + e2e
+*** M-04 UI/UX-изменение\nflows + wireframes + prototype
+*** M-05 Рефакторинг / техдолг\nбез изменения поведения
+** Дефекты
+*** M-06 Bugfix\nBUG-XXX + failing regression
+*** M-07 Hotfix P0/P1\n+ postmortem, без preemption
+** Качество
+*** M-08 E2E/QA-аудит\n+ автоматизация тестов
+*** S-02 Аудит требований\n(reverse engineering)
+** Эксплуатация
+*** M-09 Доска и отчёты\nboard-update / board-report
+*** M-10 Диагностика harness\nissues + /harness-doctor
+*** S-03 Обслуживание\nустановки и версии
+** Special
+*** S-01 Только документация\nD-01 / B-04
+@endmindmap

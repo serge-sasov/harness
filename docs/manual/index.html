@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Harness: руководство по использованию</title>
+<style>
+:root {
+  --ink: #17212b;
+  --muted: #5b6b7c;
+  --line: #dbe3ec;
+  --line-strong: #c3ceda;
+  --accent: #1d4ed8;
+  --bg: #f3f6fa;
+  --panel: #ffffff;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  width: 100%;
+  max-width: none;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.6;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: #fff;
+  color: #000;
+  padding: .5rem .8rem;
+  z-index: 2000;
+  border-radius: 0 0 8px 0;
+}
+.skip-link:focus { left: 0; }
+.page-header {
+  width: 100%;
+  background: radial-gradient(circle at 15% 20%, #1e3a8a 0%, #0f172a 55%, #070d1a 100%);
+  color: #fff;
+  padding: 3rem 0 2.5rem;
+  border-bottom: 4px solid #2563eb;
+}
+.wrap {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-inline: clamp(1rem, 2.5vw, 3rem);
+}
+.page-header .eyebrow {
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  font-size: .78rem;
+  color: #bfdbfe;
+  font-weight: 600;
+}
+.page-header h1 {
+  margin: .35rem 0 .5rem;
+  font-size: clamp(1.8rem, 3vw, 3rem);
+  line-height: 1.15;
+}
+.subtitle { margin: 0; color: #dbeafe; font-size: clamp(.98rem, 1.2vw, 1.15rem); }
+.meta { margin: .5rem 0 0; color: #93c5fd; font-size: .85rem; }
+.layout {
+  display: grid;
+  grid-template-columns: clamp(250px, 17vw, 340px) minmax(0, 1fr);
+  gap: clamp(1rem, 2vw, 2rem);
+  align-items: start;
+  padding: clamp(1.25rem, 2.5vw, 2.25rem) 0 3rem;
+  width: 100%;
+}
+.sidebar {
+  position: sticky;
+  top: 1rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1rem 1rem .5rem;
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .05);
+}
+.toc-title {
+  font-weight: 700;
+  font-size: .9rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+  margin-bottom: .5rem;
+}
+.sidebar .toc { font-size: .92rem; }
+.sidebar .toc ul { list-style: none; margin: 0; padding-left: 0; }
+.sidebar .toc ul ul {
+  padding-left: .9rem;
+  border-left: 1px solid var(--line);
+  margin: .25rem 0 .25rem .25rem;
+}
+.sidebar .toc li { margin: .18rem 0; }
+.sidebar .toc a {
+  color: #334155;
+  display: block;
+  padding: .12rem .25rem;
+  border-radius: 6px;
+}
+.sidebar .toc a:hover { background: #eff6ff; color: var(--accent); text-decoration: none; }
+.content {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: clamp(1.2rem, 2.5vw, 3rem);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, .06);
+  min-width: 0;
+  width: 100%;
+  max-width: none;
+}
+.content > :first-child { margin-top: 0; }
+h2 {
+  margin: 2.4rem 0 .8rem;
+  padding-bottom: .45rem;
+  border-bottom: 2px solid var(--line);
+  font-size: clamp(1.35rem, 1.7vw, 1.8rem);
+  scroll-margin-top: 1rem;
+}
+h3 {
+  margin: 1.8rem 0 .6rem;
+  font-size: clamp(1.08rem, 1.3vw, 1.3rem);
+  color: #1e3a8a;
+  scroll-margin-top: 1rem;
+}
+h4 { margin: 1.2rem 0 .4rem; font-size: 1.03rem; }
+p { margin: .65rem 0; text-wrap: pretty; }
+ul, ol { padding-left: 1.35rem; }
+li { margin: .2rem 0; }
+blockquote {
+  margin: 1rem 0;
+  padding: .6rem 1rem;
+  border-left: 4px solid #93c5fd;
+  background: #eff6ff;
+  color: #1e3a8a;
+  border-radius: 0 8px 8px 0;
+}
+code {
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: .88em;
+  background: #eef2f7;
+  color: #0f172a;
+  padding: .12em .35em;
+  border-radius: 5px;
+  overflow-wrap: anywhere;
+}
+pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 1rem 1.1rem;
+  border-radius: 10px;
+  overflow: auto;
+  line-height: 1.45;
+}
+pre code { background: transparent; color: inherit; padding: 0; font-size: .86rem; }
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  font-size: .92rem;
+}
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  margin: 1rem 0;
+  border-radius: 10px;
+}
+.table-scroll table { margin: 0; }
+table th, table td {
+  border: 1px solid var(--line-strong);
+  padding: .45rem .6rem;
+  vertical-align: top;
+  text-align: left;
+}
+table th { background: #eef4fb; font-weight: 600; color: #1e293b; }
+table tr:nth-child(even) td { background: #f8fafc; }
+hr { border: none; border-top: 1px solid var(--line); margin: 2rem 0; }
+.diagram {
+  width: 100%;
+  margin: 1.6rem 0;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  padding: .55rem;
+  cursor: zoom-in;
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+  outline: none;
+}
+.diagram:hover, .diagram:focus-visible {
+  border-color: #93c5fd;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, .14);
+}
+.diagram:focus-visible { outline: 3px solid #bfdbfe; outline-offset: 2px; }
+.diagram-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #fff;
+}
+.diagram-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 76vh;
+  object-fit: contain;
+}
+.zoom-hint {
+  position: absolute;
+  right: .6rem;
+  bottom: .6rem;
+  background: rgba(15, 23, 42, .86);
+  color: #fff;
+  padding: .3rem .6rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .18s, transform .18s;
+  pointer-events: none;
+}
+.diagram:hover .zoom-hint, .diagram:focus-visible .zoom-hint { opacity: 1; transform: none; }
+.diagram figcaption {
+  margin: .55rem .2rem .1rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: .86rem;
+}
+.page-footer { padding: 0 0 3rem; color: var(--muted); font-size: .9rem; }
+.lightbox[hidden] { display: none !important; }
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 15, 30, .84);
+  backdrop-filter: blur(5px);
+  padding: 2vh 1.5vw;
+}
+.lightbox-dialog {
+  width: min(1600px, 97vw);
+  height: min(1100px, 94vh);
+  display: flex;
+  flex-direction: column;
+  background: #0b1220;
+  border: 1px solid #24324a;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .55);
+}
+.lightbox-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .6rem .8rem;
+  background: #111c33;
+  border-bottom: 1px solid #24324a;
+  color: #e2e8f0;
+  flex: 0 0 auto;
+}
+.lightbox-title {
+  font-weight: 600;
+  font-size: .95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lightbox-actions {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.lightbox-actions button, .lightbox-actions .button-link {
+  background: #1e2a44;
+  border: 1px solid #334155;
+  color: #e2e8f0;
+  border-radius: 8px;
+  min-height: 34px;
+  padding: .28rem .62rem;
+  font: inherit;
+  font-size: .88rem;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.lightbox-actions button:hover, .lightbox-actions .button-link:hover {
+  background: #27406b;
+  border-color: #60a5fa;
+  color: #fff;
+  text-decoration: none;
+}
+.lightbox-actions .close { font-size: 1.25rem; line-height: 1; padding: .1rem .55rem; }
+.zoom-level {
+  min-width: 3.6em;
+  text-align: center;
+  color: #bfdbfe;
+  font-variant-numeric: tabular-nums;
+  font-size: .85rem;
+}
+.lightbox-viewport {
+  position: relative;
+  flex: 1 1 auto;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, #16233d 0%, #0b1220 70%);
+  cursor: grab;
+  touch-action: none;
+}
+.lightbox-viewport.dragging { cursor: grabbing; }
+.lightbox-viewport img {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .5);
+}
+.lightbox-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, .8);
+  color: #93c5fd;
+  border: 1px solid #1e3a5f;
+  padding: .3rem .75rem;
+  border-radius: 999px;
+  font-size: .78rem;
+  pointer-events: none;
+  white-space: nowrap;
+}
+@media (max-width: 1100px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; max-height: none; }
+  .content { padding: 1.1rem; }
+}
+@media (max-width: 640px) {
+  .page-header { padding: 2rem 0 1.6rem; }
+  .lightbox { padding: 0; }
+  .lightbox-dialog { width: 100vw; height: 100vh; border-radius: 0; }
+  .lightbox-bar { align-items: flex-start; flex-direction: column; }
+  .lightbox-actions { justify-content: flex-start; }
+  .lightbox-hint { display: none; }
+  .diagram-frame img { max-height: 58vh; }
+}
+@media print {
+  body { background: #fff; }
+  .page-header { background: #fff; color: #000; border-bottom: 2px solid #000; padding: 1rem 0; }
+  .page-header .eyebrow, .subtitle, .meta { color: #333; }
+  .layout { display: block; padding: 0; }
+  .sidebar, .zoom-hint, .lightbox, .page-footer { display: none !important; }
+  .content { border: none; box-shadow: none; padding: 0; }
+  .diagram { break-inside: avoid; cursor: default; }
+  .diagram-frame img { max-height: none; }
+  a { color: #000; text-decoration: underline; }
+}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#content">Перейти к содержанию</a>
+<header class="page-header">
+  <div class="wrap">
+    <div class="eyebrow">Local harness | руководство по использованию</div>
+    <h1>Harness: руководство по использованию</h1>
+    <p class="subtitle">Сценарии, фазы, роли, артефакты и checkpoints</p>
+    <p class="meta">Сгенерировано из README.md | 2026-11-13 | диаграмм: 3 | offline-версия</p>
+  </div>
+</header>
+<div class="layout wrap">
+  <aside class="sidebar" aria-label="Содержание">
+    <div class="toc-title">Содержание</div>
+    <div class="toc">
+<ul>
+<li><a href="#1-назначение-и-область-применения">1. Назначение и область применения</a><ul>
+<li><a href="#11-когда-использовать-harness">1.1. Когда использовать harness</a></li>
+<li><a href="#12-когда-harness-не-нужен">1.2. Когда harness не нужен</a></li>
+<li><a href="#13-ключевые-инварианты">1.3. Ключевые инварианты</a></li>
+</ul>
+</li>
+<li><a href="#2-быстрый-старт">2. Быстрый старт</a><ul>
+<li><a href="#21-глобальная-установка-один-раз">2.1. Глобальная установка (один раз)</a></li>
+<li><a href="#22-инициализация-проекта">2.2. Инициализация проекта</a></li>
+<li><a href="#23-первая-задача">2.3. Первая задача</a></li>
+<li><a href="#24-запуск-checkpoint-и-продолжение">2.4. Запуск, checkpoint и продолжение</a></li>
+<li><a href="#25-отчёты-и-обслуживание">2.5. Отчёты и обслуживание</a></li>
+<li><a href="#26-минимальный-поток">2.6. Минимальный поток</a></li>
+</ul>
+</li>
+<li><a href="#3-карта-сценариев">3. Карта сценариев</a><ul>
+<li><a href="#31-сводная-таблица">3.1. Сводная таблица</a></li>
+<li><a href="#32-матрица-сценарий-feature-фазы">3.2. Матрица «сценарий × feature-фазы»</a></li>
+<li><a href="#33-матрица-сценарий-bugfix-фазы">3.3. Матрица «сценарий × bugfix-фазы»</a></li>
+<li><a href="#34-как-выбрать-сценарий">3.4. Как выбрать сценарий</a></li>
+</ul>
+</li>
+<li><a href="#4-сценарии">4. Сценарии</a><ul>
+<li><a href="#m-01-новый-проект-с-нуля-greenfield">M-01. Новый проект с нуля (greenfield)</a></li>
+<li><a href="#m-02-новая-функциональность-в-существующем-проекте-brownfield">M-02. Новая функциональность в существующем проекте (brownfield)</a></li>
+<li><a href="#m-03-изменение-контракта-или-поведения-breaking-change">M-03. Изменение контракта или поведения (breaking change)</a></li>
+<li><a href="#m-04-uiux-изменение">M-04. UI/UX-изменение</a></li>
+<li><a href="#m-05-рефакторинг-и-технический-долг-без-изменения-поведения">M-05. Рефакторинг и технический долг без изменения поведения</a></li>
+<li><a href="#m-06-исправление-бага-bugfix">M-06. Исправление бага (bugfix)</a></li>
+<li><a href="#m-07-аварийный-hotfix-p0p1">M-07. Аварийный hotfix P0/P1</a></li>
+<li><a href="#m-08-e2eqa-аудит-и-автоматизация-тестов">M-08. E2E/QA-аудит и автоматизация тестов</a></li>
+<li><a href="#m-09-операции-с-доской-и-отчётность">M-09. Операции с доской и отчётность</a></li>
+<li><a href="#m-10-диагностика-harness-и-issue-лог">M-10. Диагностика harness и issue-лог</a></li>
+</ul>
+</li>
+<li><a href="#5-особые-случаи-special-вне-стандартного-workflow">5. Особые случаи (special, вне стандартного workflow)</a><ul>
+<li><a href="#s-01-только-документацияadr">S-01. Только документация/ADR</a></li>
+<li><a href="#s-02-аудит-требований-reverse-engineering">S-02. Аудит требований / reverse engineering</a></li>
+<li><a href="#s-03-обслуживание-установки-и-версии">S-03. Обслуживание установки и версии</a></li>
+</ul>
+</li>
+<li><a href="#6-карта-артефактов">6. Карта артефактов</a><ul>
+<li><a href="#61-feature-фазы-роли-артефакты-checkpoints">6.1. Feature: фазы, роли, артефакты, checkpoints</a></li>
+<li><a href="#611-архитектурный-пакет-r-01r-02">6.1.1. Архитектурный пакет (R-01/R-02)</a></li>
+<li><a href="#62-bugfix-фазы-роли-артефакты-checkpoints">6.2. Bugfix: фазы, роли, артефакты, checkpoints</a></li>
+<li><a href="#63-общие-артефакты">6.3. Общие артефакты</a></li>
+<li><a href="#64-зоны-записи-ролей">6.4. Зоны записи ролей</a></li>
+<li><a href="#65-статусы-задач">6.5. Статусы задач</a></li>
+</ul>
+</li>
+<li><a href="#7-жизненный-цикл-и-checkpoints">7. Жизненный цикл и checkpoints</a><ul>
+<li><a href="#71-checkpoint-контракт">7.1. Checkpoint-контракт</a></li>
+<li><a href="#72-checkpoints-по-ролям-по-умолчанию">7.2. Checkpoints по ролям (по умолчанию)</a></li>
+<li><a href="#73-ошибки-retries-и-блокировки">7.3. Ошибки, retries и блокировки</a></li>
+<li><a href="#74-бюджеты-генерации">7.4. Бюджеты генерации</a></li>
+</ul>
+</li>
+<li><a href="#8-команды-и-флаги">8. Команды и флаги</a></li>
+<li><a href="#9-чек-листы">9. Чек-листы</a><ul>
+<li><a href="#91-перед-стартом-задачи">9.1. Перед стартом задачи</a></li>
+<li><a href="#92-review-checkpoint">9.2. Review checkpoint</a></li>
+<li><a href="#93-закрытие-задачи">9.3. Закрытие задачи</a></li>
+<li><a href="#94-bugfix">9.4. Bugfix</a></li>
+<li><a href="#95-hotfix">9.5. Hotfix</a></li>
+</ul>
+</li>
+<li><a href="#10-типовые-ошибки-и-решения">10. Типовые ошибки и решения</a></li>
+<li><a href="#11-глоссарий-и-источники">11. Глоссарий и источники</a></li>
+<li><a href="#12-сборка-html">12. Сборка HTML</a></li>
+</ul>
+</div>
+
+  </aside>
+  <main id="content" class="content">
+    
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Поле</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Статус</td>
+<td>current</td>
+</tr>
+<tr>
+<td>Версия harness</td>
+<td>2.6.0</td>
+</tr>
+<tr>
+<td>Дата</td>
+<td>2026-11-13</td>
+</tr>
+<tr>
+<td>Область</td>
+<td>локальный мультиагентный harness: feature + bugfix workflows</td>
+</tr>
+<tr>
+<td>Нормативные источники</td>
+<td><a href="../../harness/process.md"><code>harness/process.md</code></a>, <a href="../../harness/workflows/feature.md"><code>harness/workflows/feature.md</code></a>, <a href="../../harness/workflows/bugfix.md"><code>harness/workflows/bugfix.md</code></a></td>
+</tr>
+<tr>
+<td>HTML-версия</td>
+<td><a href="index.html"><code>index.html</code></a></td>
+</tr>
+<tr>
+<td>Исходники диаграмм</td>
+<td><a href="diagrams/"><code>diagrams/</code></a></td>
+</tr>
+</tbody>
+</table></div>
+<p>Это практическое руководство: как выбирать сценарий, какие команды запускать, кто и
+что делает на каждой фазе, какие артефакты появляются и где проходят checkpoints.
+Если руководство расходится с <code>harness/process.md</code> или workflow-файлом, побеждают
+нормативные источники.</p>
+<hr />
+<h2 id="1-назначение-и-область-применения">1. Назначение и область применения</h2>
+<p>Harness — локальный процесс разработки, в котором работу выполняют ролевые
+subagent-ы по общему плану <code>docs/plan.md</code>. Каждая задача имеет workflow, стадию,
+ответственную роль, зависимости, критерии приёмки и checkpoints. Модели работают
+локально через Ollama; внешние API не используются.</p>
+<p>Поддерживаются два базовых workflow:</p>
+<ul>
+<li><strong>feature</strong> — новое поведение, новый проект/подсистема, изменение, требующее
+  требований, проектирования или UX-решений;</li>
+<li><strong>bugfix</strong> — восстановление уже ожидаемого поведения через воспроизведение,
+  падающий regression-тест, минимальный фикс и независимую проверку.</li>
+</ul>
+<p>Третьего workflow нет. <code>hotfix</code> — это модификатор для P0/P1 внутри <code>bugfix</code>, а не
+отдельный workflow.</p>
+<h3 id="11-когда-использовать-harness">1.1. Когда использовать harness</h3>
+<ul>
+<li>Нужен управляемый цикл: требования → e2e → UX → архитектура → код → QA → docs.</li>
+<li>Работа затрагивает несколько ролей и требует checkpoints пользователя.</li>
+<li>Нужна прослеживаемость: plan, карточки задач, bug-карточки, checkpoints,
+  артефакты, коммиты.</li>
+<li>Нужно исправить дефект с доказательством fail-before/pass-after.</li>
+<li>Нужен аудит e2e/QA или формализация требований в рамках feature-плана.</li>
+</ul>
+<h3 id="12-когда-harness-не-нужен">1.2. Когда harness не нужен</h3>
+<ul>
+<li>Обычная небольшая правка без плана, зависимостей и checkpoints.</li>
+<li>Эксперимент, исследование или разовая задача без артефактов приёмки.</li>
+<li>Нужна только консультация или объяснение кода.</li>
+<li>Работа не должна менять board и процессы проекта.</li>
+</ul>
+<p>Harness активируется только явными командами <code>/harness-*</code>; <code>default_agent</code> не
+переключается на harness.</p>
+<h3 id="13-ключевые-инварианты">1.3. Ключевые инварианты</h3>
+<ol>
+<li><strong>Одна активная задача.</strong> Одновременно допустима только одна задача в
+   состоянии <code>in_progress</code> или <code>awaiting_review</code> across оба workflow. Feature и
+   bugfix не выполняются параллельно и не вытесняют друг друга.</li>
+<li><strong>Строгая последовательность.</strong> Новые bug-отчёты и <code>pending</code>-карточки можно
+   регистрировать при активной задаче, но нельзя менять существующие статусы,
+   зависимости и активную задачу.</li>
+<li><strong>Checkpoints обязательны.</strong> У каждой задачи есть минимум один checkpoint;
+   <code>CP-F</code> обязателен до статуса <code>done</code>.</li>
+<li><strong>Решение пользователя явное.</strong> Молчание не считается одобрением. Правки
+   пользователя в артефактах и checkpoint-файле авторитетны.</li>
+<li><strong>Источники истины.</strong> Статусы, зависимости, активная задача, приёмка и
+   маршрутизация определяются только по <code>docs/plan.md</code>, карточкам, checkpoint-
+   файлам, bug-карточкам, workflow-файлам и Git. <code>docs/activity.puml/.svg</code> —
+   производная визуализация, не источник решений.</li>
+<li><strong>Раздельные реестры.</strong> Дефекты продукта — <code>docs/bugs/</code>; проблемы harness —
+   <code>docs/issues/</code>. Смешивать нельзя.</li>
+<li><strong>Изоляция ролей.</strong> Роль пишет только в свою область. Единственное
+   cross-role исключение — <code>harness-ux-designer</code> может вызывать <code>harness-coder</code>
+   для страниц прототипа. <code>harness-analyst</code> и <code>harness-coder</code> могут запускать
+   self-sub-sessions своей роли для нарезанных чанков (глубина 2, последовательно).</li>
+<li><strong>Локальность и безопасность.</strong> E2E — только local/staging, изолированные
+   данные и cleanup. Запрещены <code>git push</code>, <code>git tag</code>, перезапись истории,
+   production-деплой и секреты в коде/логах/коммитах.</li>
+</ol>
+<hr />
+<h2 id="2-быстрый-старт">2. Быстрый старт</h2>
+<h3 id="21-глобальная-установка-один-раз">2.1. Глобальная установка (один раз)</h3>
+<p>Из корня репозитория harness:</p>
+<pre><code class="language-powershell">powershell -NoProfile -ExecutionPolicy Bypass -File harness/scripts/install.ps1
+</code></pre>
+<p>После установки перезапустите opencode и проверьте:</p>
+<pre><code class="language-text">/harness-doctor
+</code></pre>
+<h3 id="22-инициализация-проекта">2.2. Инициализация проекта</h3>
+<p>В проекте, где нужен harness:</p>
+<pre><code class="language-text">/harness-init
+</code></pre>
+<p>Создаются <code>harness/process.md</code>, <code>harness/workflows/</code>, <code>harness/version.json</code>,
+<code>harness/templates/</code>, <code>docs/plan.md</code>, <code>docs/activity.puml</code>, <code>docs/bugs/</code>,
+<code>docs/checkpoints/</code> и остальной skeleton. Без <code>harness/process.md</code> и
+<code>docs/plan.md</code> harness не стартует.</p>
+<h3 id="23-первая-задача">2.3. Первая задача</h3>
+<p>Новый проект или новая функциональность:</p>
+<pre><code class="language-text">/harness-feature &lt;slug&gt;
+</code></pre>
+<p>По умолчанию e2e и UX считаются <code>required</code>. Если они действительно не нужны,
+передайте <code>no-e2e</code> и/или <code>no-ux</code>; waiver с причиной подтверждается на CP-1
+планирования. Команда только регистрирует <code>pending</code>-задачу <code>P-00</code> и не запускает
+работу.</p>
+<p>Дефект:</p>
+<pre><code class="language-text">/harness-bug &lt;report или BUG-XXX&gt;
+</code></pre>
+<p>Команда создаёт/триажит <code>BUG-XXX</code> и <code>pending</code>-задачи, но не запускает их.</p>
+<h3 id="24-запуск-checkpoint-и-продолжение">2.4. Запуск, checkpoint и продолжение</h3>
+<pre><code class="language-text">/harness-run T-XXX
+</code></pre>
+<p>Harness lead проверяет marker-файлы, workflow/stage, зависимости и отсутствие
+другой активной задачи; orchestrator переводит задачу в <code>in_progress</code>; роль
+выполняет стадию и останавливается на checkpoint. Orchestrator создаёт
+<code>docs/checkpoints/T-XXX-CP-N.md</code>, ставит <code>awaiting_review</code> и коммитит снимок.</p>
+<p>Пользователь:</p>
+<ol>
+<li>читает checkpoint-файл и артефакты;</li>
+<li>при необходимости правит файлы и/или добавляет замечания;</li>
+<li>записывает решение <code>approved</code> или <code>changes_requested</code>;</li>
+<li>снова запускает <code>/harness-run T-XXX</code>.</li>
+</ol>
+<p>При <code>approved</code> роль продолжает; при <code>changes_requested</code> возвращается к тому же
+checkpoint. После финального <code>CP-F</code> задача становится <code>done</code>, артефакты, bug-
+статусы и план обновляются, выполняется финальный коммит.</p>
+<h3 id="25-отчёты-и-обслуживание">2.5. Отчёты и обслуживание</h3>
+<pre><code class="language-text">/harness-board-report
+/harness-board-update all
+/harness-doctor
+</code></pre>
+<p><code>/harness-board-report</code> — только чтение. <code>/harness-board-update</code> запрещён, пока
+есть активная задача. <code>/harness-doctor</code> проверяет установку, права, версии,
+issue-индекс, модели и RAG.</p>
+<h3 id="26-минимальный-поток">2.6. Минимальный поток</h3>
+<pre><code class="language-text">/harness-init
+  -&gt; /harness-feature notes-api
+  -&gt; /harness-run T-001
+  -&gt; review docs/checkpoints/T-001-CP-1.md
+  -&gt; approved
+  -&gt; /harness-run T-001
+  -&gt; ... повторять до CP-F ...
+  -&gt; /harness-board-report
+</code></pre>
+<p>Фактические ID задач назначает orchestrator; <code>T-001</code> в примере условный.</p>
+<hr />
+<h2 id="3-карта-сценариев">3. Карта сценариев</h2>
+<figure class="diagram" tabindex="0" role="button" aria-label="Открыть диаграмму: Карта сценариев использования harness" data-title="Карта сценариев использования harness"><div class="diagram-frame"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJNSU5ETUFQIiBzdHlsZT0id2lkdGg6NTA3cHg7aGVpZ2h0OjExMjBweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iNTA3cHgiIGhlaWdodD0iMTEyMHB4IiB2aWV3Qm94PSIwIDAgNTA3IDExMjAiIHpvb21BbmRQYW49Im1hZ25pZnkiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiIGNvbnRlbnRTdHlsZVR5cGU9InRleHQvY3NzIj48P3BsYW50dW1sIDEuMjAyNi4xMD8+PGRlZnMvPjxnIGZvbnQtZmFtaWx5PSJzYW5zLXNlcmlmIiBsZW5ndGhBZGp1c3Q9InNwYWNpbmciPjxnIGNsYXNzPSJ0aXRsZSIgZGF0YS1zb3VyY2UtbGluZT0iMyI+PHRleHQgeD0iMzAuMzc5IiB5PSIzNS4xMDciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjQ0NS4wNjciIGZvbnQtd2VpZ2h0PSI3MDAiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+0JrQsNGA0YLQsCDRgdGG0LXQvdCw0YDQuNC10LIg0LjRgdC/0L7Qu9GM0LfQvtCy0LDQvdC40Y8gaGFybmVzcyAoTS0wMS4uTS0xMCwgUy0wMS4uUy0wMyk8L3RleHQ+PC9nPjxyZWN0IHg9IjEwIiB5PSI1NjAuMzE2IiB3aWR0aD0iNjkuMDU1IiBoZWlnaHQ9IjM4LjYyMSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48dGV4dCB4PSIyMCIgeT0iNTg1LjQyNCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iNDkuMDU1IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPkhhcm5lc3M8L3RleHQ+PHJlY3QgeD0iMTI5LjA1NSIgeT0iMTI2LjE3NCIgd2lkdGg9IjU1LjUwNiIgaGVpZ2h0PSIzOC42MjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PHRleHQgeD0iMTM5LjA1NSIgeT0iMTUxLjI4MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMzUuNTA2IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPtCh0YLQsNGA0YI8L3RleHQ+PHJlY3QgeD0iMjM0LjU2MSIgeT0iNTkuNjIxIiB3aWR0aD0iMjE2LjU2MSIgaGVpZ2h0PSI3NS44NjMiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PHRleHQgeD0iMjQ0LjU2MSIgeT0iODQuNzI5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMjkuMDk3IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPk0tMDEg0J3QvtCy0YvQuSDQv9GA0L7QtdC60YI8L3RleHQ+PHRleHQgeD0iMjQ0LjU2MSIgeT0iMTAzLjM1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxOTYuNTYxIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPi9oYXJuZXNzLWluaXQgKyAvaGFybmVzcy1mZWF0dXJlPC90ZXh0Pjx0ZXh0IHg9IjI0NC41NjEiIHk9IjEyMS45NzEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEzMy4yMzkiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+0L/QvtC70L3Ri9C5IGZlYXR1cmUt0LPRgNCw0YQ8L3RleHQ+PHBhdGggZD0iTTE4NC41NjEsMTQ1LjQ4NCBMMTk0LjU2MSwxNDUuNDg0IEMyMDkuNTYxLDE0NS40ODQgMjA5LjU2MSw5Ny41NTMgMjI0LjU2MSw5Ny41NTMgTDIzNC41NjEsOTcuNTUzIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIi8+PHJlY3QgeD0iMjM0LjU2MSIgeT0iMTU1LjQ4NCIgd2lkdGg9IjIxNi44OTYiIGhlaWdodD0iNzUuODYzIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjx0ZXh0IHg9IjI0NC41NjEiIHk9IjE4MC41OTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE5Ni44OTYiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+TS0wMiBGZWF0dXJlINCyINGB0YPRidC10YHRgtCy0YPRjtGJ0LXQvDwvdGV4dD48dGV4dCB4PSIyNDQuNTYxIiB5PSIxOTkuMjEzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMzAuMjExIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPtC/0YDQvtC10LrRgtC1IChicm93bmZpZWxkKTwvdGV4dD48dGV4dCB4PSIyNDQuNTYxIiB5PSIyMTcuODM0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMzcuNzEiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+UkFHICsgaW1wYWN0IGFuYWx5c2lzPC90ZXh0PjxwYXRoIGQ9Ik0xODQuNTYxLDE0NS40ODQgTDE5NC41NjEsMTQ1LjQ4NCBDMjA5LjU2MSwxNDUuNDg0IDIwOS41NjEsMTkzLjQxNiAyMjQuNTYxLDE5My40MTYgTDIzNC41NjEsMTkzLjQxNiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik03OS4wNTUsNTc5LjYyNyBMODkuMDU1LDU3OS42MjcgQzEwNC4wNTUsNTc5LjYyNyAxMDQuMDU1LDE0NS40ODQgMTE5LjA1NSwxNDUuNDg0IEwxMjkuMDU1LDE0NS40ODQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSIxMjkuMDU1IiB5PSIzNDcuMjExIiB3aWR0aD0iOTIuNTM2IiBoZWlnaHQ9IjM4LjYyMSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48dGV4dCB4PSIxMzkuMDU1IiB5PSIzNzIuMzE4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI3Mi41MzYiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+0JjQt9C80LXQvdC10L3QuNGPPC90ZXh0PjxyZWN0IHg9IjI3MS41OTEiIHk9IjI1MS4zNDgiIHdpZHRoPSIxOTcuOTYiIGhlaWdodD0iNzUuODYzIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjx0ZXh0IHg9IjI4MS41OTEiIHk9IjI3Ni40NTUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjE3Ny45NiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5NLTAzINCa0L7QvdGC0YDQsNC60YIgLyDQv9C+0LLQtdC00LXQvdC40LU8L3RleHQ+PHRleHQgeD0iMjgxLjU5MSIgeT0iMjk1LjA3NiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTExLjM0NCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4oYnJlYWtpbmcgY2hhbmdlKTwvdGV4dD48dGV4dCB4PSIyODEuNTkxIiB5PSIzMTMuNjk3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNDAuMzgzIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPkFEUiArIGNvbnRyYWN0cyArIGUyZTwvdGV4dD48cGF0aCBkPSJNMjIxLjU5MSwzNjYuNTIxIEwyMzEuNTkxLDM2Ni41MjEgQzI0Ni41OTEsMzY2LjUyMSAyNDYuNTkxLDI4OS4yNzkgMjYxLjU5MSwyODkuMjc5IEwyNzEuNTkxLDI4OS4yNzkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSIyNzEuNTkxIiB5PSIzNDcuMjExIiB3aWR0aD0iMjE1LjIzNCIgaGVpZ2h0PSI1Ny4yNDIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PHRleHQgeD0iMjgxLjU5MSIgeT0iMzcyLjMxOCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTQ5LjgzNyIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5NLTA0IFVJL1VYLdC40LfQvNC10L3QtdC90LjQtTwvdGV4dD48dGV4dCB4PSIyODEuNTkxIiB5PSIzOTAuOTM5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxOTUuMjM0IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmZsb3dzICsgd2lyZWZyYW1lcyArIHByb3RvdHlwZTwvdGV4dD48cGF0aCBkPSJNMjIxLjU5MSwzNjYuNTIxIEwyMzEuNTkxLDM2Ni41MjEgQzI0Ni41OTEsMzY2LjUyMSAyNDYuNTkxLDM3NS44MzIgMjYxLjU5MSwzNzUuODMyIEwyNzEuNTkxLDM3NS44MzIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSIyNzEuNTkxIiB5PSI0MjQuNDUzIiB3aWR0aD0iMjAwLjkwNiIgaGVpZ2h0PSI1Ny4yNDIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PHRleHQgeD0iMjgxLjU5MSIgeT0iNDQ5LjU2MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTgwLjkwNiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5NLTA1INCg0LXRhNCw0LrRgtC+0YDQuNC90LMgLyDRgtC10YXQtNC+0LvQszwvdGV4dD48dGV4dCB4PSIyODEuNTkxIiB5PSI0NjguMTgyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNjguNzc5IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPtCx0LXQtyDQuNC30LzQtdC90LXQvdC40Y8g0L/QvtCy0LXQtNC10L3QuNGPPC90ZXh0PjxwYXRoIGQ9Ik0yMjEuNTkxLDM2Ni41MjEgTDIzMS41OTEsMzY2LjUyMSBDMjQ2LjU5MSwzNjYuNTIxIDI0Ni41OTEsNDUzLjA3NCAyNjEuNTkxLDQ1My4wNzQgTDI3MS41OTEsNDUzLjA3NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik03OS4wNTUsNTc5LjYyNyBMODkuMDU1LDU3OS42MjcgQzEwNC4wNTUsNTc5LjYyNyAxMDQuMDU1LDM2Ni41MjEgMTE5LjA1NSwzNjYuNTIxIEwxMjkuMDU1LDM2Ni41MjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSIxMjkuMDU1IiB5PSI1NDkuNjI3IiB3aWR0aD0iNzYuNTg4IiBoZWlnaHQ9IjM4LjYyMSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48dGV4dCB4PSIxMzkuMDU1IiB5PSI1NzQuNzM0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI1Ni41ODgiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+0JTQtdGE0LXQutGC0Ys8L3RleHQ+PHJlY3QgeD0iMjU1LjY0MyIgeT0iNTAxLjY5NSIgd2lkdGg9IjIwMC41NjQiIGhlaWdodD0iNTcuMjQyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjx0ZXh0IHg9IjI2NS42NDMiIHk9IjUyNi44MDMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9Ijc1LjQ4OSIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5NLTA2IEJ1Z2ZpeDwvdGV4dD48dGV4dCB4PSIyNjUuNjQzIiB5PSI1NDUuNDI0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxODAuNTY0IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPkJVRy1YWFggKyBmYWlsaW5nIHJlZ3Jlc3Npb248L3RleHQ+PHBhdGggZD0iTTIwNS42NDMsNTY4LjkzOCBMMjE1LjY0Myw1NjguOTM4IEMyMzAuNjQzLDU2OC45MzggMjMwLjY0Myw1MzAuMzE2IDI0NS42NDMsNTMwLjMxNiBMMjU1LjY0Myw1MzAuMzE2IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIi8+PHJlY3QgeD0iMjU1LjY0MyIgeT0iNTc4LjkzOCIgd2lkdGg9IjIxNC40NDgiIGhlaWdodD0iNTcuMjQyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjx0ZXh0IHg9IjI2NS42NDMiIHk9IjYwNC4wNDUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjExNC4yNDkiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+TS0wNyBIb3RmaXggUDAvUDE8L3RleHQ+PHRleHQgeD0iMjY1LjY0MyIgeT0iNjIyLjY2NiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTk0LjQ0OCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4rIHBvc3Rtb3J0ZW0sINCx0LXQtyBwcmVlbXB0aW9uPC90ZXh0PjxwYXRoIGQ9Ik0yMDUuNjQzLDU2OC45MzggTDIxNS42NDMsNTY4LjkzOCBDMjMwLjY0Myw1NjguOTM4IDIzMC42NDMsNjA3LjU1OSAyNDUuNjQzLDYwNy41NTkgTDI1NS42NDMsNjA3LjU1OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik03OS4wNTUsNTc5LjYyNyBMODkuMDU1LDU3OS42MjcgQzEwNC4wNTUsNTc5LjYyNyAxMDQuMDU1LDU2OC45MzggMTE5LjA1NSw1NjguOTM4IEwxMjkuMDU1LDU2OC45MzgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSIxMjkuMDU1IiB5PSI3MDQuMTExIiB3aWR0aD0iNzguMzA0IiBoZWlnaHQ9IjM4LjYyMSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48dGV4dCB4PSIxMzkuMDU1IiB5PSI3MjkuMjE5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI1OC4zMDQiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+0JrQsNGH0LXRgdGC0LLQvjwvdGV4dD48cmVjdCB4PSIyNTcuMzU4IiB5PSI2NTYuMTgiIHdpZHRoPSIxNzQuMzk2IiBoZWlnaHQ9IjU3LjI0MiIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48dGV4dCB4PSIyNjcuMzU4IiB5PSI2ODEuMjg3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMjQuODc5IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPk0tMDggRTJFL1FBLdCw0YPQtNC40YI8L3RleHQ+PHRleHQgeD0iMjY3LjM1OCIgeT0iNjk5LjkwOCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTU0LjM5NiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4rINCw0LLRgtC+0LzQsNGC0LjQt9Cw0YbQuNGPINGC0LXRgdGC0L7QsjwvdGV4dD48cGF0aCBkPSJNMjA3LjM1OCw3MjMuNDIyIEwyMTcuMzU4LDcyMy40MjIgQzIzMi4zNTgsNzIzLjQyMiAyMzIuMzU4LDY4NC44MDEgMjQ3LjM1OCw2ODQuODAxIEwyNTcuMzU4LDY4NC44MDEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSIyNTcuMzU4IiB5PSI3MzMuNDIyIiB3aWR0aD0iMTY5LjYzMiIgaGVpZ2h0PSI1Ny4yNDIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PHRleHQgeD0iMjY3LjM1OCIgeT0iNzU4LjUyOSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTQ5LjYzMiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5TLTAyINCQ0YPQtNC40YIg0YLRgNC10LHQvtCy0LDQvdC40Lk8L3RleHQ+PHRleHQgeD0iMjY3LjM1OCIgeT0iNzc3LjE1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMzAuNDk4IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPihyZXZlcnNlIGVuZ2luZWVyaW5nKTwvdGV4dD48cGF0aCBkPSJNMjA3LjM1OCw3MjMuNDIyIEwyMTcuMzU4LDcyMy40MjIgQzIzMi4zNTgsNzIzLjQyMiAyMzIuMzU4LDc2Mi4wNDMgMjQ3LjM1OCw3NjIuMDQzIEwyNTcuMzU4LDc2Mi4wNDMiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNNzkuMDU1LDU3OS42MjcgTDg5LjA1NSw1NzkuNjI3IEMxMDQuMDU1LDU3OS42MjcgMTA0LjA1NSw3MjMuNDIyIDExOS4wNTUsNzIzLjQyMiBMMTI5LjA1NSw3MjMuNDIyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIi8+PHJlY3QgeD0iMTI5LjA1NSIgeT0iODk3LjIxNyIgd2lkdGg9IjEwNy44NDkiIGhlaWdodD0iMzguNjIxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjx0ZXh0IHg9IjEzOS4wNTUiIHk9IjkyMi4zMjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9Ijg3Ljg0OSIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj7QrdC60YHQv9C70YPQsNGC0LDRhtC40Y88L3RleHQ+PHJlY3QgeD0iMjg2LjkwMyIgeT0iODEwLjY2NCIgd2lkdGg9IjE5OS40NzgiIGhlaWdodD0iNTcuMjQyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjx0ZXh0IHg9IjI5Ni45MDMiIHk9IjgzNS43NzEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEzNi4yMTMiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+TS0wOSDQlNC+0YHQutCwINC4INC+0YLRh9GR0YLRizwvdGV4dD48dGV4dCB4PSIyOTYuOTAzIiB5PSI4NTQuMzkzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNzkuNDc4IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmJvYXJkLXVwZGF0ZSAvIGJvYXJkLXJlcG9ydDwvdGV4dD48cGF0aCBkPSJNMjM2LjkwMyw5MTYuNTI3IEwyNDYuOTAzLDkxNi41MjcgQzI2MS45MDMsOTE2LjUyNyAyNjEuOTAzLDgzOS4yODUgMjc2LjkwMyw4MzkuMjg1IEwyODYuOTAzLDgzOS4yODUiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSIyODYuOTAzIiB5PSI4ODcuOTA2IiB3aWR0aD0iMTg5LjAwNSIgaGVpZ2h0PSI1Ny4yNDIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PHRleHQgeD0iMjk2LjkwMyIgeT0iOTEzLjAxNCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTY5LjAwNSIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5NLTEwINCU0LjQsNCz0L3QvtGB0YLQuNC60LAgaGFybmVzczwvdGV4dD48dGV4dCB4PSIyOTYuOTAzIiB5PSI5MzEuNjM1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxNTIuNTIzIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmlzc3VlcyArIC9oYXJuZXNzLWRvY3RvcjwvdGV4dD48cGF0aCBkPSJNMjM2LjkwMyw5MTYuNTI3IEwyNDYuOTAzLDkxNi41MjcgQzI2MS45MDMsOTE2LjUyNyAyNjEuOTAzLDkxNi41MjcgMjc2LjkwMyw5MTYuNTI3IEwyODYuOTAzLDkxNi41MjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiLz48cmVjdCB4PSIyODYuOTAzIiB5PSI5NjUuMTQ4IiB3aWR0aD0iMTQ3LjkiIGhlaWdodD0iNTcuMjQyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjx0ZXh0IHg9IjI5Ni45MDMiIHk9Ijk5MC4yNTYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjEyNy45IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPlMtMDMg0J7QsdGB0LvRg9C20LjQstCw0L3QuNC1PC90ZXh0Pjx0ZXh0IHg9IjI5Ni45MDMiIHk9IjEwMDguODc3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIxMjYuNDEiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+0YPRgdGC0LDQvdC+0LLQutC4INC4INCy0LXRgNGB0LjQuDwvdGV4dD48cGF0aCBkPSJNMjM2LjkwMyw5MTYuNTI3IEwyNDYuOTAzLDkxNi41MjcgQzI2MS45MDMsOTE2LjUyNyAyNjEuOTAzLDk5My43NyAyNzYuOTAzLDk5My43NyBMMjg2LjkwMyw5OTMuNzciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNNzkuMDU1LDU3OS42MjcgTDg5LjA1NSw1NzkuNjI3IEMxMDQuMDU1LDU3OS42MjcgMTA0LjA1NSw5MTYuNTI3IDExOS4wNTUsOTE2LjUyNyBMMTI5LjA1NSw5MTYuNTI3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIi8+PHJlY3QgeD0iMTI5LjA1NSIgeT0iMTA1MS43MDEiIHdpZHRoPSI2My4zNiIgaGVpZ2h0PSIzOC42MjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PHRleHQgeD0iMTM5LjA1NSIgeT0iMTA3Ni44MDkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjQzLjM2IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPlNwZWNpYWw8L3RleHQ+PHJlY3QgeD0iMjQyLjQxNSIgeT0iMTA0Mi4zOTEiIHdpZHRoPSIxOTIuMTk3IiBoZWlnaHQ9IjU3LjI0MiIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48dGV4dCB4PSIyNTIuNDE1IiB5PSIxMDY3LjQ5OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMTcyLjE5NyIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5TLTAxINCi0L7Qu9GM0LrQviDQtNC+0LrRg9C80LXQvdGC0LDRhtC40Y88L3RleHQ+PHRleHQgeD0iMjUyLjQxNSIgeT0iMTA4Ni4xMTkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjcyLjM1MiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5ELTAxIC8gQi0wNDwvdGV4dD48cGF0aCBkPSJNMTkyLjQxNSwxMDcxLjAxMiBMMjAyLjQxNSwxMDcxLjAxMiBDMjE3LjQxNSwxMDcxLjAxMiAyMTcuNDE1LDEwNzEuMDEyIDIzMi40MTUsMTA3MS4wMTIgTDI0Mi40MTUsMTA3MS4wMTIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiLz48cGF0aCBkPSJNNzkuMDU1LDU3OS42MjcgTDg5LjA1NSw1NzkuNjI3IEMxMDQuMDU1LDU3OS42MjcgMTA0LjA1NSwxMDcxLjAxMiAxMTkuMDU1LDEwNzEuMDEyIEwxMjkuMDU1LDEwNzEuMDEyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIi8+PD9wbGFudHVtbC1zcmMgTkxIREpuRDE2Qnh0THhuN0FGR0pIUnExdVNpMzFjYjhValpCcTR4Qm5kUHNDcGlMa1RjMjQ4Rm44XzVXSjNKZ3RRSXFMZk8yb3ItT19LUy1DemlqUWo5cVB0UlZVSnhVWnJhQTU5RWd4T2Z3Y19jUHU5YWhWMlBQYy1neW1KZWpqVXU5ek9JckVMTHVxLUVxLXBZWk5ETllmM19oVmxtb3hrYS1uVHR1SDhfcVpOY1hHd202ZkNFdWdzenJmQV9ZRF9lMnB1N2s4bzJDdHo0LWF1ODcwU3Jpdk9nYlY3dWhMb2hFS3lNa3lSeW1jeWJhUUpFOW9NSXBmQnlSM2lFNE5QUkM4VDlWMzY5eWZZejl0dThwMGtTdXhaY1lDMDdGa1M5TEQ0VkpWT0NwclA3UzRPYWVWTUNGSnp4Y3oxMFdfVld1UElaSlVsQTVPME5rWmtCTlVlSGQzd0g3eUxrcHF6UzZ3dXZSWnNYY0p0ZTdlazdvTGR0TTRKbEI2bjNXamRyTUt5RzRRbnE2UmNCZTRuOW9SVkNySWJBSXFZd09mNFJHclpEbzMyZUxvMGVVOEZITjRndjdaVzBKUG9YS2FzaHhKM0d2dzlQTlRxMU5HeDRhMjBFaVVQY2RtRlRHamk5a0RPVkpfcjBSaDRSQkVwM1gxd3hhM1RJVGN1cWxGVU1mR3QtQVM5X3FEd0pXRTk2YjhybGU2cHM0R0VDelZXTHY5Z3ozUEVLU3UxVnFGblNnX3h5THd2cHFIbWppaW5ZVmZPSUJqRDlmRGptTlpiWlB0U1hMZ3JNZVFaMnRQS25CdGZHZWdrazlERmUxUk5lQXFSSFRCNm9ONzA0N05nM1FkYkl5Rkt5SkhSeGFsRXNodjVaSWx3VGZNTk1LR1pzYWpWOVF1VWJvM2YtRmUzR3FWSkw3QzN1bW5jNmZad1NucnFWTjZyaXMwTHR4U00xSEFnUTN6RmxxRURid1pnMVlFV1J3NGFNS18zY04wSVNrY2d4V05DQlFoNU5zNHdhbXF0QzVYQnhqX2ZFX3MtSUhJTGM0WTM1Y0p1VTRUSXktWkotT3ozYllwc0VvZGtsdVRRT3VnZkRpOVZVSFltYjBnTVcwR1lXUEdhamFmT1NNUjM4alpkMjNlNkNST0pmMFRRLWNGOWRRR3dULXJVVUdPMkotbmtkSzVuZUE0czhHcFR4dTdIazUtQTdrNkU4a09hOVppa0JwY2lqUUFJMWMtaVZhalhaaFk2bXRaTzVqNi1XazFPdk9EUjQ1TWE1SlB2T3V4Z3A5bFBLZnZTbDV5Y0EtTEZtMz8+PC9nPjwvc3ZnPg==" alt="Карта сценариев использования harness" loading="lazy"><span class="zoom-hint">Нажмите, чтобы открыть</span></div><figcaption>Карта сценариев использования harness</figcaption></figure>
+<p>Источник: <a href="diagrams/scenario-map.puml"><code>diagrams/scenario-map.puml</code></a>.</p>
+<h3 id="31-сводная-таблица">3.1. Сводная таблица</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Когда использовать</th>
+<th>Команда / триггер</th>
+<th>Workflow</th>
+<th>Ключевые фазы</th>
+<th>Выход</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M-01</td>
+<td>Новый проект с нуля</td>
+<td><code>/harness-init</code>, <code>/harness-feature &lt;slug&gt;</code></td>
+<td>feature</td>
+<td>P-00 → A-01 → A-02 → U-01 → U-02 → R-01 → R-02 → I-01 → I-02 → Q-01 → Q-02 → D-01 → F-01</td>
+<td>CP-F, <code>done</code></td>
+</tr>
+<tr>
+<td>M-02</td>
+<td>Новая функциональность в существующем проекте</td>
+<td><code>/harness-feature &lt;slug&gt;</code></td>
+<td>feature</td>
+<td>полный граф; A-02/U-01/U-02/I-02/Q-01 — при применимости</td>
+<td>CP-F, <code>done</code></td>
+</tr>
+<tr>
+<td>M-03</td>
+<td>Изменение контракта/поведения (breaking change)</td>
+<td><code>/harness-feature &lt;slug&gt;</code> или escalation из bugfix</td>
+<td>feature</td>
+<td>A-01, A-02, R-01, R-02, I-01, I-02, Q-01, Q-02</td>
+<td>CP-F, <code>done</code>; решение о совместимости</td>
+</tr>
+<tr>
+<td>M-04</td>
+<td>UI/UX-изменение</td>
+<td><code>/harness-feature &lt;slug&gt;</code> с UX или UI-escalation bugfix</td>
+<td>feature</td>
+<td>A-01, A-02, U-01, U-02, R-01, R-02, I-01, Q-02</td>
+<td>CP-F, <code>done</code>; visual QA</td>
+</tr>
+<tr>
+<td>M-05</td>
+<td>Рефакторинг/техдолг без изменения поведения</td>
+<td><code>/harness-feature &lt;slug&gt; no-e2e no-ux</code></td>
+<td>feature</td>
+<td>P-00 → A-01 → R-01 → R-02 → I-01 → Q-02 → F-01</td>
+<td>CP-F, <code>done</code>; regression green</td>
+</tr>
+<tr>
+<td>M-06</td>
+<td>Исправление бага</td>
+<td><code>/harness-bug &lt;report&gt;</code>, <code>/harness-run</code></td>
+<td>bugfix</td>
+<td>B-00 → B-01 → B-02 → B-03 → B-04? → B-05</td>
+<td>bug <code>closed</code>, CP-F</td>
+</tr>
+<tr>
+<td>M-07</td>
+<td>Аварийный hotfix P0/P1</td>
+<td><code>/harness-bug</code> + <code>profile: hotfix</code></td>
+<td>bugfix</td>
+<td>B-00 → B-01 → B-02 → B-03 → B-05 (+ postmortem)</td>
+<td>bug <code>closed</code>, postmortem</td>
+</tr>
+<tr>
+<td>M-08</td>
+<td>E2E/QA-аудит и автоматизация</td>
+<td><code>/harness-feature &lt;slug&gt; no-ux</code></td>
+<td>feature</td>
+<td>P-00 → A-01 → A-02 → R-01 → R-02 → I-01 → I-02 → Q-01 → Q-02 → F-01</td>
+<td>CP-F, coverage/report</td>
+</tr>
+<tr>
+<td>M-09</td>
+<td>Доска и отчётность</td>
+<td><code>/harness-board-report</code>, <code>/harness-board-update</code>, <code>/harness-doctor</code></td>
+<td>service</td>
+<td>—</td>
+<td>отчёт/синхронизация</td>
+</tr>
+<tr>
+<td>M-10</td>
+<td>Диагностика harness и issue-лог</td>
+<td><code>harness-issues</code>, <code>/harness-doctor</code></td>
+<td>service</td>
+<td>—</td>
+<td>issue <code>resolved</code>/<code>workaround</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="32-матрица-сценарий-feature-фазы">3.2. Матрица «сценарий × feature-фазы»</h3>
+<p>Обозначения: ● — обязательна/в scope, ○ — применимо по карточке, — — waiver
+или не применимо с причиной.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Сценарий</th>
+<th>P-00</th>
+<th>A-01</th>
+<th>A-02</th>
+<th>U-01</th>
+<th>U-02</th>
+<th>R-01</th>
+<th>R-02</th>
+<th>I-01</th>
+<th>I-02</th>
+<th>Q-01</th>
+<th>Q-02</th>
+<th>D-01</th>
+<th>F-01</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M-01 Новый проект</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>○</td>
+<td>●</td>
+</tr>
+<tr>
+<td>M-02 Feature в существующем проекте</td>
+<td>●</td>
+<td>●</td>
+<td>○</td>
+<td>○</td>
+<td>○</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>○</td>
+<td>○</td>
+<td>●</td>
+<td>○</td>
+<td>●</td>
+</tr>
+<tr>
+<td>M-03 Breaking change</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>○</td>
+<td>○</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>○</td>
+<td>●</td>
+</tr>
+<tr>
+<td>M-04 UI/UX-изменение</td>
+<td>●</td>
+<td>●</td>
+<td>○</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>○</td>
+<td>○</td>
+<td>●</td>
+<td>○</td>
+<td>●</td>
+</tr>
+<tr>
+<td>M-05 Рефакторинг/техдолг</td>
+<td>●</td>
+<td>●</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>—</td>
+<td>—</td>
+<td>●</td>
+<td>○</td>
+<td>●</td>
+</tr>
+<tr>
+<td>M-08 E2E/QA-аудит</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>—</td>
+<td>—</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>○</td>
+<td>●</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="33-матрица-сценарий-bugfix-фазы">3.3. Матрица «сценарий × bugfix-фазы»</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Сценарий</th>
+<th>B-00</th>
+<th>B-01</th>
+<th>B-02</th>
+<th>B-03</th>
+<th>B-04</th>
+<th>B-05</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>M-06 Bugfix</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>○</td>
+<td>●</td>
+</tr>
+<tr>
+<td>M-07 Hotfix P0/P1</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>●</td>
+<td>○</td>
+<td>● + postmortem</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="34-как-выбрать-сценарий">3.4. Как выбрать сценарий</h3>
+<ol>
+<li>Поведения ещё нет или проект новый → <strong>M-01</strong>.</li>
+<li>Поведение добавляется в существующий проект без breaking change → <strong>M-02</strong>.</li>
+<li>Меняется публичный контракт, схема, security boundary, несколько модулей или
+   UI-flow → <strong>M-03</strong>.</li>
+<li>Меняется интерфейс, экран, навигация или взаимодействие → <strong>M-04</strong>.</li>
+<li>Меняется только внутреннее устройство без изменения поведения → <strong>M-05</strong>.</li>
+<li>Ожидаемое поведение уже есть, но не работает → <strong>M-06</strong>.</li>
+<li>P0/P1: outage, потеря данных, security-инцидент, сломан основной flow →
+   <strong>M-07</strong>.</li>
+<li>Нужны e2e-тесты, покрытие или QA-аудит → <strong>M-08</strong>.</li>
+<li>Нужен статус, синхронизация доски или проверка установки → <strong>M-09</strong>.</li>
+<li>Проблема в самом harness (permission, MCP, RAG, модель, git, board) → <strong>M-10</strong>.</li>
+</ol>
+<hr />
+<h2 id="4-сценарии">4. Сценарии</h2>
+<h3 id="m-01-новый-проект-с-нуля-greenfield">M-01. Новый проект с нуля (greenfield)</h3>
+<p><strong>Когда:</strong> новый продукт, прототип, пилот или новая подсистема, для которой нужен
+полный цикл требований, UX, архитектуры, реализации и QA.</p>
+<p><strong>Команды:</strong></p>
+<pre><code class="language-text">/harness-init
+/harness-feature &lt;slug&gt;
+/harness-run T-XXX
+</code></pre>
+<p><code>no-e2e</code>/<code>no-ux</code> используйте только если e2e/UX действительно вне scope; waiver
+с причиной фиксируется и подтверждается на CP-1.</p>
+<p><strong>Фазы и роли:</strong></p>
+<ul>
+<li>P-00 — orchestrator: планирование, граф задач, карточки, CP-1;</li>
+<li>A-01/A-02 — analyst: требования, <code>UC-E2E-NNN</code>, YAML-данные;</li>
+<li>U-01/U-02 — ux-designer: flows, screens, wireframes, UI spec, prototype;</li>
+<li>R-01/R-02 — architect: ADR, общее архитектурное описание, компонентная
+  диаграмма, sequence для каждого сценария, диаграммы данных и классов,
+  swimlane для каждого микросервиса, OpenAPI 3.x, контракты, handoff;</li>
+<li>I-01/I-02 — coder: код, unit/integration/e2e, runner, CI/CD, локальный запуск;</li>
+<li>Q-01/Q-02 — qa: покрытие, прогон e2e, review и verdict; qa-vision для визуала;</li>
+<li>D-01 — doc-writer: README, runbook, guides, финализация ADR;</li>
+<li>F-01 — orchestrator + lead: приёмка, <code>done</code>, финальный commit.</li>
+</ul>
+<p><strong>Артефакты:</strong> <code>docs/analysis/</code>, <code>docs/ux/</code>, <code>docs/architecture/</code>, <code>src/</code>,
+<code>tests/</code>, <code>docs/qa/</code>, <code>docs/guides/</code>, <code>docs/plan.md</code>, карточки, checkpoints.</p>
+<p><strong>Критерии выхода:</strong> все задачи графа <code>done</code>; <code>CP-F</code> одобрен; e2e/UX waivers
+явные; board и bug registry согласованы; финальный commit выполнен.</p>
+<p><strong>Нюансы:</strong> на CP-1 планирования orchestrator создаёт остальные карточки; не
+запускайте вторую задачу; не обходите checkpoints; производная activity-диаграмма
+не является доказательством приёмки.</p>
+<hr />
+<h3 id="m-02-новая-функциональность-в-существующем-проекте-brownfield">M-02. Новая функциональность в существующем проекте (brownfield)</h3>
+<p><strong>Когда:</strong> в существующем коде добавляется новое поведение, но публичный контракт
+и текущие сценарии не ломаются.</p>
+<p><strong>Команды:</strong></p>
+<pre><code class="language-text">/harness-feature &lt;slug&gt;
+/harness-run T-XXX
+</code></pre>
+<p>Если e2e/UX вне scope, передайте <code>no-e2e</code>/<code>no-ux</code> или зафиксируйте waiver с
+причиной на CP-1.</p>
+<p><strong>Фазы и роли:</strong> полный feature-граф; A-02/U-01/U-02/I-02/Q-01 включаются по
+применимости. Analyst использует <code>local-rag</code> для поиска существующих требований,
+контрактов и кода; architect фиксирует impact на текущие модули и совместимость;
+coder сохраняет существующее поведение и добавляет regression-покрытие.</p>
+<p><strong>Артефакты:</strong> дельта требований, вопросы/допущения, impact analysis в
+requirements/ADR, ADR и контракты, код и тесты, QA-отчёт.</p>
+<p><strong>Критерии выхода:</strong> <code>CP-F</code>; существующие тесты зелёные; нет несвязанных
+изменений; совместимость и миграции описаны.</p>
+<p><strong>Нюансы:</strong> если изменение ломает контракт/схему/security/UI-flow — переходите на
+<strong>M-03</strong>. Не добавляйте «попутный» рефакторинг в feature-задачу; для него нужна
+отдельная задача.</p>
+<hr />
+<h3 id="m-03-изменение-контракта-или-поведения-breaking-change">M-03. Изменение контракта или поведения (breaking change)</h3>
+<p><strong>Когда:</strong> меняется публичный API, формат сообщений, схема данных или миграция;
+затрагиваются auth/authz/secrets/security; изменение пересекает модули; меняется
+UI-flow; или bugfix выявил, что нужно новое поведение, а не восстановление
+старого.</p>
+<p><strong>Команды:</strong></p>
+<pre><code class="language-text">/harness-feature &lt;slug&gt;
+/harness-run T-XXX
+</code></pre>
+<p>Если UI вне scope, передайте <code>no-ux</code> или зафиксируйте waiver на CP-1. Если
+изменение выделено из bugfix, bug остаётся <code>BUG-XXX</code>, а эскалированные задачи
+используют feature-стадии. Bugfix-задачи coder/QA остаются <code>bugfix</code>.</p>
+<p><strong>Фазы и роли:</strong> A-01/A-02, R-01/R-02, I-01/I-02, Q-01/Q-02 обязательны; UX — если
+затронут интерфейс; D-01 — если меняются docs/ADR. Architect обязан рассмотреть
+альтернативы и последствия; QA — проверить e2e и обратную совместимость.</p>
+<p><strong>Артефакты:</strong> ADR с альтернативами, контракты, план миграции/rollback, e2e
+use cases и YAML, тесты, QA evidence.</p>
+<p><strong>Критерии выхода:</strong> <code>CP-F</code>; решение о совместимости зафиксировано; нет «тихого»
+изменения поведения; документация обновлена или записан follow-up.</p>
+<p><strong>Нюансы:</strong> не маскируйте breaking change под bugfix; не начинайте реализацию без
+ADR/контрактов; при неясном ожидаемом поведении сначала создаётся analyst-задача.</p>
+<hr />
+<h3 id="m-04-uiux-изменение">M-04. UI/UX-изменение</h3>
+<p><strong>Когда:</strong> меняются экран, навигация, layout, взаимодействие, UI copy или
+accessibility; или UI-дефект требует изменения flow.</p>
+<p><strong>Команды:</strong></p>
+<pre><code class="language-text">/harness-feature &lt;slug&gt;
+/harness-run T-XXX
+</code></pre>
+<p>Для UI-дефекта: <code>/harness-bug &lt;report&gt;</code> с UX-escalation.</p>
+<p><strong>Фазы и роли:</strong> A-01/A-02; U-01 (flows, screens); U-02 (wireframes, UI spec,
+prototype); R-01/R-02 (контракты экранов); I-01; Q-02 + qa-vision. UX-designer
+может делегировать реализацию страниц прототипа <code>harness-coder</code> — по одной
+странице, depth 2, последовательно; coder пишет только
+<code>docs/ux/prototype/&lt;slug&gt;/</code>.</p>
+<p><strong>Артефакты:</strong> <code>docs/ux/user-flows-*.md</code>, <code>screens-*.md</code>,
+<code>wireframes-*.puml/.svg</code>, <code>ui-spec-*.md</code>, <code>docs/ux/prototype/&lt;slug&gt;/index.html</code> и
+<code>uc-e2e-NNN.html</code>, локальные assets, screenshots; контракты с screen ID.</p>
+<p><strong>Критерии выхода:</strong> <code>CP-F</code>; UX проверил все страницы; qa-vision проверил
+визуал; нет внешних CDN/network API; accessibility учтена.</p>
+<p><strong>Нюансы:</strong> для use case без web UI нужен явный waiver в UI spec; UX-designer
+остаётся ответственным за делегированные страницы; prototype — статический
+offline HTML.</p>
+<hr />
+<h3 id="m-05-рефакторинг-и-технический-долг-без-изменения-поведения">M-05. Рефакторинг и технический долг без изменения поведения</h3>
+<p><strong>Когда:</strong> нужно улучшить структуру, зависимости или качество кода, но
+наблюдаемое поведение должно остаться прежним. Если поведение ошибочно — это
+bugfix, а не рефакторинг.</p>
+<p><strong>Команды:</strong></p>
+<pre><code class="language-text">/harness-feature &lt;slug&gt; no-e2e no-ux
+/harness-run T-XXX
+</code></pre>
+<p><strong>Фазы и роли:</strong> P-00 → A-01 → R-01 → R-02 → I-01 → Q-02 → F-01. A-02, U-01,
+U-02, I-02, Q-01 и D-01 оформляются как waiver с причиной. Architect фиксирует
+границы изменения; coder не меняет поведение; QA проверяет regression и
+отсутствие побочных эффектов.</p>
+<p><strong>Артефакты:</strong> ADR/design note, refactored code, regression-тесты, QA verdict.</p>
+<p><strong>Критерии выхода:</strong> <code>CP-F</code>; существующие тесты зелёные; поведение не изменилось;
+нет незапланированных изменений.</p>
+<p><strong>Нюансы:</strong> не расширяйте scope «заодно»; если появляется новое поведение —
+создайте отдельную feature-задачу; если обнаружен дефект — bugfix.</p>
+<hr />
+<h3 id="m-06-исправление-бага-bugfix">M-06. Исправление бага (bugfix)</h3>
+<p><strong>Когда:</strong> ожидаемое поведение уже существует, но не реализовано: воспроизводимый
+дефект, регрессия, дефект данных/security/контракта без необходимости нового
+поведения.</p>
+<p><strong>Команды:</strong></p>
+<pre><code class="language-text">/harness-bug &lt;report или BUG-XXX&gt;
+/harness-run T-XXX
+</code></pre>
+<p><strong>Фазы и роли:</strong></p>
+<ul>
+<li>B-00 — orchestrator: триаж, severity P0..P3, duplicate check, affected
+  requirements/UC, <code>pending</code>-карточки; bug статус <code>triaged</code>, если данных хватает;</li>
+<li>B-01 — coder: воспроизведение на базовой ревизии, root cause, падающий
+  regression-тест; CP-1;</li>
+<li>B-02 — coder: минимальный фикс, regression и релевантные suites зелёные; CP-2;</li>
+<li>B-03 — qa: независимая проверка fail-before/pass-after, regression, verdict;</li>
+<li>B-04 — doc-writer: changelog/guide, если поведение или docs изменились;</li>
+<li>B-05 — orchestrator + lead: bug status, board/card, derived activity, commit;
+  postmortem для P0/P1.</li>
+</ul>
+<p><strong>Артефакты:</strong> <code>docs/bugs/BUG-XXX-*.md</code>, <code>docs/bugs/README.md</code>, failing
+regression-тест, код и тесты, <code>docs/qa/review-T-XXX.md</code>, commit.</p>
+<p><strong>Критерии выхода:</strong> bug <code>fixed</code> → <code>verified</code> → <code>closed</code>; <code>CP-F</code> одобрен;
+fail-before/pass-after подтверждён независимо; индекс и карточки согласованы.</p>
+<p><strong>Нюансы:</strong> если не хватает observed/expected behavior, reproduction steps или
+environment — bug остаётся <code>new</code>, фикс не создаётся. После 3 неудачных попыток
+воспроизведения — <code>blocked</code> с evidence. Продуктовый дефект нельзя писать в
+<code>docs/issues/</code>.</p>
+<hr />
+<h3 id="m-07-аварийный-hotfix-p0p1">M-07. Аварийный hotfix P0/P1</h3>
+<p><strong>Когда:</strong> outage, потеря данных, security-инцидент или сломан основной flow.
+<code>profile: hotfix</code> разрешён только для P0/P1.</p>
+<p><strong>Команды:</strong></p>
+<pre><code class="language-text">/harness-bug &lt;report&gt;
+/harness-run T-XXX
+</code></pre>
+<p><strong>Фазы и роли:</strong> B-00 → B-01 → B-02 → B-03 → B-05; для P0/P1 привлекаются
+architect/QA по необходимости; postmortem обязателен. B-04 может быть отложен на
+follow-up.</p>
+<p><strong>Артефакты:</strong> как в M-06, плюс postmortem в bug-карточке/связанных docs.</p>
+<p><strong>Критерии выхода:</strong> bug <code>closed</code>; postmortem есть; <code>CP-F</code> одобрен; индекс и
+commit согласованы.</p>
+<p><strong>Нюансы:</strong> hotfix — модификатор, не третий workflow. Он не отменяет
+воспроизведение, regression-тест, независимую QA-проверку и postmortem. Hotfix
+ждёт завершения активной задачи; preemption и параллельный запуск запрещены. При
+изменении контракта/схемы/security/multi-module/UI-flow — эскалация в feature-
+стиль.</p>
+<hr />
+<h3 id="m-08-e2eqa-аудит-и-автоматизация-тестов">M-08. E2E/QA-аудит и автоматизация тестов</h3>
+<p><strong>Когда:</strong> нужны end-to-end use cases, машинно-читаемые данные, автоматизация,
+покрытие или независимый QA-аудит; UI вне scope.</p>
+<p><strong>Команды:</strong></p>
+<pre><code class="language-text">/harness-feature &lt;slug&gt; no-ux
+/harness-run T-XXX
+</code></pre>
+<p><strong>Фазы и роли:</strong> P-00, A-01, A-02 (analyst), R-01/R-02 (architect), I-01,
+I-02 (coder), Q-01/Q-02 (qa), F-01. UX-стадии — waiver с причиной.</p>
+<p><strong>Артефакты:</strong> <code>docs/analysis/e2e-use-cases-*.md</code>, <code>e2e-test-data-*.yaml</code>
+(schema <code>harness-e2e/1</code>), <code>tests/e2e/</code>, <code>scripts/e2e.ps1</code>,
+<code>scripts/validate-e2e-data.py</code>, <code>docs/qa/e2e-plan-*.md</code>,
+<code>docs/qa/e2e-report-*.md</code>, review/verdict.</p>
+<p><strong>Критерии выхода:</strong> <code>CP-F</code>; покрытие requirement → UC → test; runner
+детерминирован; данные изолированы и очищаются; e2e только local/staging.</p>
+<p><strong>Нюансы:</strong> analyst пишет A-02 чанками по 2-3 use case/YAML-записи; coder
+нарезает реализацию по процессу 11.1. QA отклоняет/блокирует задачу при
+невалидном dataset, а не ослабляет покрытие.</p>
+<hr />
+<h3 id="m-09-операции-с-доской-и-отчётность">M-09. Операции с доской и отчётность</h3>
+<p><strong>Когда:</strong> нужен статус, синхронизация плана/карточек/коммитов, проверка
+установки или отчёт без изменения продукта.</p>
+<p><strong>Команды:</strong></p>
+<pre><code class="language-text">/harness-board-report
+/harness-board-update T-XXX
+/harness-board-update all
+/harness-doctor
+</code></pre>
+<p><strong>Роли:</strong> harness lead → orchestrator; <code>/harness-doctor</code> — build agent.</p>
+<p><strong>Артефакты:</strong> отчёт по задачам/багам; обновлённые plan/cards/checkpoints/bug index
+и commit hashes; производная activity/SVG; вывод doctor.</p>
+<p><strong>Критерии выхода:</strong> report доставлен без изменений; board согласован; для update
+сделан commit; для report ничего не изменено.</p>
+<p><strong>Нюансы:</strong> <code>board-update</code> запрещён при любой активной задаче. Activity-диаграмма
+не используется для сверки статусов: при расхождении побеждают plan/cards, и
+activity перерисовывается.</p>
+<hr />
+<h3 id="m-10-диагностика-harness-и-issue-лог">M-10. Диагностика harness и issue-лог</h3>
+<p><strong>Когда:</strong> проблема в самом harness: permission deny, MCP/RAG/model failure,
+git/board issue, checkpoint problem, blocker или workaround.</p>
+<p><strong>Команды и инструменты:</strong> skill <code>harness-issues</code>,
+<code>harness/scripts/new-issue.ps1</code>, <code>/harness-doctor</code>, follow-up task.</p>
+<p><strong>Роли:</strong> issue может создать любая роль; orchestrator проверяет индекс и
+включает issue в commit задачи.</p>
+<p><strong>Артефакты:</strong> <code>docs/issues/ISSUE-YYYYMMDD-HHMMSS-&lt;slug&gt;.md</code>,
+<code>docs/issues/README.md</code>; ссылка из карточки задачи; follow-up задача для
+prevention.</p>
+<p><strong>Критерии выхода:</strong> статус <code>resolved</code>/<code>workaround</code>; prevention записан; индекс
+согласован; issue не удалён.</p>
+<p><strong>Нюансы:</strong> issue не заменяет карточку задачи. Секреты в issue не пишутся.
+Продуктовые дефекты остаются в <code>docs/bugs/</code>. При <code>Subagent depth limit</code> или
+routing/permission ошибке нельзя выполнять работу роли inline — остановитесь,
+исправьте tool/plugin или начните новую root-сессию.</p>
+<hr />
+<h2 id="5-особые-случаи-special-вне-стандартного-workflow">5. Особые случаи (special, вне стандартного workflow)</h2>
+<h3 id="s-01-только-документацияadr">S-01. Только документация/ADR</h3>
+<p>Документация обновляется стадией <code>D-01</code> в feature-задаче или <code>B-04</code> в bugfix.
+Отдельная docs-only задача не является стандартным workflow: используйте обычный
+процесс или попросите orchestrator создать явно сокращённый feature-граф с
+waiver и причиной. Не придумывайте третий workflow.</p>
+<p>Артефакты: <code>README.md</code>, <code>docs/guides/*</code>, финализация ADR, <code>CHANGELOG.md</code>.
+Не меняйте смысл ADR/контрактов — только форму и полноту.</p>
+<h3 id="s-02-аудит-требований-reverse-engineering">S-02. Аудит требований / reverse engineering</h3>
+<p>Требования и e2e формализуются в <code>A-01</code>/<code>A-02</code> в рамках feature-плана; analyst
+использует <code>local-rag</code>. Отдельного analysis-only workflow нет. Если нужен именно
+аудит без реализации, согласуйте с orchestrator сокращённый граф и явные waivers;
+не выдавайте анализ за стандартную feature-задачу.</p>
+<p>Артефакты: <code>requirements-*.md</code>, <code>questions-*.md</code>, <code>glossary.md</code>,
+<code>e2e-use-cases-*.md</code>, <code>e2e-test-data-*.yaml</code> (если e2e в scope).</p>
+<h3 id="s-03-обслуживание-установки-и-версии">S-03. Обслуживание установки и версии</h3>
+<pre><code class="language-text">/harness-doctor
+harness/scripts/install.ps1
+harness/scripts/uninstall.ps1
+</code></pre>
+<p>Проверяются глобальная установка, <code>permission.task</code>, <code>subagent_depth</code>, issue-
+индекс, <code>num_ctx</code> vs <code>limit.context</code>, compaction plugin, RAG timeout. Версия
+проекта хранится в <code>harness/version.json</code>; глобальная — в
+<code>~/.config/opencode/harness/version.json</code>. Для заморозки версии используется
+vendor copy (если включён). Board и задачи при обслуживании не меняются.</p>
+<hr />
+<h2 id="6-карта-артефактов">6. Карта артефактов</h2>
+<figure class="diagram" tabindex="0" role="button" aria-label="Открыть диаграмму: Карта артефактов: фазы, роли, результаты" data-title="Карта артефактов: фазы, роли, результаты"><div class="diagram-frame"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJXQlMiIHN0eWxlPSJ3aWR0aDoxMTQ2cHg7aGVpZ2h0OjI4NDZweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iMTE0NnB4IiBoZWlnaHQ9IjI4NDZweCIgdmlld0JveD0iMCAwIDExNDYgMjg0NiIgem9vbUFuZFBhbj0ibWFnbmlmeSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSIgY29udGVudFN0eWxlVHlwZT0idGV4dC9jc3MiPjw/cGxhbnR1bWwgMS4yMDI2LjEwPz48ZGVmcy8+PGcgZm9udC1mYW1pbHk9InNhbnMtc2VyaWYiIGxlbmd0aEFkanVzdD0ic3BhY2luZyI+PGcgY2xhc3M9InRpdGxlIiBkYXRhLXNvdXJjZS1saW5lPSIzIj48dGV4dCB4PSI0MjQuNjEiIHk9IjM1LjEwNyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjk1LjEyOCIgZm9udC13ZWlnaHQ9IjcwMCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj7QmtCw0YDRgtCwINCw0YDRgtC10YTQsNC60YLQvtCyOiDRhNCw0LfRiywg0YDQvtC70LgsINGA0LXQt9GD0LvRjNGC0LDRgtGLPC90ZXh0PjwvZz48bGluZSB4MT0iNzUuNTE5IiB5MT0iMTE1LjU4MiIgeDI9Ijc1LjUxOSIgeTI9IjEzNS41ODIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjIwIiB5PSIxMzUuNTgyIiB3aWR0aD0iMTExLjAzNyIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjMwIiB5PSIxNTguNTMxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI5MS4wMzciIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+RmVhdHVyZSB3b3JrZmxvdzwvdGV4dD48bGluZSB4MT0iNzUuNTE5IiB5MT0iMjEyLjUwNCIgeDI9Ijg1LjUxOSIgeTI9IjIxMi41MDQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9Ijg1LjUxOSIgeT0iMTg2LjU0MyIgd2lkdGg9IjEyOS4zNDgiIGhlaWdodD0iNTEuOTIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI5NS41MTkiIHk9IjIwOS40OTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjEwOS4zNDgiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+UC0wMCDQn9C70LDQvdC40YDQvtCy0LDQvdC40LU8L3RleHQ+PHRleHQgeD0iOTUuNTE5IiB5PSIyMjUuNDUzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI3MS43NiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4ob3JjaGVzdHJhdG9yKTwvdGV4dD48bGluZSB4MT0iMTUwLjE5MiIgeTE9IjI3MS40NDUiIHgyPSIxNjAuMTkyIiB5Mj0iMjcxLjQ0NSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iMTYwLjE5MiIgeT0iMjUzLjQ2NSIgd2lkdGg9IjkyLjI3IiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iMTcwLjE5MiIgeT0iMjc2LjQxNCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iNzIuMjciIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+ZG9jcy9wbGFuLm1kPC90ZXh0PjxsaW5lIHgxPSIxNTAuMTkyIiB5MT0iMzIyLjQwNiIgeDI9IjE2MC4xOTIiIHkyPSIzMjIuNDA2IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSIxNjAuMTkyIiB5PSIzMDQuNDI2IiB3aWR0aD0iMTQyLjUzMSIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjE3MC4xOTIiIHk9IjMyNy4zNzUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjEyMi41MzEiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+ZG9jcy90YXNrcy9ULVhYWC0qLm1kPC90ZXh0PjxsaW5lIHgxPSIxNTAuMTkyIiB5MT0iMjM4LjQ2NSIgeDI9IjE1MC4xOTIiIHkyPSIzMjIuNDA2IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48bGluZSB4MT0iNzUuNTE5IiB5MT0iMzgxLjM0OCIgeDI9Ijg1LjUxOSIgeTI9IjM4MS4zNDgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9Ijg1LjUxOSIgeT0iMzU1LjM4NyIgd2lkdGg9IjExNC43NTgiIGhlaWdodD0iNTEuOTIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI5NS41MTkiIHk9IjM3OC4zMzYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9Ijk0Ljc1OCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5BLTAxINCi0YDQtdCx0L7QstCw0L3QuNGPPC90ZXh0Pjx0ZXh0IHg9Ijk1LjUxOSIgeT0iMzk0LjI5NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iNDQuMTE1IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPihhbmFseXN0KTwvdGV4dD48bGluZSB4MT0iMTQyLjg5NyIgeTE9IjQ0MC4yODkiIHgyPSIxNTIuODk3IiB5Mj0iNDQwLjI4OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iMTUyLjg5NyIgeT0iNDIyLjMwOSIgd2lkdGg9IjE5NC45MTQiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxNjIuODk3IiB5PSI0NDUuMjU4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxNzQuOTE0IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvYW5hbHlzaXMvcmVxdWlyZW1lbnRzLSoubWQ8L3RleHQ+PGxpbmUgeDE9IjE0Mi44OTciIHkxPSI0OTEuMjUiIHgyPSIxNTIuODk3IiB5Mj0iNDkxLjI1IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSIxNTIuODk3IiB5PSI0NzMuMjciIHdpZHRoPSIxNzUuODA3IiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iMTYyLjg5NyIgeT0iNDk2LjIxOSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTU1LjgwNyIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5kb2NzL2FuYWx5c2lzL3F1ZXN0aW9ucy0qLm1kPC90ZXh0PjxsaW5lIHgxPSIxNDIuODk3IiB5MT0iNTQyLjIxMSIgeDI9IjE1Mi44OTciIHkyPSI1NDIuMjExIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSIxNTIuODk3IiB5PSI1MjQuMjMiIHdpZHRoPSIxNTguMTY0IiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iMTYyLjg5NyIgeT0iNTQ3LjE4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxMzguMTY0IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvYW5hbHlzaXMvZ2xvc3NhcnkubWQ8L3RleHQ+PGxpbmUgeDE9IjE0Mi44OTciIHkxPSI0MDcuMzA5IiB4Mj0iMTQyLjg5NyIgeTI9IjU0Mi4yMTEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxsaW5lIHgxPSI3NS41MTkiIHkxPSI2MDEuMTUyIiB4Mj0iODUuNTE5IiB5Mj0iNjAxLjE1MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iODUuNTE5IiB5PSI1NzUuMTkxIiB3aWR0aD0iMTU4LjM0IiBoZWlnaHQ9IjUxLjkyMiIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iOTUuNTE5IiB5PSI1OTguMTQxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxMzguMzQiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+QS0wMiBFMkUgdXNlIGNhc2VzICsgZGF0YTwvdGV4dD48dGV4dCB4PSI5NS41MTkiIHk9IjYxNC4xMDIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjQ0LjExNSIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4oYW5hbHlzdCk8L3RleHQ+PGxpbmUgeDE9IjE2NC42ODgiIHkxPSI2NjAuMDk0IiB4Mj0iMTc0LjY4OCIgeTI9IjY2MC4wOTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjE3NC42ODgiIHk9IjY0Mi4xMTMiIHdpZHRoPSIxOTkuNTc4IiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iMTg0LjY4OCIgeT0iNjY1LjA2MyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTc5LjU3OCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5kb2NzL2FuYWx5c2lzL2UyZS11c2UtY2FzZXMtKi5tZDwvdGV4dD48bGluZSB4MT0iMTY0LjY4OCIgeTE9IjcxMS4wNTUiIHgyPSIxNzQuNjg4IiB5Mj0iNzExLjA1NSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iMTc0LjY4OCIgeT0iNjkzLjA3NCIgd2lkdGg9IjIwMy45MDgiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxODQuNjg4IiB5PSI3MTYuMDIzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxODMuOTA4IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvYW5hbHlzaXMvZTJlLXRlc3QtZGF0YS0qLnlhbWw8L3RleHQ+PGxpbmUgeDE9IjE2NC42ODgiIHkxPSI2MjcuMTEzIiB4Mj0iMTY0LjY4OCIgeTI9IjcxMS4wNTUiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxsaW5lIHgxPSI3NS41MTkiIHkxPSI3NjkuOTk2IiB4Mj0iODUuNTE5IiB5Mj0iNzY5Ljk5NiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iODUuNTE5IiB5PSI3NDQuMDM1IiB3aWR0aD0iMTQ5LjM1NyIgaGVpZ2h0PSI1MS45MjIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9Ijk1LjUxOSIgeT0iNzY2Ljk4NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTI5LjM1NyIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5VLTAxIFVYIGZsb3dzICsgc2NyZWVuczwvdGV4dD48dGV4dCB4PSI5NS41MTkiIHk9Ijc4Mi45NDUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjY5Ljk4NCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4odXgtZGVzaWduZXIpPC90ZXh0PjxsaW5lIHgxPSIxNjAuMTk3IiB5MT0iODI4LjkzOCIgeDI9IjE3MC4xOTciIHkyPSI4MjguOTM4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSIxNzAuMTk3IiB5PSI4MTAuOTU3IiB3aWR0aD0iMTUwLjc3NSIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjE4MC4xOTciIHk9IjgzMy45MDYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjEzMC43NzUiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+ZG9jcy91eC91c2VyLWZsb3dzLSoubWQ8L3RleHQ+PGxpbmUgeDE9IjE2MC4xOTciIHkxPSI4NzkuODk4IiB4Mj0iMTcwLjE5NyIgeTI9Ijg3OS44OTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjE3MC4xOTciIHk9Ijg2MS45MTgiIHdpZHRoPSIxMzUuNDMiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxODAuMTk3IiB5PSI4ODQuODY3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxMTUuNDMiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+ZG9jcy91eC9zY3JlZW5zLSoubWQ8L3RleHQ+PGxpbmUgeDE9IjE2MC4xOTciIHkxPSI3OTUuOTU3IiB4Mj0iMTYwLjE5NyIgeTI9Ijg3OS44OTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxsaW5lIHgxPSI3NS41MTkiIHkxPSI5MzguODQiIHgyPSI4NS41MTkiIHkyPSI5MzguODQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9Ijg1LjUxOSIgeT0iOTEyLjg3OSIgd2lkdGg9IjE3Ni45MDgiIGhlaWdodD0iNTEuOTIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI5NS41MTkiIHk9IjkzNS44MjgiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjE1Ni45MDgiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+VS0wMiBXaXJlZnJhbWVzICsgcHJvdG90eXBlPC90ZXh0Pjx0ZXh0IHg9Ijk1LjUxOSIgeT0iOTUxLjc4OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTA1Ljk2MSIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4odXgtZGVzaWduZXIsIGNvZGVyKTwvdGV4dD48bGluZSB4MT0iMTczLjk3MyIgeTE9Ijk5Ny43ODEiIHgyPSIxODMuOTczIiB5Mj0iOTk3Ljc4MSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iMTgzLjk3MyIgeT0iOTc5LjgwMSIgd2lkdGg9IjE4OC44MiIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjE5My45NzMiIHk9IjEwMDIuNzUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjE2OC44MiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5kb2NzL3V4L3dpcmVmcmFtZXMtKi5wdW1sLy5zdmc8L3RleHQ+PGxpbmUgeDE9IjE3My45NzMiIHkxPSIxMDQ4Ljc0MiIgeDI9IjE4My45NzMiIHkyPSIxMDQ4Ljc0MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iMTgzLjk3MyIgeT0iMTAzMC43NjIiIHdpZHRoPSIxMzQuNjUiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxOTMuOTczIiB5PSIxMDUzLjcxMSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTE0LjY1IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvdXgvdWktc3BlYy0qLm1kPC90ZXh0PjxsaW5lIHgxPSIxNzMuOTczIiB5MT0iMTA5OS43MDMiIHgyPSIxODMuOTczIiB5Mj0iMTA5OS43MDMiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjE4My45NzMiIHk9IjEwODEuNzIzIiB3aWR0aD0iMTU1LjE1MiIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjE5My45NzMiIHk9IjExMDQuNjcyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxMzUuMTUyIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvdXgvcHJvdG90eXBlL3NsdWcvKjwvdGV4dD48bGluZSB4MT0iMTczLjk3MyIgeTE9Ijk2NC44MDEiIHgyPSIxNzMuOTczIiB5Mj0iMTA5OS43MDMiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxsaW5lIHgxPSI3NS41MTkiIHkxPSIxMTU4LjY0NSIgeDI9Ijg1LjUxOSIgeTI9IjExNTguNjQ1IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSI4NS41MTkiIHk9IjExMzIuNjg0IiB3aWR0aD0iMTc1LjczNiIgaGVpZ2h0PSI1MS45MjIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9Ijk1LjUxOSIgeT0iMTE1NS42MzMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjE1NS43MzYiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+Ui0wMSBBcmNoaXRlY3R1cmUgKyBjb250cmFjdHM8L3RleHQ+PHRleHQgeD0iOTUuNTE5IiB5PSIxMTcxLjU5NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iNTIuNzExIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPihhcmNoaXRlY3QpPC90ZXh0PjxsaW5lIHgxPSIxNzMuMzg3IiB5MT0iMTIxNy41ODYiIHgyPSIxODMuMzg3IiB5Mj0iMTIxNy41ODYiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjE4My4zODciIHk9IjExOTkuNjA1IiB3aWR0aD0iMjA5LjMwNSIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjE5My4zODciIHk9IjEyMjIuNTU1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxODkuMzA1IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvYXJjaGl0ZWN0dXJlL2FyY2hpdGVjdHVyZS0qLm1kPC90ZXh0PjxsaW5lIHgxPSIxNzMuMzg3IiB5MT0iMTI2OC41NDciIHgyPSIxODMuMzg3IiB5Mj0iMTI2OC41NDciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjE4My4zODciIHk9IjEyNTAuNTY2IiB3aWR0aD0iMTYzLjk0MSIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjE5My4zODciIHk9IjEyNzMuNTE2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxNDMuOTQxIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvYXJjaGl0ZWN0dXJlL2Fkci0qLm1kPC90ZXh0PjxsaW5lIHgxPSIxNzMuMzg3IiB5MT0iMTMxOS41MDgiIHgyPSIxODMuMzg3IiB5Mj0iMTMxOS41MDgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjE4My4zODciIHk9IjEzMDEuNTI3IiB3aWR0aD0iMTk1LjAwOCIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjE5My4zODciIHk9IjEzMjQuNDc3IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxNzUuMDA4IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvYXJjaGl0ZWN0dXJlL2NvbnRyYWN0cy0qLm1kPC90ZXh0PjxsaW5lIHgxPSIxNzMuMzg3IiB5MT0iMTM3MC40NjkiIHgyPSIxODMuMzg3IiB5Mj0iMTM3MC40NjkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjE4My4zODciIHk9IjEzNTIuNDg4IiB3aWR0aD0iMjQzLjEyNSIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjE5My4zODciIHk9IjEzNzUuNDM4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIyMjMuMTI1IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvYXJjaGl0ZWN0dXJlL29wZW5hcGktYXBpLSoueWFtbHxqc29uPC90ZXh0PjxsaW5lIHgxPSIxNzMuMzg3IiB5MT0iMTE4NC42MDUiIHgyPSIxNzMuMzg3IiB5Mj0iMTM3MC40NjkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxsaW5lIHgxPSI3NS41MTkiIHkxPSIxNDI5LjQxIiB4Mj0iODUuNTE5IiB5Mj0iMTQyOS40MSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iODUuNTE5IiB5PSIxNDAzLjQ0OSIgd2lkdGg9IjE1NC40NzkiIGhlaWdodD0iNTEuOTIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI5NS41MTkiIHk9IjE0MjYuMzk4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxMzQuNDc5IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPlItMDIgRGlhZ3JhbXMgKyBoYW5kb2ZmPC90ZXh0Pjx0ZXh0IHg9Ijk1LjUxOSIgeT0iMTQ0Mi4zNTkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjUyLjcxMSIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4oYXJjaGl0ZWN0KTwvdGV4dD48bGluZSB4MT0iMTYyLjc1OCIgeTE9IjE0ODguMzUyIiB4Mj0iMTcyLjc1OCIgeTI9IjE0ODguMzUyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSIxNzIuNzU4IiB5PSIxNDcwLjM3MSIgd2lkdGg9IjE1MC42ODgiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxODIuNzU4IiB5PSIxNDkzLjMyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxMzAuNjg4IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmNvbXBvbmVudHMtKi5wdW1sLy5zdmc8L3RleHQ+PGxpbmUgeDE9IjE2Mi43NTgiIHkxPSIxNTM5LjMxMyIgeDI9IjE3Mi43NTgiIHkyPSIxNTM5LjMxMyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iMTcyLjc1OCIgeT0iMTUyMS4zMzIiIHdpZHRoPSIxNTcuMDEiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxODIuNzU4IiB5PSIxNTQ0LjI4MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTM3LjAxIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPnNlcXVlbmNlLXNjbi0qLnB1bWwvLnN2ZzwvdGV4dD48bGluZSB4MT0iMTYyLjc1OCIgeTE9IjE1OTAuMjczIiB4Mj0iMTcyLjc1OCIgeTI9IjE1OTAuMjczIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSIxNzIuNzU4IiB5PSIxNTcyLjI5MyIgd2lkdGg9IjE0Ni40MzQiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxODIuNzU4IiB5PSIxNTk1LjI0MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTI2LjQzNCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5kYXRhLW1vZGVsLSoucHVtbC8uc3ZnPC90ZXh0PjxsaW5lIHgxPSIxNjIuNzU4IiB5MT0iMTY0MS4yMzQiIHgyPSIxNzIuNzU4IiB5Mj0iMTY0MS4yMzQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjE3Mi43NTgiIHk9IjE2MjMuMjU0IiB3aWR0aD0iMTA5LjQxNCIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjE4Mi43NTgiIHk9IjE2NDYuMjAzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI4OS40MTQiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+Y2xhc3MtKi5wdW1sLy5zdmc8L3RleHQ+PGxpbmUgeDE9IjE2Mi43NTgiIHkxPSIxNjkyLjE5NSIgeDI9IjE3Mi43NTgiIHkyPSIxNjkyLjE5NSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iMTcyLjc1OCIgeT0iMTY3NC4yMTUiIHdpZHRoPSIxNTQuOTQxIiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iMTgyLjc1OCIgeT0iMTY5Ny4xNjQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjEzNC45NDEiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+c3dpbWxhbmUtc3ZjLSoucHVtbC8uc3ZnPC90ZXh0PjxsaW5lIHgxPSIxNjIuNzU4IiB5MT0iMTQ1NS4zNzEiIHgyPSIxNjIuNzU4IiB5Mj0iMTY5Mi4xOTUiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxsaW5lIHgxPSI3NS41MTkiIHkxPSIxNzUxLjEzNyIgeDI9Ijg1LjUxOSIgeTI9IjE3NTEuMTM3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSI4NS41MTkiIHk9IjE3MjUuMTc2IiB3aWR0aD0iMTY3LjcyNyIgaGVpZ2h0PSI1MS45MjIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9Ijk1LjUxOSIgeT0iMTc0OC4xMjUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjE0Ny43MjciIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+SS0wMSBJbXBsZW1lbnRhdGlvbiArIHRlc3RzPC90ZXh0Pjx0ZXh0IHg9Ijk1LjUxOSIgeT0iMTc2NC4wODYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjM3LjMzIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPihjb2Rlcik8L3RleHQ+PGxpbmUgeDE9IjE2OS4zODIiIHkxPSIxODEwLjA3OCIgeDI9IjE3OS4zODIiIHkyPSIxODEwLjA3OCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iMTc5LjM4MiIgeT0iMTc5Mi4wOTgiIHdpZHRoPSI3NC42MzkiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxODkuMzgyIiB5PSIxODE1LjA0NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iNTQuNjM5IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPnNyYy8sIHRlc3RzLzwvdGV4dD48bGluZSB4MT0iMTY5LjM4MiIgeTE9IjE4NjEuMDM5IiB4Mj0iMTc5LjM4MiIgeTI9IjE4NjEuMDM5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSIxNzkuMzgyIiB5PSIxODQzLjA1OSIgd2lkdGg9IjE3OC4zNSIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjE4OS4zODIiIHk9IjE4NjYuMDA4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxNTguMzUiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+RG9ja2VyZmlsZSwgY29tcG9zZSwgTWFrZWZpbGU8L3RleHQ+PGxpbmUgeDE9IjE2OS4zODIiIHkxPSIxNzc3LjA5OCIgeDI9IjE2OS4zODIiIHkyPSIxODYxLjAzOSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PGxpbmUgeDE9Ijc1LjUxOSIgeTE9IjE5MTkuOTgiIHgyPSI4NS41MTkiIHkyPSIxOTE5Ljk4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSI4NS41MTkiIHk9IjE4OTQuMDIiIHdpZHRoPSIxMjcuMzQ0IiBoZWlnaHQ9IjUxLjkyMiIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iOTUuNTE5IiB5PSIxOTE2Ljk2OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTA3LjM0NCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5JLTAyIEUyRSBhdXRvbWF0aW9uPC90ZXh0Pjx0ZXh0IHg9Ijk1LjUxOSIgeT0iMTkzMi45MyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMzcuMzMiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+KGNvZGVyKTwvdGV4dD48bGluZSB4MT0iMTQ5LjE5IiB5MT0iMTk3OC45MjIiIHgyPSIxNTkuMTkiIHkyPSIxOTc4LjkyMiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iMTU5LjE5IiB5PSIxOTYwLjk0MSIgd2lkdGg9IjcyLjk2MyIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjE2OS4xOSIgeT0iMTk4My44OTEiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjUyLjk2MyIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj50ZXN0cy9lMmUvPC90ZXh0PjxsaW5lIHgxPSIxNDkuMTkiIHkxPSIyMDI5Ljg4MyIgeDI9IjE1OS4xOSIgeTI9IjIwMjkuODgzIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSIxNTkuMTkiIHk9IjIwMTEuOTAyIiB3aWR0aD0iOTguODM4IiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iMTY5LjE5IiB5PSIyMDM0Ljg1MiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iNzguODM4IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPnNjcmlwdHMvZTJlLnBzMTwvdGV4dD48bGluZSB4MT0iMTQ5LjE5IiB5MT0iMjA4MC44NDQiIHgyPSIxNTkuMTkiIHkyPSIyMDgwLjg0NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iMTU5LjE5IiB5PSIyMDYyLjg2MyIgd2lkdGg9IjE2Ny4yMDUiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxNjkuMTkiIHk9IjIwODUuODEzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxNDcuMjA1IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPnNjcmlwdHMvdmFsaWRhdGUtZTJlLWRhdGEucHk8L3RleHQ+PGxpbmUgeDE9IjE0OS4xOSIgeTE9IjE5NDUuOTQxIiB4Mj0iMTQ5LjE5IiB5Mj0iMjA4MC44NDQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxsaW5lIHgxPSI3NS41MTkiIHkxPSIyMTM5Ljc4NSIgeDI9Ijg1LjUxOSIgeTI9IjIxMzkuNzg1IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSI4NS41MTkiIHk9IjIxMTMuODI0IiB3aWR0aD0iMTU3LjgyNCIgaGVpZ2h0PSI1MS45MjIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9Ijk1LjUxOSIgeT0iMjEzNi43NzMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjEzNy44MjQiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+US0wMSBFMkUgcGxhbiArIGNvdmVyYWdlPC90ZXh0Pjx0ZXh0IHg9Ijk1LjUxOSIgeT0iMjE1Mi43MzQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjIwLjQxNCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4ocWEpPC90ZXh0PjxsaW5lIHgxPSIxNjQuNDMxIiB5MT0iMjE5OC43MjciIHgyPSIxNzQuNDMxIiB5Mj0iMjE5OC43MjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjE3NC40MzEiIHk9IjIxODAuNzQ2IiB3aWR0aD0iMTQzLjczOCIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjE4NC40MzEiIHk9IjIyMDMuNjk1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxMjMuNzM4IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvcWEvZTJlLXBsYW4tKi5tZDwvdGV4dD48bGluZSB4MT0iMTY0LjQzMSIgeTE9IjIxNjUuNzQ2IiB4Mj0iMTY0LjQzMSIgeTI9IjIxOTguNzI3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48bGluZSB4MT0iNzUuNTE5IiB5MT0iMjI1Ny42NjgiIHgyPSI4NS41MTkiIHkyPSIyMjU3LjY2OCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iODUuNTE5IiB5PSIyMjMxLjcwNyIgd2lkdGg9IjE0MC45NDMiIGhlaWdodD0iNTEuOTIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI5NS41MTkiIHk9IjIyNTQuNjU2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxMjAuOTQzIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPlEtMDIgUUEgKyBhY2NlcHRhbmNlPC90ZXh0Pjx0ZXh0IHg9Ijk1LjUxOSIgeT0iMjI3MC42MTciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9Ijc0Ljc0OCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4ocWEsIHFhLXZpc2lvbik8L3RleHQ+PGxpbmUgeDE9IjE1NS45OSIgeTE9IjIzMTYuNjA5IiB4Mj0iMTY1Ljk5IiB5Mj0iMjMxNi42MDkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjE2NS45OSIgeT0iMjI5OC42MjkiIHdpZHRoPSIxNTMuNjUyIiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iMTc1Ljk5IiB5PSIyMzIxLjU3OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTMzLjY1MiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5kb2NzL3FhL2UyZS1yZXBvcnQtKi5tZDwvdGV4dD48bGluZSB4MT0iMTU1Ljk5IiB5MT0iMjM2Ny41NyIgeDI9IjE2NS45OSIgeTI9IjIzNjcuNTciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjE2NS45OSIgeT0iMjM0OS41OSIgd2lkdGg9IjE1OC40MjgiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxNzUuOTkiIHk9IjIzNzIuNTM5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxMzguNDI4IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvcWEvcmV2aWV3LVQtWFhYLm1kPC90ZXh0PjxsaW5lIHgxPSIxNTUuOTkiIHkxPSIyNDE4LjUzMSIgeDI9IjE2NS45OSIgeTI9IjI0MTguNTMxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSIxNjUuOTkiIHk9IjI0MDAuNTUxIiB3aWR0aD0iMTY2LjM4NSIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjE3NS45OSIgeT0iMjQyMy41IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxNDYuMzg1IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvcWEvdmlzaW9uLXJldmlldy0qLm1kPC90ZXh0PjxsaW5lIHgxPSIxNTUuOTkiIHkxPSIyMjgzLjYyOSIgeDI9IjE1NS45OSIgeTI9IjI0MTguNTMxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48bGluZSB4MT0iNzUuNTE5IiB5MT0iMjQ3Ny40NzMiIHgyPSI4NS41MTkiIHkyPSIyNDc3LjQ3MyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iODUuNTE5IiB5PSIyNDUxLjUxMiIgd2lkdGg9IjEzMS41ODYiIGhlaWdodD0iNTEuOTIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI5NS41MTkiIHk9IjI0NzQuNDYxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxMTEuNTg2IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPkQtMDEgRG9jdW1lbnRhdGlvbjwvdGV4dD48dGV4dCB4PSI5NS41MTkiIHk9IjI0OTAuNDIyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI2MS45NDUiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+KGRvYy13cml0ZXIpPC90ZXh0PjxsaW5lIHgxPSIxNTEuMzEyIiB5MT0iMjUzNi40MTQiIHgyPSIxNjEuMzEyIiB5Mj0iMjUzNi40MTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjE2MS4zMTIiIHk9IjI1MTguNDM0IiB3aWR0aD0iODYuMjUyIiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iMTcxLjMxMiIgeT0iMjU0MS4zODMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjY2LjI1MiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5SRUFETUUubWQ8L3RleHQ+PGxpbmUgeDE9IjE1MS4zMTIiIHkxPSIyNTg3LjM3NSIgeDI9IjE2MS4zMTIiIHkyPSIyNTg3LjM3NSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iMTYxLjMxMiIgeT0iMjU2OS4zOTUiIHdpZHRoPSI5NC4yODUiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxNzEuMzEyIiB5PSIyNTkyLjM0NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iNzQuMjg1IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvZ3VpZGVzLyo8L3RleHQ+PGxpbmUgeDE9IjE1MS4zMTIiIHkxPSIyNjM4LjMzNiIgeDI9IjE2MS4zMTIiIHkyPSIyNjM4LjMzNiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iMTYxLjMxMiIgeT0iMjYyMC4zNTUiIHdpZHRoPSI5NS44NSIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjE3MS4zMTIiIHk9IjI2NDMuMzA1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI3NS44NSIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5maW5hbGl6ZWQgQURSczwvdGV4dD48bGluZSB4MT0iMTUxLjMxMiIgeTE9IjI1MDMuNDM0IiB4Mj0iMTUxLjMxMiIgeTI9IjI2MzguMzM2IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48bGluZSB4MT0iNzUuNTE5IiB5MT0iMjY5Ny4yNzciIHgyPSI4NS41MTkiIHkyPSIyNjk3LjI3NyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iODUuNTE5IiB5PSIyNjcxLjMxNiIgd2lkdGg9IjEyOC44OTYiIGhlaWdodD0iNTEuOTIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI5NS41MTkiIHk9IjI2OTQuMjY2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxMDYuMTcyIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPkYtMDEgQ2xvc3VyZSArIENQLUY8L3RleHQ+PHRleHQgeD0iOTUuNTE5IiB5PSIyNzEwLjIyNyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTA4Ljg5NiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4ob3JjaGVzdHJhdG9yICsgbGVhZCk8L3RleHQ+PGxpbmUgeDE9IjE0OS45NjciIHkxPSIyNzU2LjIxOSIgeDI9IjE1OS45NjciIHkyPSIyNzU2LjIxOSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iMTU5Ljk2NyIgeT0iMjczOC4yMzgiIHdpZHRoPSIxNjQuMDgyIiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iMTY5Ljk2NyIgeT0iMjc2MS4xODgiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjE0NC4wODIiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+ZG9jcy9wbGFuLm1kLCBjYXJkLCBhY3Rpdml0eTwvdGV4dD48bGluZSB4MT0iMTQ5Ljk2NyIgeTE9IjI4MDcuMTgiIHgyPSIxNTkuOTY3IiB5Mj0iMjgwNy4xOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iMTU5Ljk2NyIgeT0iMjc4OS4xOTkiIHdpZHRoPSI3Ny41NDUiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSIxNjkuOTY3IiB5PSIyODEyLjE0OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iNTcuNTQ1IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmdpdCBjb21taXQ8L3RleHQ+PGxpbmUgeDE9IjE0OS45NjciIHkxPSIyNzIzLjIzOCIgeDI9IjE0OS45NjciIHkyPSIyODA3LjE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48bGluZSB4MT0iNzUuNTE5IiB5MT0iMTcxLjU0MyIgeDI9Ijc1LjUxOSIgeTI9IjI2OTcuMjc3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48bGluZSB4MT0iNDk4LjcxMSIgeTE9IjExNS41ODIiIHgyPSI0OTguNzExIiB5Mj0iMTM1LjU4MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iNDQ2LjUxMiIgeT0iMTM1LjU4MiIgd2lkdGg9IjEwNC4zOTgiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI0NTYuNTEyIiB5PSIxNTguNTMxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI4NC4zOTgiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+QnVnZml4IHdvcmtmbG93PC90ZXh0PjxsaW5lIHgxPSI0OTguNzExIiB5MT0iMjEyLjUwNCIgeDI9IjUwOC43MTEiIHkyPSIyMTIuNTA0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSI1MDguNzExIiB5PSIxODYuNTQzIiB3aWR0aD0iOTEuNzYiIGhlaWdodD0iNTEuOTIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI1MTguNzExIiB5PSIyMDkuNDkyIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI2MC43MTUiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+Qi0wMCBUcmlhZ2U8L3RleHQ+PHRleHQgeD0iNTE4LjcxMSIgeT0iMjI1LjQ1MyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iNzEuNzYiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+KG9yY2hlc3RyYXRvcik8L3RleHQ+PGxpbmUgeDE9IjU1NC41OTEiIHkxPSIyNzEuNDQ1IiB4Mj0iNTY0LjU5MSIgeTI9IjI3MS40NDUiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjU2NC41OTEiIHk9IjI1My40NjUiIHdpZHRoPSIxNTkuMjgzIiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iNTc0LjU5MSIgeT0iMjc2LjQxNCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTM5LjI4MyIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5kb2NzL2J1Z3MvQlVHLVhYWC0qLm1kPC90ZXh0PjxsaW5lIHgxPSI1NTQuNTkxIiB5MT0iMzIyLjQwNiIgeDI9IjU2NC41OTEiIHkyPSIzMjIuNDA2IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSI1NjQuNTkxIiB5PSIzMDQuNDI2IiB3aWR0aD0iMTQ2LjM0IiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iNTc0LjU5MSIgeT0iMzI3LjM3NSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTI2LjM0IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvYnVncy9SRUFETUUubWQ8L3RleHQ+PGxpbmUgeDE9IjU1NC41OTEiIHkxPSIzNzMuMzY3IiB4Mj0iNTY0LjU5MSIgeTI9IjM3My4zNjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjU2NC41OTEiIHk9IjM1NS4zODciIHdpZHRoPSIxMTkuNzMyIiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iNTc0LjU5MSIgeT0iMzc4LjMzNiIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iOTkuNzMyIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPnBlbmRpbmcgdGFzayBjYXJkczwvdGV4dD48bGluZSB4MT0iNTU0LjU5MSIgeTE9IjIzOC40NjUiIHgyPSI1NTQuNTkxIiB5Mj0iMzczLjM2NyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PGxpbmUgeDE9IjQ5OC43MTEiIHkxPSI0MzIuMzA5IiB4Mj0iNTA4LjcxMSIgeTI9IjQzMi4zMDkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjUwOC43MTEiIHk9IjQwNi4zNDgiIHdpZHRoPSIxODkuOTg2IiBoZWlnaHQ9IjUxLjkyMiIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iNTE4LjcxMSIgeT0iNDI5LjI5NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTY5Ljk4NiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5CLTAxIFJlcHJvZHVjdGlvbiArIHJvb3QgY2F1c2U8L3RleHQ+PHRleHQgeD0iNTE4LjcxMSIgeT0iNDQ1LjI1OCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMzcuMzMiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+KGNvZGVyKTwvdGV4dD48bGluZSB4MT0iNjAzLjcwNCIgeTE9IjQ5MS4yNSIgeDI9IjYxMy43MDQiIHkyPSI0OTEuMjUiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjYxMy43MDQiIHk9IjQ3My4yNyIgd2lkdGg9IjEzMy4zODUiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI2MjMuNzA0IiB5PSI0OTYuMjE5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxMTMuMzg1IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmZhaWxpbmcgcmVncmVzc2lvbiB0ZXN0PC90ZXh0PjxsaW5lIHgxPSI2MDMuNzA0IiB5MT0iNTQyLjIxMSIgeDI9IjYxMy43MDQiIHkyPSI1NDIuMjExIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSI2MTMuNzA0IiB5PSI1MjQuMjMiIHdpZHRoPSI2My4xNzgiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI2MjMuNzA0IiB5PSI1NDcuMTgiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjQzLjE3OCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5jYXJkIGxvZzwvdGV4dD48bGluZSB4MT0iNjAzLjcwNCIgeTE9IjQ1OC4yNyIgeDI9IjYwMy43MDQiIHkyPSI1NDIuMjExIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48bGluZSB4MT0iNDk4LjcxMSIgeTE9IjYwMS4xNTIiIHgyPSI1MDguNzExIiB5Mj0iNjAxLjE1MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iNTA4LjcxMSIgeT0iNTc1LjE5MSIgd2lkdGg9IjE3NS43NDIiIGhlaWdodD0iNTEuOTIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI1MTguNzExIiB5PSI1OTguMTQxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxNTUuNzQyIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPkItMDIgTWluaW1hbCBmaXggKyByZWdyZXNzaW9uPC90ZXh0Pjx0ZXh0IHg9IjUxOC43MTEiIHk9IjYxNC4xMDIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjM3LjMzIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPihjb2Rlcik8L3RleHQ+PGxpbmUgeDE9IjU5Ni41ODIiIHkxPSI2NjAuMDk0IiB4Mj0iNjA2LjU4MiIgeTI9IjY2MC4wOTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjYwNi41ODIiIHk9IjY0Mi4xMTMiIHdpZHRoPSI4NS4yOTEiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI2MTYuNTgyIiB5PSI2NjUuMDYzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI2NS4yOTEiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+Y29kZSArIHRlc3RzPC90ZXh0PjxsaW5lIHgxPSI1OTYuNTgyIiB5MT0iNjI3LjExMyIgeDI9IjU5Ni41ODIiIHkyPSI2NjAuMDk0IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48bGluZSB4MT0iNDk4LjcxMSIgeTE9IjcxOS4wMzUiIHgyPSI1MDguNzExIiB5Mj0iNzE5LjAzNSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iNTA4LjcxMSIgeT0iNjkzLjA3NCIgd2lkdGg9IjE3Ny4wNDMiIGhlaWdodD0iNTEuOTIyIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI1MTguNzExIiB5PSI3MTYuMDIzIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSIxNTcuMDQzIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPkItMDMgSW5kZXBlbmRlbnQgdmVyaWZpY2F0aW9uPC90ZXh0Pjx0ZXh0IHg9IjUxOC43MTEiIHk9IjczMS45ODQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjIwLjQxNCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4ocWEpPC90ZXh0PjxsaW5lIHgxPSI1OTcuMjMyIiB5MT0iNzc3Ljk3NyIgeDI9IjYwNy4yMzIiIHkyPSI3NzcuOTc3IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSI2MDcuMjMyIiB5PSI3NTkuOTk2IiB3aWR0aD0iMTU4LjQyOCIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjYxNy4yMzIiIHk9Ijc4Mi45NDUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjEzOC40MjgiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+ZG9jcy9xYS9yZXZpZXctVC1YWFgubWQ8L3RleHQ+PGxpbmUgeDE9IjU5Ny4yMzIiIHkxPSI3NDQuOTk2IiB4Mj0iNTk3LjIzMiIgeTI9Ijc3Ny45NzciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxsaW5lIHgxPSI0OTguNzExIiB5MT0iODM2LjkxOCIgeDI9IjUwOC43MTEiIHkyPSI4MzYuOTE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSI1MDguNzExIiB5PSI4MTAuOTU3IiB3aWR0aD0iMTQwLjgwOSIgaGVpZ2h0PSI1MS45MjIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjUxOC43MTEiIHk9IjgzMy45MDYiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjEyMC44MDkiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+Qi0wNCBEb2NzIC8gY2hhbmdlbG9nPC90ZXh0Pjx0ZXh0IHg9IjUxOC43MTEiIHk9Ijg0OS44NjciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjExMS43MjciIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+KGRvYy13cml0ZXIsIG9wdGlvbmFsKTwvdGV4dD48bGluZSB4MT0iNTc5LjExNSIgeTE9Ijg5NS44NTkiIHgyPSI1ODkuMTE1IiB5Mj0iODk1Ljg1OSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iNTg5LjExNSIgeT0iODc3Ljg3OSIgd2lkdGg9IjEwOS45IiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iNTk5LjExNSIgeT0iOTAwLjgyOCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iODkuOSIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5DSEFOR0VMT0cubWQ8L3RleHQ+PGxpbmUgeDE9IjU3OS4xMTUiIHkxPSI5NDYuODIiIHgyPSI1ODkuMTE1IiB5Mj0iOTQ2LjgyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSI1ODkuMTE1IiB5PSI5MjguODQiIHdpZHRoPSI5NC4yODUiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI1OTkuMTE1IiB5PSI5NTEuNzg5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI3NC4yODUiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+ZG9jcy9ndWlkZXMvKjwvdGV4dD48bGluZSB4MT0iNTc5LjExNSIgeTE9Ijg2Mi44NzkiIHgyPSI1NzkuMTE1IiB5Mj0iOTQ2LjgyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48bGluZSB4MT0iNDk4LjcxMSIgeTE9IjEwMDUuNzYyIiB4Mj0iNTA4LjcxMSIgeTI9IjEwMDUuNzYyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSI1MDguNzExIiB5PSI5NzkuODAxIiB3aWR0aD0iMTY3Ljg0NCIgaGVpZ2h0PSI1MS45MjIiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjUxOC43MTEiIHk9IjEwMDIuNzUiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjE0Ny44NDQiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+Qi0wNSBDbG9zdXJlICsgcG9zdG1vcnRlbTwvdGV4dD48dGV4dCB4PSI1MTguNzExIiB5PSIxMDE4LjcxMSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTA4Ljg5NiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4ob3JjaGVzdHJhdG9yICsgbGVhZCk8L3RleHQ+PGxpbmUgeDE9IjU5Mi42MzMiIHkxPSIxMDY0LjcwMyIgeDI9IjYwMi42MzMiIHkyPSIxMDY0LjcwMyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iNjAyLjYzMyIgeT0iMTA0Ni43MjMiIHdpZHRoPSIxMTguNzQyIiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iNjEyLjYzMyIgeT0iMTA2OS42NzIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9Ijk4Ljc0MiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5idWcgc3RhdHVzICsgaW5kZXg8L3RleHQ+PGxpbmUgeDE9IjU5Mi42MzMiIHkxPSIxMTE1LjY2NCIgeDI9IjYwMi42MzMiIHkyPSIxMTE1LjY2NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iNjAyLjYzMyIgeT0iMTA5Ny42ODQiIHdpZHRoPSIxNjcuMjQ2IiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iNjEyLjYzMyIgeT0iMTEyMC42MzMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjE0Ny4yNDYiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+cGxhbi9jYXJkL2FjdGl2aXR5ICsgY29tbWl0PC90ZXh0PjxsaW5lIHgxPSI1OTIuNjMzIiB5MT0iMTAzMS43MjMiIHgyPSI1OTIuNjMzIiB5Mj0iMTExNS42NjQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxsaW5lIHgxPSI0OTguNzExIiB5MT0iMTcxLjU0MyIgeDI9IjQ5OC43MTEiIHkyPSIxMDA1Ljc2MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PGxpbmUgeDE9Ijg0MS42MTUiIHkxPSIxMTUuNTgyIiB4Mj0iODQxLjYxNSIgeTI9IjEzNS41ODIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9Ijc4OS44NzkiIHk9IjEzNS41ODIiIHdpZHRoPSIxMDMuNDczIiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iNzk5Ljg3OSIgeT0iMTU4LjUzMSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iODMuNDczIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPlNoYXJlZCAvINCy0YHQtdCz0LTQsDwvdGV4dD48bGluZSB4MT0iODQxLjYxNSIgeTE9IjIwNC41MjMiIHgyPSI4NTEuNjE1IiB5Mj0iMjA0LjUyMyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iODUxLjYxNSIgeT0iMTg2LjU0MyIgd2lkdGg9Ijg2LjUzMyIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9Ijg2MS42MTUiIHk9IjIwOS40OTIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjY2LjUzMyIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5PcmNoZXN0cmF0b3I8L3RleHQ+PGxpbmUgeDE9Ijg5NC44ODIiIHkxPSIyNTUuNDg0IiB4Mj0iOTA0Ljg4MiIgeTI9IjI1NS40ODQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjkwNC44ODIiIHk9IjIzNy41MDQiIHdpZHRoPSI5Mi4yNyIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjkxNC44ODIiIHk9IjI2MC40NTMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjcyLjI3IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmRvY3MvcGxhbi5tZDwvdGV4dD48bGluZSB4MT0iODk0Ljg4MiIgeTE9IjMwNi40NDUiIHgyPSI5MDQuODgyIiB5Mj0iMzA2LjQ0NSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iOTA0Ljg4MiIgeT0iMjg4LjQ2NSIgd2lkdGg9IjgwLjQwNCIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjkxNC44ODIiIHk9IjMxMS40MTQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjYwLjQwNCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5kb2NzL3Rhc2tzLzwvdGV4dD48bGluZSB4MT0iODk0Ljg4MiIgeTE9IjM1Ny40MDYiIHgyPSI5MDQuODgyIiB5Mj0iMzU3LjQwNiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iOTA0Ljg4MiIgeT0iMzM5LjQyNiIgd2lkdGg9IjExNy4xNDMiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI5MTQuODgyIiB5PSIzNjIuMzc1IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI5Ny4xNDMiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+ZG9jcy9jaGVja3BvaW50cy88L3RleHQ+PGxpbmUgeDE9Ijg5NC44ODIiIHkxPSI0MDguMzY3IiB4Mj0iOTA0Ljg4MiIgeTI9IjQwOC4zNjciIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjkwNC44ODIiIHk9IjM5MC4zODciIHdpZHRoPSI4MC4wODgiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI5MTQuODgyIiB5PSI0MTMuMzM2IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI2MC4wODgiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+ZG9jcy9idWdzLzwvdGV4dD48bGluZSB4MT0iODk0Ljg4MiIgeTE9IjQ1OS4zMjgiIHgyPSI5MDQuODgyIiB5Mj0iNDU5LjMyOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iOTA0Ljg4MiIgeT0iNDQxLjM0OCIgd2lkdGg9IjE0MS40MyIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjkxNC44ODIiIHk9IjQ2NC4yOTciIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjEyMS40MyIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5kb2NzL2FjdGl2aXR5LnB1bWwvLnN2ZzwvdGV4dD48bGluZSB4MT0iODk0Ljg4MiIgeTE9IjIyMi41MDQiIHgyPSI4OTQuODgyIiB5Mj0iNDU5LjMyOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PGxpbmUgeDE9Ijg0MS42MTUiIHkxPSI1MTAuMjg5IiB4Mj0iODUxLjYxNSIgeTI9IjUxMC4yODkiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9Ijg1MS42MTUiIHk9IjQ5Mi4zMDkiIHdpZHRoPSI2Mi4zMTYiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI4NjEuNjE1IiB5PSI1MTUuMjU4IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEyIiB0ZXh0TGVuZ3RoPSI0Mi4zMTYiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+QWxsIHJvbGVzPC90ZXh0PjxsaW5lIHgxPSI4ODIuNzczIiB5MT0iNTYxLjI1IiB4Mj0iODkyLjc3MyIgeTI9IjU2MS4yNSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iODkyLjc3MyIgeT0iNTQzLjI3IiB3aWR0aD0iMTQ1LjM5NiIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjkwMi43NzMiIHk9IjU2Ni4yMTkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjEyNS4zOTYiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+ZG9jcy9pc3N1ZXMvSVNTVUUtKi5tZDwvdGV4dD48bGluZSB4MT0iODgyLjc3MyIgeTE9IjYxMi4yMTEiIHgyPSI4OTIuNzczIiB5Mj0iNjEyLjIxMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iODkyLjc3MyIgeT0iNTk0LjIzIiB3aWR0aD0iMTUxLjU4NCIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjkwMi43NzMiIHk9IjYxNy4xOCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTMxLjU4NCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5kb2NzL2lzc3Vlcy9SRUFETUUubWQ8L3RleHQ+PGxpbmUgeDE9Ijg4Mi43NzMiIHkxPSI1MjguMjciIHgyPSI4ODIuNzczIiB5Mj0iNjEyLjIxMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PGxpbmUgeDE9Ijg0MS42MTUiIHkxPSI2NjMuMTcyIiB4Mj0iODUxLjYxNSIgeTI9IjY2My4xNzIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9Ijg1MS42MTUiIHk9IjY0NS4xOTEiIHdpZHRoPSIxMjMuMDg0IiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iODYxLjYxNSIgeT0iNjY4LjE0MSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTAzLjA4NCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5Vc2VyICsgb3JjaGVzdHJhdG9yPC90ZXh0PjxsaW5lIHgxPSI5MTMuMTU3IiB5MT0iNzE0LjEzMyIgeDI9IjkyMy4xNTciIHkyPSI3MTQuMTMzIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48cmVjdCB4PSI5MjMuMTU3IiB5PSI2OTYuMTUyIiB3aWR0aD0iMjAyLjE5MSIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9IjkzMy4xNTciIHk9IjcxOS4xMDIiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjE4Mi4xOTEiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+ZG9jcy9jaGVja3BvaW50cy9ULVhYWC1DUC1OLm1kPC90ZXh0PjxsaW5lIHgxPSI5MTMuMTU3IiB5MT0iNjgxLjE1MiIgeDI9IjkxMy4xNTciIHkyPSI3MTQuMTMzIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48bGluZSB4MT0iODQxLjYxNSIgeTE9Ijc2NS4wOTQiIHgyPSI4NTEuNjE1IiB5Mj0iNzY1LjA5NCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHJlY3QgeD0iODUxLjYxNSIgeT0iNzQ3LjExMyIgd2lkdGg9IjM1LjIwNSIgaGVpZ2h0PSIzNS45NjEiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjx0ZXh0IHg9Ijg2MS42MTUiIHk9Ijc3MC4wNjMiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTIiIHRleHRMZW5ndGg9IjE1LjIwNSIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5HaXQ8L3RleHQ+PGxpbmUgeDE9Ijg2OS4yMTgiIHkxPSI4MTYuMDU1IiB4Mj0iODc5LjIxOCIgeTI9IjgxNi4wNTUiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9Ijg3OS4yMTgiIHk9Ijc5OC4wNzQiIHdpZHRoPSIxMTQuNjExIiBoZWlnaHQ9IjM1Ljk2MSIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PHRleHQgeD0iODg5LjIxOCIgeT0iODIxLjAyMyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iOTQuNjExIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmNvbW1pdHMgVC1YWFg6IC4uLjwvdGV4dD48bGluZSB4MT0iODY5LjIxOCIgeTE9Ijc4My4wNzQiIHgyPSI4NjkuMjE4IiB5Mj0iODE2LjA1NSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxLjU7Ii8+PGxpbmUgeDE9Ijg0MS42MTUiIHkxPSIxNzEuNTQzIiB4Mj0iODQxLjYxNSIgeTI9Ijc2NS4wOTQiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxsaW5lIHgxPSI3NS41MTkiIHkxPSIxMTUuNTgyIiB4Mj0iODQxLjYxNSIgeTI9IjExNS41ODIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MS41OyIvPjxyZWN0IHg9IjM5Ni44OTkiIHk9IjU5LjYyMSIgd2lkdGg9IjEyMy4zMzYiIGhlaWdodD0iMzUuOTYxIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48dGV4dCB4PSI0MDYuODk5IiB5PSI4Mi41NyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMiIgdGV4dExlbmd0aD0iMTAzLjMzNiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj7QkNGA0YLQtdGE0LDQutGC0YsgaGFybmVzczwvdGV4dD48bGluZSB4MT0iNDU4LjU2NyIgeTE9Ijk1LjU4MiIgeDI9IjQ1OC41NjciIHkyPSIxMTUuNTgyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjEuNTsiLz48P3BsYW50dW1sLXNyYyBaTFJEU2tENDRCeHhBVmU4WmNLdnZrVW1mdEtJOXdJQVAzVjlraVkxb3dtcUxXUUZEQ2hDbzh1ZjNpbDJCTEoxY0dqTEY0NDhmRFhZMnZ2MVZZRXdIdjhaQUt4V2E5SlNGcl9fcERTenl6bk9ma3RZalVjT2NLWElmYmFDOFAtb0pEZnpiVFhaNWRDdXV2N1lDM2RpTTY0YlhfcGRfNlJyUGxLc2x1N291c3hyVk53Sl91TFZfLUl0cHkzei1kRHJ0T0ZMNnZJeXB6LXZocGtLVlBVX05fcjBoZ2t0Zy1qRWZtbHZKcXM0ckpMU0M5cm1PcGhUQmtucFBaRkRPUTdxUjJoTDBjTFRVRWFEMWYzX1doV3QtVF92RW5WWmpsWkV4eHZDRmIwd2tFMzZRY1FMX2YweWtYMmdtRllmUDRhXzNjaUlveXBDLUEteXlfRHBocmtnT0VHRGpZN19ySU55c3B0cXdhVTRQV2NKSXNGaGc4TDg2NV9wb3FuZTdsRjRjWkxRcy1Xb215bzRJWHd0WUFHb1hrYmJCUHFYWjhUWm8wbzdXMWJrTzBqMlBqYl9mQ0U3dDRDTnB4YXk2ZXNpQkFSYTRJOVFCTGFpTlRXOVRNNW8zakhyWWNXMnBOYllDNlhzdk9OU1kyWlhaVXZjTHB3NnF2dnBRQ1QzUEdibXQtUzk1Vk81VGNvQWQ3RExmTGZQUFBTZlJxUmZHUTMyMXk0TVFxLTRKQkRPLWRxcFpyZTkyUy1hRkRZR3BKZ0tSc0dNLUxzTnFJZExGNEJzMkNpM254aWozOXFXYW05QmJSREFyTVh1cFJ4bnVxN0Y2dVFYVmJBXzNsa2FiS2Z2bWJCWHFMem5Uanp5UExISTVKRTRGUzRZeDE0cnp1OGJlUGZFRHZHSGczWExJS2RSTFlTRGFmZWQwVlRDYTZwZUN2NGNuaUVIM3RNMVA2T0p1NEI0RThTOEUwX1FNWllhMHBZQ0stY2NZRDZXT0VSNEpzZl9kR0w2MXR3bHFGWTVQNHk1Q3d3ZEdsOVVLUDcxWm9Dc3VvSWdxOGo5T2ZiTGlLRGxlSFB1RTFDYjlkOU1mOE1hZHZoamZkM0VmQzA2Uzh6Y1kzaEhKdlNrcFdiTEdONWV1SldBcFJiYzRSN3dhak1mU3lkU185N1BfTFlTSzlPZDhfSFpHUzFKb3gzeHBoQzdieW9SMnVEZlJtM0hGNU5RampjMklpdGRXWXl5ai1HVUEwaXVoeEhQdngxNzVNMTNpX0tuTzBSZXVvcXE0Z1ZncmtidWo3U3FSYzk2Y1MybkJVUWYyckUxVXFQeXBLQ094UHFRMXhyRnFCa3V1dWhuc2R0ZnhSVE1EYWViUC02NnBPcTdvcEotbnhhR1NzNk5YS0thQjFydUIycFQ2M2pQRDFMTnBHalpYb3dDTHJlS1BfM096VjB3WXVvX0NwYmV0MFByTlFqVWRCckc5MTdHOVU4SUNyTW1SSlpiazYzMkIyV1BoOU4yNzFka25uUlhmYW44bWoweXFkWmJhSkxuaTltV24wSWZlV2ZzMjRTWTRKNkpHMUxrclBuUWdGSFRwS3RiXzE0UzlZNmRkRjU4MEdhZmZZQWVabE8xQkpVR1hhMC05YjhPeTI3MFJIOW5wQXQxWW53ZWIxMlBCRTVzRm5pVDd1bV9WdDdtRTRhOHpmQ1E4TjFrUk9uQ3ZsNkpqQzAzME5vdnM4bk1jeTJZaGlmM0dRUnVyM1lfOGVhUm04ZVRQX1lzRzNSd2FELWtsaU54X1ZWeVpfcDZmVjZZNWtmX2wxYmcwbEdCUGdhSVlNczg3TU5nWXhsQ2Z4Tm9IYjhZRklHdERMRFgzM3VKX0NFcGl5Y3VwU0hJci0wWUpGM1luSmhMdlhoZzJIUGw3UG93dXlodEdEWnJETzFUQ2sxQ2RhNl90LXl5SHhoR3F4MnB0SHlFWGZfc2ptVl8wVzAwPz48L2c+PC9zdmc+" alt="Карта артефактов: фазы, роли, результаты" loading="lazy"><span class="zoom-hint">Нажмите, чтобы открыть</span></div><figcaption>Карта артефактов: фазы, роли, результаты</figcaption></figure>
+<p>Источник: <a href="diagrams/artifact-map.puml"><code>diagrams/artifact-map.puml</code></a>.</p>
+<h3 id="61-feature-фазы-роли-артефакты-checkpoints">6.1. Feature: фазы, роли, артефакты, checkpoints</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Фаза</th>
+<th>Роль</th>
+<th>Артефакты</th>
+<th>Checkpoint</th>
+<th>Применимость</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P-00 Планирование</td>
+<td>orchestrator</td>
+<td><code>docs/plan.md</code>, <code>docs/tasks/T-XXX-*.md</code></td>
+<td>CP-1, CP-F</td>
+<td>Всегда</td>
+</tr>
+<tr>
+<td>A-01 Требования</td>
+<td>analyst</td>
+<td><code>docs/analysis/requirements-*.md</code>, <code>questions-*.md</code>, <code>glossary.md</code></td>
+<td>CP-1</td>
+<td>Всегда</td>
+</tr>
+<tr>
+<td>A-02 E2E use cases и данные</td>
+<td>analyst</td>
+<td><code>docs/analysis/e2e-use-cases-*.md</code>, <code>e2e-test-data-*.yaml</code></td>
+<td>CP-2</td>
+<td>Если e2e в scope, иначе waiver</td>
+</tr>
+<tr>
+<td>U-01 UX flows и screens</td>
+<td>ux-designer</td>
+<td><code>docs/ux/user-flows-*.md</code>, <code>screens-*.md</code></td>
+<td>CP-1</td>
+<td>Если UI в scope, иначе waiver</td>
+</tr>
+<tr>
+<td>U-02 Wireframes, prototype, UI spec</td>
+<td>ux-designer (+ coder)</td>
+<td><code>wireframes-*.puml/.svg</code>, <code>ui-spec-*.md</code>, <code>prototype/&lt;slug&gt;/*</code></td>
+<td>CP-2</td>
+<td>Если UI в scope</td>
+</tr>
+<tr>
+<td>R-01 ADR, описание, API</td>
+<td>architect</td>
+<td><code>docs/architecture/architecture-*.md</code>, <code>adr-*.md</code>, <code>contracts-*.md</code>, <code>openapi-api-*.yaml/.json</code></td>
+<td>CP-1</td>
+<td>Всегда; UX input при UI</td>
+</tr>
+<tr>
+<td>R-02 Диаграммы и handoff</td>
+<td>architect</td>
+<td><code>components-*.puml/.svg</code>, <code>sequence-scn-*.puml/.svg</code>, <code>data-model-*.puml/.svg</code>, <code>class-*.puml/.svg</code>, <code>swimlane-svc-*.puml/.svg</code></td>
+<td>CP-2</td>
+<td>Всегда</td>
+</tr>
+<tr>
+<td>I-01 Реализация и unit/integration</td>
+<td>coder</td>
+<td><code>src/</code>, <code>tests/</code>, <code>Dockerfile</code>, <code>docker-compose*.yml</code>, <code>Makefile</code></td>
+<td>CP-1</td>
+<td>Всегда</td>
+</tr>
+<tr>
+<td>I-02 E2E automation</td>
+<td>coder</td>
+<td><code>tests/e2e/</code>, <code>scripts/e2e.ps1</code>, <code>scripts/validate-e2e-data.py</code></td>
+<td>CP-2</td>
+<td>Если e2e в scope</td>
+</tr>
+<tr>
+<td>Q-01 E2E plan и coverage</td>
+<td>qa</td>
+<td><code>docs/qa/e2e-plan-*.md</code></td>
+<td>CP-1</td>
+<td>Если e2e в scope</td>
+</tr>
+<tr>
+<td>Q-02 QA и приёмка</td>
+<td>qa (+ qa-vision)</td>
+<td><code>docs/qa/e2e-report-*.md</code>, <code>review-T-XXX.md</code>, <code>vision-review-*.md</code></td>
+<td>CP-2</td>
+<td>Всегда; e2e-часть если в scope</td>
+</tr>
+<tr>
+<td>D-01 Документация</td>
+<td>doc-writer</td>
+<td><code>README.md</code>, <code>docs/guides/*</code>, финализированные ADR</td>
+<td>CP-1</td>
+<td>По карточке</td>
+</tr>
+<tr>
+<td>F-01 Финализация и закрытие</td>
+<td>orchestrator + lead</td>
+<td><code>docs/plan.md</code>, card, <code>docs/activity.puml/.svg</code>, commit</td>
+<td>CP-F</td>
+<td>Всегда</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="611-архитектурный-пакет-r-01r-02">6.1.1. Архитектурный пакет (R-01/R-02)</h3>
+<p>Архитектурное описание <code>docs/architecture/architecture-&lt;slug&gt;.md</code> — единая
+точка входа. В нём задаются <code>SCN-NNN</code> (сценарии), <code>SVC-NNN</code> (микросервисы) и
+<code>API-NNN</code> (REST API), а также ссылки на все диаграммы и спецификации.</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Артефакт</th>
+<th>Путь</th>
+<th>Правило</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Общее описание</td>
+<td><code>architecture-&lt;slug&gt;.md</code></td>
+<td>Всегда; обязательные разделы scope/applicability, components, services, scenarios, data/class model, REST API, diagram index, traceability</td>
+</tr>
+<tr>
+<td>Компонентная диаграмма</td>
+<td><code>components-&lt;slug&gt;.puml/.svg</code></td>
+<td>Всегда</td>
+</tr>
+<tr>
+<td>Sequence-диаграмма сценария</td>
+<td><code>sequence-scn-&lt;nnn&gt;-&lt;slug&gt;.puml/.svg</code></td>
+<td>По одной на каждый <code>SCN-NNN</code></td>
+</tr>
+<tr>
+<td>Диаграмма данных</td>
+<td><code>data-model-&lt;slug&gt;.puml/.svg</code></td>
+<td>Всегда</td>
+</tr>
+<tr>
+<td>Диаграмма классов</td>
+<td><code>class-&lt;slug&gt;.puml/.svg</code></td>
+<td>Всегда</td>
+</tr>
+<tr>
+<td>Swimlane микросервиса</td>
+<td><code>swimlane-svc-&lt;nnn&gt;-&lt;slug&gt;.puml/.svg</code></td>
+<td>По одной на каждый <code>SVC-NNN</code>; иначе явно <code>No microservices</code></td>
+</tr>
+<tr>
+<td>OpenAPI 3.x</td>
+<td><code>openapi-api-&lt;nnn&gt;-&lt;slug&gt;.yaml/.json</code></td>
+<td>По одной на каждый <code>API-NNN</code>; иначе явно <code>No REST API</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Все <code>.puml</code>, <code>.svg</code> и OpenAPI-файлы должны быть упомянуты в описании.
+<code>SCN</code>/<code>SVC</code>/<code>API</code> — project-global: не переиспользуйте ID между разными
+архитектурными описаниями. В <code>card.inputs</code> для R-01/R-02 укажите текущие
+requirements, e2e use cases (если e2e в scope), UX и architecture-описание:
+трассировочные проверки читают <code>card.inputs</code>. Для проектов, обновлённых с
+2.5.0, свяжите старые диаграммы в <code>architecture-*.md</code> или удалите устаревшие.
+Проверки: <code>architecture-exist</code>,
+<code>architecture-sections</code>, <code>scenario-ids</code>, <code>service-ids</code>, <code>api-ids</code>,
+<code>openapi-valid</code>, <code>sequence-count</code>, <code>swimlane-count</code>, <code>architecture-links</code>;
+рендер — через MCP <code>plantuml-render</code>.</p>
+<h3 id="62-bugfix-фазы-роли-артефакты-checkpoints">6.2. Bugfix: фазы, роли, артефакты, checkpoints</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Фаза</th>
+<th>Роль</th>
+<th>Артефакты</th>
+<th>Checkpoint</th>
+<th>Применимость</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>B-00 Триаж</td>
+<td>orchestrator</td>
+<td><code>docs/bugs/BUG-XXX-*.md</code>, <code>docs/bugs/README.md</code>, pending cards</td>
+<td>bug <code>triaged</code></td>
+<td>Всегда</td>
+</tr>
+<tr>
+<td>B-01 Воспроизведение и root cause</td>
+<td>coder</td>
+<td>failing regression test, card log</td>
+<td>CP-1</td>
+<td>Всегда; analyst при неясном expected behavior</td>
+</tr>
+<tr>
+<td>B-02 Минимальный фикс и regression</td>
+<td>coder</td>
+<td>code, tests, card log</td>
+<td>CP-2</td>
+<td>Всегда; architect при design-level</td>
+</tr>
+<tr>
+<td>B-03 Независимая проверка</td>
+<td>qa</td>
+<td><code>docs/qa/review-T-XXX.md</code></td>
+<td>CP-1 report, CP-F</td>
+<td>Всегда</td>
+</tr>
+<tr>
+<td>B-04 Docs/changelog</td>
+<td>doc-writer</td>
+<td><code>CHANGELOG.md</code>, <code>docs/guides/*</code></td>
+<td>CP-1</td>
+<td>Опционально</td>
+</tr>
+<tr>
+<td>B-05 Закрытие и postmortem</td>
+<td>orchestrator + lead</td>
+<td>bug card/index, plan/card, activity, commit</td>
+<td>CP-F</td>
+<td>Всегда; postmortem для P0/P1</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="63-общие-артефакты">6.3. Общие артефакты</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Артефакт</th>
+<th>Путь</th>
+<th>Владелец</th>
+<th>Назначение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Board</td>
+<td><code>docs/plan.md</code></td>
+<td>orchestrator</td>
+<td>Единственный источник scope и статусов</td>
+</tr>
+<tr>
+<td>Task cards</td>
+<td><code>docs/tasks/T-XXX-*.md</code></td>
+<td>роль задачи + orchestrator</td>
+<td>Workflow, stage, inputs, acceptance, checkpoints, log</td>
+</tr>
+<tr>
+<td>Bug cards и индекс</td>
+<td><code>docs/bugs/BUG-XXX-*.md</code>, <code>docs/bugs/README.md</code></td>
+<td>orchestrator</td>
+<td>Продуктовые дефекты и связи с задачами</td>
+</tr>
+<tr>
+<td>Checkpoints</td>
+<td><code>docs/checkpoints/T-XXX-CP-N.md</code></td>
+<td>пользователь + orchestrator</td>
+<td>Решения, правки, замечания</td>
+</tr>
+<tr>
+<td>Issues</td>
+<td><code>docs/issues/ISSUE-*.md</code>, <code>docs/issues/README.md</code></td>
+<td>все роли; индекс — orchestrator</td>
+<td>Проблемы harness</td>
+</tr>
+<tr>
+<td>Activity (derived)</td>
+<td><code>docs/activity.puml</code>, <code>.svg</code></td>
+<td>orchestrator</td>
+<td>Визуализация прогресса, не источник решений</td>
+</tr>
+<tr>
+<td>Git commits</td>
+<td>репозиторий</td>
+<td>orchestrator</td>
+<td>История задачи и checkpoint-снимков</td>
+</tr>
+<tr>
+<td>Analysis</td>
+<td><code>docs/analysis/</code></td>
+<td>analyst</td>
+<td>Требования, вопросы, glossary, e2e UC/YAML</td>
+</tr>
+<tr>
+<td>UX</td>
+<td><code>docs/ux/</code></td>
+<td>ux-designer (+ coder для prototype)</td>
+<td>Flows, screens, wireframes, UI spec, prototype</td>
+</tr>
+<tr>
+<td>Architecture</td>
+<td><code>docs/architecture/</code></td>
+<td>architect</td>
+<td>Architecture description, ADR, contracts, component/scenario/data/class/swimlane diagrams, OpenAPI</td>
+</tr>
+<tr>
+<td>QA</td>
+<td><code>docs/qa/</code></td>
+<td>qa, qa-vision</td>
+<td>Plans, reports, reviews, verdicts</td>
+</tr>
+<tr>
+<td>Guides</td>
+<td><code>docs/guides/</code>, <code>README.md</code></td>
+<td>doc-writer</td>
+<td>Пользовательская и техническая документация</td>
+</tr>
+<tr>
+<td>Code/tests</td>
+<td><code>src/</code>, <code>tests/</code>, <code>scripts/</code></td>
+<td>coder</td>
+<td>Реализация, тесты, runner, CI/CD</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="64-зоны-записи-ролей">6.4. Зоны записи ролей</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Роль</th>
+<th>Можно писать</th>
+<th>Нельзя</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>harness</code> lead</td>
+<td>ничего; только читает и маршрутизирует</td>
+<td>edit/write, commit, вызов ролей вне harness</td>
+</tr>
+<tr>
+<td>orchestrator</td>
+<td><code>docs/plan.md</code>, <code>docs/tasks/</code>, <code>docs/checkpoints/</code>, <code>docs/bugs/</code>, <code>docs/activity.puml</code>, <code>README.md</code>, <code>.gitignore</code></td>
+<td>работа ролей, закрытие без <code>CP-F</code>, <code>git push/tag/reset/rebase</code></td>
+</tr>
+<tr>
+<td>analyst</td>
+<td><code>docs/analysis/</code>, своя card-секция статуса/лога</td>
+<td>architecture, code, tests, <code>docs/bugs/</code>, commits</td>
+</tr>
+<tr>
+<td>ux-designer</td>
+<td><code>docs/ux/</code>, своя card-секция; вызов coder для prototype</td>
+<td>production code, contracts, tests, <code>docs/bugs/</code>, commits</td>
+</tr>
+<tr>
+<td>architect</td>
+<td><code>docs/architecture/</code>, своя card-секция</td>
+<td>code, tests, <code>docs/analysis/</code>, <code>docs/bugs/</code></td>
+</tr>
+<tr>
+<td>coder</td>
+<td><code>src/</code>, <code>tests/</code>, <code>scripts/</code>, <code>Dockerfile</code>, <code>docker-compose*.yml</code>, <code>Makefile</code>, <code>.gitignore</code>, <code>.env.example</code>, <code>requirements.txt</code>, <code>pyproject.toml</code>; <code>docs/ux/prototype/**</code> только по вызову UX</td>
+<td>prod actions, <code>git commit</code>, <code>docker push</code>, cloud CLIs, <code>docs/bugs/</code>, UI spec/wireframes</td>
+</tr>
+<tr>
+<td>qa</td>
+<td><code>docs/qa/</code>, своя card-секция</td>
+<td>фикс кода/артефактов, <code>docs/bugs/</code>, commits, deployment</td>
+</tr>
+<tr>
+<td>qa-vision</td>
+<td><code>docs/qa/</code></td>
+<td>code/docs edits, <code>docs/bugs/</code>, commits</td>
+</tr>
+<tr>
+<td>doc-writer</td>
+<td><code>README.md</code>, <code>docs/guides/</code>, финализация <code>adr-*.md</code></td>
+<td>code, tests, CI/CD, <code>docs/bugs/</code>, изменение смысла ADR</td>
+</tr>
+<tr>
+<td>все роли</td>
+<td><code>docs/issues/</code> (индекс ведёт orchestrator)</td>
+<td>секреты, смешивание с <code>docs/bugs/</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Пользователь во время checkpoint может править любые артефакты и checkpoint-файл;
+роль обязана сохранить эти правки и сообщить о конфликте.</p>
+<h3 id="65-статусы-задач">6.5. Статусы задач</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Статус</th>
+<th>Цвет</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pending</code></td>
+<td><code>#D3D3D3</code></td>
+<td>Не начата</td>
+</tr>
+<tr>
+<td><code>in_progress</code></td>
+<td><code>#FFE082</code></td>
+<td>В работе</td>
+</tr>
+<tr>
+<td><code>awaiting_review</code></td>
+<td><code>#87CEFA</code></td>
+<td>Ждёт решения пользователя на checkpoint</td>
+</tr>
+<tr>
+<td><code>done</code></td>
+<td><code>#90EE90</code></td>
+<td>Принята, <code>CP-F</code> одобрен</td>
+</tr>
+<tr>
+<td><code>failed</code></td>
+<td><code>#FF9090</code></td>
+<td>Ошибка, нужен фикс</td>
+</tr>
+<tr>
+<td><code>blocked</code></td>
+<td><code>#FFB347</code></td>
+<td>Внешний блокер</td>
+</tr>
+</tbody>
+</table></div>
+<p>Переходы: <code>pending → in_progress</code>; <code>in_progress → awaiting_review</code> на checkpoint;
+<code>awaiting_review → in_progress</code> после approved/changes_requested (кроме <code>CP-F</code>);
+<code>awaiting_review → done</code> только после <code>CP-F</code>; <code>awaiting_review → failed</code> при
+отклонении пользователем; <code>in_progress → failed</code>; <code>failed → in_progress</code> после
+фикса; <code>* → blocked</code> при внешнем блокере.</p>
+<hr />
+<h2 id="7-жизненный-цикл-и-checkpoints">7. Жизненный цикл и checkpoints</h2>
+<figure class="diagram" tabindex="0" role="button" aria-label="Открыть диаграмму: Жизненный цикл задачи и checkpoints" data-title="Жизненный цикл задачи и checkpoints"><div class="diagram-frame"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2ZXJzaW9uPSIxLjEiIGRhdGEtZGlhZ3JhbS10eXBlPSJTVEFURSIgc3R5bGU9IndpZHRoOjk5MnB4O2hlaWdodDo1MTJweDtiYWNrZ3JvdW5kOiNGRkZGRkY7IiB3aWR0aD0iOTkycHgiIGhlaWdodD0iNTEycHgiIHZpZXdCb3g9IjAgMCA5OTIgNTEyIiB6b29tQW5kUGFuPSJtYWduaWZ5IiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJub25lIiBjb250ZW50U3R5bGVUeXBlPSJ0ZXh0L2NzcyI+PD9wbGFudHVtbCAxLjIwMjYuMTA/PjxkZWZzLz48ZyBmb250LWZhbWlseT0ic2Fucy1zZXJpZiIgbGVuZ3RoQWRqdXN0PSJzcGFjaW5nIj48ZyBjbGFzcz0idGl0bGUiIGRhdGEtc291cmNlLWxpbmU9IjIiPjx0ZXh0IHg9IjM1OC45NTciIHk9IjI1LjEwNyIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMjY3LjUwNCIgZm9udC13ZWlnaHQ9IjcwMCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj7QltC40LfQvdC10L3QvdGL0Lkg0YbQuNC60Lsg0LfQsNC00LDRh9C4INC4IGNoZWNrcG9pbnRzPC90ZXh0PjwvZz48ZyBjbGFzcz0ic3RhcnRfZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSIuc3RhcnQuIiBpZD0iZW50MDAwMSIgZGF0YS1zb3VyY2UtbGluZT0iNCI+PGVsbGlwc2UgY3g9IjY4Mi42OSIgY3k9IjU1LjYyMSIgcng9IjEwIiByeT0iMTAiIGZpbGw9IiMyMjIiIHN0eWxlPSJzdHJva2U6IzIyMjtzdHJva2Utd2lkdGg6MTsiLz48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0icGVuZGluZyIgaWQ9ImVudDAwMDIiIGRhdGEtc291cmNlLWxpbmU9IjQiPjxyZWN0IHg9IjY0Ny4xOSIgeT0iMTUwLjYyMSIgd2lkdGg9IjcxLjI3NiIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iNjQ3LjE5IiB5MT0iMTc5LjI0MiIgeDI9IjcxOC40NjYiIHkyPSIxNzkuMjQyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSI2NTcuMTkiIHk9IjE3MC43MjkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjUxLjI3NiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5wZW5kaW5nPC90ZXh0PjwvZz48ZyBjbGFzcz0iZW50aXR5IiBkYXRhLXF1YWxpZmllZC1uYW1lPSJpbl9wcm9ncmVzcyIgaWQ9ImVudDAwMDQiIGRhdGEtc291cmNlLWxpbmU9IjUiPjxyZWN0IHg9IjM3MC4xOSIgeT0iMzAyLjYyMSIgd2lkdGg9IjkwLjczOCIgaGVpZ2h0PSI1MCIgZmlsbD0iI0YxRjFGMSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7IiByeD0iMTIuNSIgcnk9IjEyLjUiLz48bGluZSB4MT0iMzcwLjE5IiB5MT0iMzMxLjI0MiIgeDI9IjQ2MC45MjgiIHkyPSIzMzEuMjQyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSIzODAuMTkiIHk9IjMyMi43MjkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTQiIHRleHRMZW5ndGg9IjcwLjczOCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5pbl9wcm9ncmVzczwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iYXdhaXRpbmdfcmV2aWV3IiBpZD0iZW50MDAwNiIgZGF0YS1zb3VyY2UtbGluZT0iNiI+PHJlY3QgeD0iMjA0LjY5IiB5PSIxNTAuNjIxIiB3aWR0aD0iMTE3LjU5IiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSIyMDQuNjkiIHkxPSIxNzkuMjQyIiB4Mj0iMzIyLjI4IiB5Mj0iMTc5LjI0MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iMjE0LjY5IiB5PSIxNzAuNzI5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI5Ny41OSIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5hd2FpdGluZ19yZXZpZXc8L3RleHQ+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9ImRvbmUiIGlkPSJlbnQwMDEwIiBkYXRhLXNvdXJjZS1saW5lPSI5Ij48cmVjdCB4PSI4MzIuNjkiIHk9IjMwMi42MjEiIHdpZHRoPSI1MS42OTEiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjgzMi42OSIgeTE9IjMzMS4yNDIiIHgyPSI4ODQuMzgxIiB5Mj0iMzMxLjI0MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iODQyLjY5IiB5PSIzMjIuNzI5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSIzMS42OTEiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+ZG9uZTwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iZmFpbGVkIiBpZD0iZW50MDAxMiIgZGF0YS1zb3VyY2UtbGluZT0iMTAiPjxyZWN0IHg9IjQ0LjY5IiB5PSI0NDguNjIxIiB3aWR0aD0iNTMuODUyIiBoZWlnaHQ9IjUwIiBmaWxsPSIjRjFGMUYxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIHJ4PSIxMi41IiByeT0iMTIuNSIvPjxsaW5lIHgxPSI0NC42OSIgeTE9IjQ3Ny4yNDIiIHgyPSI5OC41NDIiIHkyPSI0NzcuMjQyIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiLz48dGV4dCB4PSI1NC42OSIgeT0iNDY4LjcyOSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxNCIgdGV4dExlbmd0aD0iMzMuODUyIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmZhaWxlZDwvdGV4dD48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iYmxvY2tlZCIgaWQ9ImVudDAwMTYiIGRhdGEtc291cmNlLWxpbmU9IjEzIj48cmVjdCB4PSI0MDUuMTkiIHk9IjQ0OC42MjEiIHdpZHRoPSI2OC44MTUiIGhlaWdodD0iNTAiIGZpbGw9IiNGMUYxRjEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MC41OyIgcng9IjEyLjUiIHJ5PSIxMi41Ii8+PGxpbmUgeDE9IjQwNS4xOSIgeTE9IjQ3Ny4yNDIiIHgyPSI0NzQuMDA1IiB5Mj0iNDc3LjI0MiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDowLjU7Ii8+PHRleHQgeD0iNDE1LjE5IiB5PSI0NjguNzI5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjE0IiB0ZXh0TGVuZ3RoPSI0OC44MTUiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+YmxvY2tlZDwvdGV4dD48L2c+PGcgY2xhc3M9ImVuZF9lbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9Ii5lbmQuIiBpZD0iZW50MDAxOSIgZGF0YS1zb3VyY2UtbGluZT0iMTUiPjxlbGxpcHNlIGN4PSI4NjMuNjkiIGN5PSI0NzMuNjIxIiByeD0iMTEiIHJ5PSIxMSIgZmlsbD0ibm9uZSIgc3R5bGU9InN0cm9rZTojMjIyO3N0cm9rZS13aWR0aDoxOyIvPjxlbGxpcHNlIGN4PSI4NjMuNjkiIGN5PSI0NzMuNjIxIiByeD0iNiIgcnk9IjYiIGZpbGw9IiMyMjIiIHN0eWxlPSJzdHJva2U6IzIyMjtzdHJva2Utd2lkdGg6MTsiLz48L2c+PGcgY2xhc3M9ImVudGl0eSIgZGF0YS1xdWFsaWZpZWQtbmFtZT0iR01OMjEiIGlkPSJlbnQwMDIyIiBkYXRhLXNvdXJjZS1saW5lPSIxOCI+PHBhdGggZD0iTTM1OC4xOSwxNDQuNjIxIEwzNTguMTksMTcxLjYyMSBMMzIyLjg4LDE3NS42MjEgTDM1OC4xOSwxNzkuNjIxIEwzNTguMTksMjA2LjQ5NCBBMCwwIDAgMCAwIDM1OC4xOSwyMDYuNDk0IEw1ODcuMTI3LDIwNi40OTQgQTAsMCAwIDAgMCA1ODcuMTI3LDIwNi40OTQgTDU4Ny4xMjcsMTU0LjYyMSBMNTc3LjEyNywxNDQuNjIxIEwzNTguMTksMTQ0LjYyMSBBMCwwIDAgMCAwIDM1OC4xOSwxNDQuNjIxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIGZpbGw9IiNGRUZGREQiLz48cGF0aCBkPSJNNTc3LjEyNywxNDQuNjIxIEw1NzcuMTI3LDE1NC42MjEgTDU4Ny4xMjcsMTU0LjYyMSBMNTc3LjEyNywxNDQuNjIxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIGZpbGw9IiNGRUZGREQiLz48dGV4dCB4PSIzNjQuMTkiIHk9IjE2My42NDkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE2Ni42NTgiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+0JHQtdC3INGP0LLQvdC+0LPQviBhcHByb3ZlZCDQt9Cw0LTQsNGH0LA8L3RleHQ+PHRleHQgeD0iMzY0LjE5IiB5PSIxODAuOTQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE0Ny4yNCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj7QvtGB0YLQsNGR0YLRgdGPIGF3YWl0aW5nX3Jldmlldy48L3RleHQ+PHRleHQgeD0iMzY0LjE5IiB5PSIxOTguMjMxIiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyMDcuOTM3IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPtCf0YDQsNCy0LrQuCDQv9C+0LvRjNC30L7QstCw0YLQtdC70Y8gYXV0aG9yaXRhdGl2ZS48L3RleHQ+PC9nPjxnIGNsYXNzPSJlbnRpdHkiIGRhdGEtcXVhbGlmaWVkLW5hbWU9IkdNTjI0IiBpZD0iZW50MDAyNSIgZGF0YS1zb3VyY2UtbGluZT0iMjQiPjxwYXRoIGQ9Ik01MzMuNjksNDUxLjEyMSBMNTMzLjY5LDQ5NS43MDMgTDgxNy40NTgsNDk1LjcwMyBMODE3LjQ1OCw0NjEuMTIxIEw4MDcuNDU4LDQ1MS4xMjEgTDUzMy42OSw0NTEuMTIxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjAuNTsiIGZpbGw9IiNGRUZGREQiLz48cGF0aCBkPSJNODA3LjQ1OCw0NTEuMTIxIEw4MDcuNDU4LDQ2MS4xMjEgTDgxNy40NTgsNDYxLjEyMSBMODA3LjQ1OCw0NTEuMTIxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSIjRkVGRkREIi8+PHRleHQgeD0iNTM5LjY5IiB5PSI0NzAuMTQ5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIyNjIuNzY4IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPtCe0LTQvdCwINCw0LrRgtC40LLQvdCw0Y8g0LfQsNC00LDRh9CwIGFjcm9zcyBmZWF0dXJlK2J1Z2ZpeC48L3RleHQ+PHRleHQgeD0iNTM5LjY5IiB5PSI0ODcuNDQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE5Ni41OTMiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+RmVhdHVyZSDQuCBidWdmaXgg0L3QtSDQv9Cw0YDQsNC70LvQtdC70YzQvdGLLjwvdGV4dD48L2c+PCEtLWxpbmsgKnN0YXJ0KiB0byBwZW5kaW5nLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDEiIGRhdGEtZW50aXR5LTI9ImVudDAwMDIiIGlkPSJsbmszIiBkYXRhLXNvdXJjZS1saW5lPSI0IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTY4Mi42OSw2NS44ODEgQzY4Mi42OSw4My45MjEgNjgyLjY5LDExOS4yODEgNjgyLjY5LDE0NS40NDEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSIqc3RhcnQqLXRvLXBlbmRpbmciLz48cG9seWdvbiBwb2ludHM9IjY4Mi42OSwxNTAuNDQxLDY4Ni42OSwxNDEuNDQxLDY4Mi42OSwxNDUuNDQxLDY3OC42OSwxNDEuNDQxLDY4Mi42OSwxNTAuNDQxIiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjY4My42OSIgeT0iMTEwLjY0OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTgxLjMzMyIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4vaGFybmVzcy1mZWF0dXJlIHwgL2hhcm5lc3MtYnVnPC90ZXh0PjwvZz48IS0tbGluayBwZW5kaW5nIHRvIGluX3Byb2dyZXNzLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDIiIGRhdGEtZW50aXR5LTI9ImVudDAwMDQiIGlkPSJsbms1IiBkYXRhLXNvdXJjZS1saW5lPSI1IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTY3My4xNywyMDAuODAxIEM2NjMuMjksMjIyLjc4MSA2NDUuNzUsMjU0LjQ1MSA2MjAuNjksMjcyLjYyMSBDNTczLjMyLDMwNi45ODEgNTEwLjY4NCwzMTguOTgzIDQ2Ni4yNTQsMzIzLjUyMyIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9InBlbmRpbmctdG8taW5fcHJvZ3Jlc3MiLz48cG9seWdvbiBwb2ludHM9IjQ2MS4yOCwzMjQuMDMxLDQ3MC42NCwzMjcuMDk1LDQ2Ni4yNTQsMzIzLjUyMyw0NjkuODI3LDMxOS4xMzcsNDYxLjI4LDMyNC4wMzEiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iNjU4LjEyNCIgeT0iMjUxLjY0OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTExLjc1IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPi9oYXJuZXNzLXJ1biBULVhYWDwvdGV4dD48dGV4dCB4PSI2NTIuNjkiIHk9IjI2OC45NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTIyLjYxOCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj7Qv9GA0L7QstC10YDQutC4INC/0YDQvtC50LTQtdC90Ys8L3RleHQ+PC9nPjwhLS1saW5rIGluX3Byb2dyZXNzIHRvIGF3YWl0aW5nX3Jldmlldy0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA0IiBkYXRhLWVudGl0eS0yPSJlbnQwMDA2IiBpZD0ibG5rNyIgZGF0YS1zb3VyY2UtbGluZT0iNiIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik00MjYuMTYsMzAyLjYyMSBDNDMyLjkxLDI4My4xMDEgNDM4LjE3LDI1NS43NTEgNDI0LjY5LDIzNi42MjEgQzQwMS44NiwyMDQuMjIxIDM3Ny44MywyMjAuNDgxIDM0MC42OSwyMDYuNjIxIEMzMzQuOTEsMjA0LjQ2MSAzMzMuNTY5LDIwMy45NzEgMzI3LjU2OSwyMDEuNjcxIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iaW5fcHJvZ3Jlc3MtdG8tYXdhaXRpbmdfcmV2aWV3Ii8+PHBvbHlnb24gcG9pbnRzPSIzMjIuOSwxOTkuODgxLDMyOS44NzIsMjA2LjgzOCwzMjcuNTY5LDIwMS42NzEsMzMyLjczNSwxOTkuMzY4LDMyMi45LDE5OS44ODEiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iNDQzLjg1MyIgeT0iMjUxLjY0OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTU5LjY0NCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5DSEVDS1BPSU5UIENQLU4gcmVhY2hlZDwvdGV4dD48dGV4dCB4PSI0MzQuNjkiIHk9IjI2OC45NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTc3Ljk2OSIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5jaGVja3BvaW50ICsgc25hcHNob3QgY29tbWl0PC90ZXh0PjwvZz48IS0tbGluayBhd2FpdGluZ19yZXZpZXcgdG8gaW5fcHJvZ3Jlc3MtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNiIgZGF0YS1lbnRpdHktMj0iZW50MDAwNCIgaWQ9ImxuazgiIGRhdGEtc291cmNlLWxpbmU9IjciIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMjA0LjU1LDE4NC42NDEgQzEzMy42OSwxOTYuNjIxIDI5LjQ4LDIyMy4yNzEgNzEuNjksMjcyLjYyMSBDMTA5LjU2LDMxNi45MDEgMjgwLjQyMSwzMjUuMDMxIDM2NS4wMTEsMzI2LjM5MSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9ImF3YWl0aW5nX3Jldmlldy10by1pbl9wcm9ncmVzcyIvPjxwb2x5Z29uIHBvaW50cz0iMzcwLjAxLDMyNi40NzEsMzYxLjA3NSwzMjIuMzI3LDM2NS4wMTEsMzI2LjM5MSwzNjAuOTQ3LDMzMC4zMjYsMzcwLjAxLDMyNi40NzEiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMTE4Ljg1NyIgeT0iMjUxLjY0OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iNTQuNzE3IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmFwcHJvdmVkPC90ZXh0Pjx0ZXh0IHg9IjcyLjY5IiB5PSIyNjguOTQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE0Ny4wNSIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj4oaW50ZXJtZWRpYXRlIGNoZWNrcG9pbnQpPC90ZXh0PjwvZz48IS0tbGluayBhd2FpdGluZ19yZXZpZXcgdG8gaW5fcHJvZ3Jlc3MtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNiIgZGF0YS1lbnRpdHktMj0iZW50MDAwNCIgaWQ9ImxuazkiIGRhdGEtc291cmNlLWxpbmU9IjgiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMjUzLjk3LDIwMC42NDEgQzI0Ny4yMSwyMjEuNjExIDI0MS44LDI1MS44NDEgMjU2LjY5LDI3Mi42MjEgQzI4Mi4yNSwzMDguMjkxIDMyNy43NDEsMzIwLjEyNiAzNjQuOTkxLDMyNC4yODYiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJhd2FpdGluZ19yZXZpZXctdG8taW5fcHJvZ3Jlc3MtMSIvPjxwb2x5Z29uIHBvaW50cz0iMzY5Ljk2LDMyNC44NDEsMzYxLjQ2LDMxOS44NjcsMzY0Ljk5MSwzMjQuMjg2LDM2MC41NzIsMzI3LjgxNywzNjkuOTYsMzI0Ljg0MSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSIyODEuODA1IiB5PSIyNTEuNjQ5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxMTAuMjAyIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmNoYW5nZXNfcmVxdWVzdGVkPC90ZXh0Pjx0ZXh0IHg9IjI1Ny42OSIgeT0iMjY4Ljk0IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSIxNTguNDMxIiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPihyZXR1cm4gdG8gc2FtZSBjaGVja3BvaW50KTwvdGV4dD48L2c+PCEtLWxpbmsgYXdhaXRpbmdfcmV2aWV3IHRvIGRvbmUtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNiIgZGF0YS1lbnRpdHktMj0iZW50MDAxMCIgaWQ9ImxuazExIiBkYXRhLXNvdXJjZS1saW5lPSI5IiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTMxOS44NSwyMDAuNzQxIEMzMjYuNzgsMjAzLjA0MSAzMzMuODMsMjA1LjA5MSAzNDAuNjksMjA2LjYyMSBDNDM2Ljk5LDIyOC4xMTEgNjk1LjgsMTkxLjc3MSA3ODMuNjksMjM2LjYyMSBDODExLjc3LDI1MC45NTEgODMwLjc5NywyNzYuNjE2IDg0My40NDcsMjk4LjAzNiIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9ImF3YWl0aW5nX3Jldmlldy10by1kb25lIi8+PHBvbHlnb24gcG9pbnRzPSI4NDUuOTksMzAyLjM0MSw4NDQuODU4LDI5Mi41NTgsODQzLjQ0NywyOTguMDM2LDgzNy45NjksMjk2LjYyNiw4NDUuOTksMzAyLjM0MSIgZmlsbD0iIzE4MTgxOCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxO3N0cm9rZS1saW5lam9pbjptaXRlcjtzdHJva2UtbWl0ZXJsaW1pdDoxMDsiLz48dGV4dCB4PSI4NTcuOTc3IiB5PSIyNTEuNjQ5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI4NS4xNTQiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+Q1AtRiBhcHByb3ZlZDwvdGV4dD48dGV4dCB4PSI4MjQuNjkiIHk9IjI2OC45NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iMTUxLjcyOCIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5hY2NlcHRhbmNlICsgZmluYWwgY29tbWl0PC90ZXh0PjwvZz48IS0tbGluayBhd2FpdGluZ19yZXZpZXcgdG8gZmFpbGVkLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMDYiIGRhdGEtZW50aXR5LTI9ImVudDAwMTIiIGlkPSJsbmsxMyIgZGF0YS1zb3VyY2UtbGluZT0iMTAiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNMjA0LjU5LDE4NS42NzEgQzE0OS40OSwxOTUuNDQxIDczLjExLDIxMi44NjEgNTQuNjksMjM2LjYyMSBDNiwyOTkuNDUxIDM4LjY2NiwzOTcuNTMzIDU4LjQ3Niw0NDMuOTIzIiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iYXdhaXRpbmdfcmV2aWV3LXRvLWZhaWxlZCIvPjxwb2x5Z29uIHBvaW50cz0iNjAuNDQsNDQ4LjUyMSw2MC41ODQsNDM4LjY3Myw1OC40NzYsNDQzLjkyMyw1My4yMjcsNDQxLjgxNSw2MC40NCw0NDguNTIxIiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjMzLjY5IiB5PSIzMzMuMTQ5IiBmaWxsPSIjMDAwIiBmb250LXNpemU9IjEzIiB0ZXh0TGVuZ3RoPSI1OS40MjciIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+dXNlciByZWplY3Q8L3RleHQ+PC9nPjwhLS1saW5rIGluX3Byb2dyZXNzIHRvIGZhaWxlZC0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA0IiBkYXRhLWVudGl0eS0yPSJlbnQwMDEyIiBpZD0ibG5rMTQiIGRhdGEtc291cmNlLWxpbmU9IjExIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTM2OS45NCwzMjguNzAxIEMyODQuNzUsMzI5LjkzMSAxMDYuOTYsMzM3LjkzMSA2OC42OSwzODIuNjIxIEM1My40NCw0MDAuNDMxIDU1LjczMyw0MjMuNDU5IDYxLjM3Myw0NDMuNDU5IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7IiBmaWxsPSJub25lIiBpZD0iaW5fcHJvZ3Jlc3MtdG8tZmFpbGVkIi8+PHBvbHlnb24gcG9pbnRzPSI2Mi43Myw0NDguMjcxLDY0LjEzNyw0MzguNTIzLDYxLjM3Myw0NDMuNDU5LDU2LjQzNyw0NDAuNjk1LDYyLjczLDQ0OC4yNzEiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iNjkuNjkiIHk9IjQwNi4xNDkiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjEwMy40NiIgZm9udC1mYW1pbHk9IlNlZ29lIFVJIj5hY2NlcHRhbmNlIGZhaWx1cmU8L3RleHQ+PC9nPjwhLS1saW5rIGZhaWxlZCB0byBpbl9wcm9ncmVzcy0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDEyIiBkYXRhLWVudGl0eS0yPSJlbnQwMDA0IiBpZD0ibG5rMTUiIGRhdGEtc291cmNlLWxpbmU9IjEyIiBkYXRhLWxpbmstdHlwZT0iZGVwZW5kZW5jeSI+PHBhdGggZD0iTTk4Ljg0LDQ1OS4xMjEgQzEyMC4zMyw0NDguMzQxIDE1MS4wNyw0MzIuNzcxIDE3Ny42OSw0MTguNjIxIEMyMDYuODUsNDAzLjEyMSAyMTIuMzMsMzk1LjYxMSAyNDIuNjksMzgyLjYyMSBDMjg0LjY0LDM2NC42ODEgMzI5Ljc0NCwzNTEuMDQ4IDM2NS4xNTQsMzQxLjQ1OCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9ImZhaWxlZC10by1pbl9wcm9ncmVzcyIvPjxwb2x5Z29uIHBvaW50cz0iMzY5Ljk4LDM0MC4xNTEsMzYwLjI0NywzMzguNjQzLDM2NS4xNTQsMzQxLjQ1OCwzNjIuMzM5LDM0Ni4zNjUsMzY5Ljk4LDM0MC4xNTEiIGZpbGw9IiMxODE4MTgiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtbGluZWpvaW46bWl0ZXI7c3Ryb2tlLW1pdGVybGltaXQ6MTA7Ii8+PHRleHQgeD0iMjg4LjEzNiIgeT0iMzk3LjY0OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iNjguNDY2IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmZpeCBhbmQgcmV0cnk8L3RleHQ+PHRleHQgeD0iMjQzLjY5IiB5PSI0MTQuOTQiIGZpbGw9IiMwMDAiIGZvbnQtc2l6ZT0iMTMiIHRleHRMZW5ndGg9IjE1Ny4zNTgiIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSI+KG1heCAzIGF0dGVtcHRzIHBlciBjaHVuayk8L3RleHQ+PC9nPjwhLS1saW5rIGluX3Byb2dyZXNzIHRvIGJsb2NrZWQtLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAwNCIgZGF0YS1lbnRpdHktMj0iZW50MDAxNiIgaWQ9ImxuazE3IiBkYXRhLXNvdXJjZS1saW5lPSIxMyIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik00MTEuNSwzNTIuNjUxIEM0MDkuMTIsMzcwLjk3MSA0MDcuNTIsMzk2LjcxMSA0MTIuNjksNDE4LjYyMSBDNDE1LjEyLDQyOC45MjEgNDE3LjQ4Niw0MzUuMDkgNDIyLjMwNiw0NDQuMTIiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTsiIGZpbGw9Im5vbmUiIGlkPSJpbl9wcm9ncmVzcy10by1ibG9ja2VkIi8+PHBvbHlnb24gcG9pbnRzPSI0MjQuNjYsNDQ4LjUzMSw0MjMuOTUxLDQzOC43MDgsNDIyLjMwNiw0NDQuMTIsNDE2Ljg5Myw0NDIuNDc1LDQyNC42Niw0NDguNTMxIiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjQxMy42OSIgeT0iMzk3LjY0OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iOTkuOTg4IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmV4dGVybmFsIGJsb2NrZXIgLzwvdGV4dD48dGV4dCB4PSI0MTUuNDEiIHk9IjQxNC45NCIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iOTYuNTQ4IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPjMgZmFpbGVkIGF0dGVtcHRzPC90ZXh0PjwvZz48IS0tbGluayBibG9ja2VkIHRvIGluX3Byb2dyZXNzLS0+PGcgY2xhc3M9ImxpbmsiIGRhdGEtZW50aXR5LTE9ImVudDAwMTYiIGRhdGEtZW50aXR5LTI9ImVudDAwMDQiIGlkPSJsbmsxOCIgZGF0YS1zb3VyY2UtbGluZT0iMTQiIGRhdGEtbGluay10eXBlPSJkZXBlbmRlbmN5Ij48cGF0aCBkPSJNNDc0LjU4LDQ1Ny45MTEgQzQ5MC44MSw0NDkuMDkxIDUwOC41Miw0MzYuMTMxIDUxNy42OSw0MTguNjIxIEM1MjUuMTIsNDA0LjQ1MSA1MjUuOTUsMzk2LjMzMSA1MTcuNjksMzgyLjYyMSBDNTA1LjM0LDM2Mi4xMTEgNDg2Ljk2MiwzNTAuNzg5IDQ2NS44OTIsMzQyLjYxOSIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9ImJsb2NrZWQtdG8taW5fcHJvZ3Jlc3MiLz48cG9seWdvbiBwb2ludHM9IjQ2MS4yMywzNDAuODExLDQ2OC4xNzUsMzQ3Ljc5NCw0NjUuODkyLDM0Mi42MTksNDcxLjA2NywzNDAuMzM1LDQ2MS4yMywzNDAuODExIiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjx0ZXh0IHg9IjUyNC42OSIgeT0iNDA2LjE0OSIgZmlsbD0iIzAwMCIgZm9udC1zaXplPSIxMyIgdGV4dExlbmd0aD0iOTQuMDM0IiBmb250LWZhbWlseT0iU2Vnb2UgVUkiPmJsb2NrZXIgcmVzb2x2ZWQ8L3RleHQ+PC9nPjwhLS1saW5rIGRvbmUgdG8gKmVuZCotLT48ZyBjbGFzcz0ibGluayIgZGF0YS1lbnRpdHktMT0iZW50MDAxMCIgZGF0YS1lbnRpdHktMj0iZW50MDAxOSIgaWQ9ImxuazIwIiBkYXRhLXNvdXJjZS1saW5lPSIxNSIgZGF0YS1saW5rLXR5cGU9ImRlcGVuZGVuY3kiPjxwYXRoIGQ9Ik04NTkuNTMsMzUyLjcyMSBDODYwLjY0LDM4NC43NTEgODYyLjM4OCw0MzQuOTE0IDg2My4xNjgsNDU3LjUyNCIgc3R5bGU9InN0cm9rZTojMTgxODE4O3N0cm9rZS13aWR0aDoxOyIgZmlsbD0ibm9uZSIgaWQ9ImRvbmUtdG8tKmVuZCoiLz48cG9seWdvbiBwb2ludHM9Ijg2My4zNCw0NjIuNTIxLDg2Ny4wMjcsNDUzLjM4OSw4NjMuMTY4LDQ1Ny41MjQsODU5LjAzMiw0NTMuNjY0LDg2My4zNCw0NjIuNTIxIiBmaWxsPSIjMTgxODE4IiBzdHlsZT0ic3Ryb2tlOiMxODE4MTg7c3Ryb2tlLXdpZHRoOjE7c3Ryb2tlLWxpbmVqb2luOm1pdGVyO3N0cm9rZS1taXRlcmxpbWl0OjEwOyIvPjwvZz48IS0tbGluayBpbl9wcm9ncmVzcyB0byBHTU4yNC0tPjxnIGNsYXNzPSJsaW5rIiBkYXRhLWVudGl0eS0xPSJlbnQwMDA0IiBkYXRhLWVudGl0eS0yPSJlbnQwMDI1IiBpZD0ibG5rMjYiIGRhdGEtc291cmNlLWxpbmU9IjI0IiBkYXRhLWxpbmstdHlwZT0iYXNzb2NpYXRpb24iPjxwYXRoIGQ9Ik00NjEuMywzMjkuNzkxIEM1MDcuNjksMzMzLjE4MSA1NzkuNDMsMzQ0Ljc2MSA2MjcuNjksMzgyLjYyMSBDNjQ5LjcxLDM5OS44OTEgNjYyLjgzLDQzMC4xMjEgNjY5LjY1LDQ1MC43NDEiIHN0eWxlPSJzdHJva2U6IzE4MTgxODtzdHJva2Utd2lkdGg6MTtzdHJva2UtZGFzaGFycmF5OjcsNzsiIGZpbGw9Im5vbmUiIGlkPSJpbl9wcm9ncmVzcy1HTU4yNCIvPjwvZz48P3BsYW50dW1sLXNyYyBaUEpGUW5EMTVDVmx5clV5ZXhNYUZWSmNtS2ltTThIUWk0QjBJOWRpbGF0NlA2Vk1zVGFzV1dWakdHeUFmUFNVekx6T3JEMHM5VkxWY0ZzRl9DdWNRUFM2TDlBR3BEbHRGbER6bHZBRmJDd2FiSWQ1ZENYWXgzZjZrcHNQQ2h0V1dNNXdrSWtTU2NDY1YtdWxfT01WLW9hLXktZ0Jsd0JnNHFtcFZxc21iX3dOQndsRl9mQm1aZU9TWkpBWmpDazVVRk5tRFJMUVpvYlo3SWl6ZTRVcUZQSE1Tdnd0NGZRa2k0cGx4cXB6T1kxTWRZNUF3U0ZDY2U3NWlzUWFCSkdUakJoVFJhX3h0eks3Vi1EXy0yYy1QcTcwbWQwNUhURVdMM0dQV0ljRmZOQXV1RDNvYVU5WlNEakZkeElWeEpfVnRKa1d6ZHZoWm9uQnYxM3R6NXFjajRjdmJiYS1EOHVZYXdSQVlWa1NUUnFvbS00ZVcxdTBtSlJiTTRkN1pHOWpfMFNiNmFlenUxbUVSbWxFTk9zcFpDZmZTZVJvcUFuXzBNRVpFVUl2dC1lcUhDYWV1aW45N0o2b0l2SU11eC1iYmFXcnZYWUs4Y1VCNGh0WG9BdEx6alFmbUd1c2o1YWlkd3FkY0FXOUlIczN3VW14OTlWQTJVc0dUOHhKcEVNTzc4aTQycHRRTUJra0ZwUkhnQndGOXdYbG82MVhpaEpUcXBpaEVJa0tNRmNsUXJZNXVNWjZnOHdlSW5SeUNDMTJROEVzTUpLT0VaQjlfR2FJSEZ1Q210UDFySWE2U094Zi0tYmxSV2xUdDh5by1Edks3d2lKN0MtZzRfbXdsT19SMlp4VkNTR2JPOGs5MWw2dy1XZkU2RkdJbUxFUzRMWXVlUjdBSVFVRVU0aldSb1c4TlNoajYtVEM2bEdzS1d0aVJuMHB6b05YV1hiT2J4TmM0aG9jSzdKRzZmSGNrUUlSczRwcUFNWmhCRFNNb1hQNjJkeUJHTUxQWXh4NlFyaGhuVlJUZ1ZlMz8+PC9nPjwvc3ZnPg==" alt="Жизненный цикл задачи и checkpoints" loading="lazy"><span class="zoom-hint">Нажмите, чтобы открыть</span></div><figcaption>Жизненный цикл задачи и checkpoints</figcaption></figure>
+<p>Источник: <a href="diagrams/lifecycle.puml"><code>diagrams/lifecycle.puml</code></a>.</p>
+<h3 id="71-checkpoint-контракт">7.1. Checkpoint-контракт</h3>
+<ul>
+<li>Файл: <code>docs/checkpoints/T-XXX-CP-N.md</code>, создаётся из
+  <code>harness/templates/checkpoint.md</code>.</li>
+<li>Статусы: <code>awaiting_review</code>, <code>approved</code>, <code>changes_requested</code>.</li>
+<li>Обязательные поля: task, checkpoint, role, stage, artifacts, status,
+  requested_at, reviewer, decision, user remarks, user edits, role response,
+  next action, snapshot commit.</li>
+<li>Перед review orchestrator коммитит снимок. Роль перед продолжением читает
+  решение, замечания и <code>git diff</code> с момента снимка; правки пользователя
+  сохраняются.</li>
+<li>Без явного <code>approved</code> задача остаётся <code>awaiting_review</code>.</li>
+<li><code>CP-F</code> — финальная приёмка; без него задача не может стать <code>done</code>.</li>
+<li>Checkpoint-файл — часть задачи; удалять историю нельзя.</li>
+</ul>
+<h3 id="72-checkpoints-по-ролям-по-умолчанию">7.2. Checkpoints по ролям (по умолчанию)</h3>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Роль</th>
+<th>Feature</th>
+<th>Bugfix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>analyst</td>
+<td>CP-1 требования; CP-2 e2e UC/YAML</td>
+<td>CP-1 impact/acceptance при эскалации</td>
+</tr>
+<tr>
+<td>ux-designer</td>
+<td>CP-1 flows/screens; CP-2 wireframes/prototype/UI spec</td>
+<td>CP-1 UI impact/fix spec</td>
+</tr>
+<tr>
+<td>architect</td>
+<td>CP-1 ADR, architecture description, SCN/SVC/API, OpenAPI; CP-2 component/scenario/data/class/swimlane diagrams and decomposition</td>
+<td>CP-1 design/root-cause</td>
+</tr>
+<tr>
+<td>coder</td>
+<td>CP-1 implementation/unit+integration; CP-2 e2e automation/local run</td>
+<td>CP-1 reproduction/root cause + failing regression; CP-2 fix/regression</td>
+</tr>
+<tr>
+<td>qa</td>
+<td>CP-1 plan/coverage; CP-2 report/verdict</td>
+<td>CP-1 report; CP-F</td>
+</tr>
+<tr>
+<td>doc-writer</td>
+<td>CP-1 documentation draft</td>
+<td>CP-1 changelog/guide</td>
+</tr>
+<tr>
+<td>все</td>
+<td>CP-F</td>
+<td>CP-F</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="73-ошибки-retries-и-блокировки">7.3. Ошибки, retries и блокировки</h3>
+<ul>
+<li>Acceptance failure → <code>failed</code>, причина и output в <code>Blockers</code>.</li>
+<li>До 3 попыток на чанк; затем <code>blocked</code> и эскалация пользователю.</li>
+<li>Пустой результат subagent или <code>finish=length</code> — failed attempt; записать в log
+  время, ошибку, токены, размер контекста, состояние артефактов.</li>
+<li>После второй ошибки размера — нарезать чанк мельче; третья попытка не должна
+  повторять тот же большой вызов.</li>
+<li>Невоспроизводимый баг после 3 попыток → <code>blocked</code> с evidence, не спекулятивный
+  фикс.</li>
+<li><code>changes_requested</code> — не failure, а возврат к тому же checkpoint.</li>
+<li>При <code>Subagent depth limit</code> или routing/permission ошибке — не делать работу
+  роли inline; остановиться, исправить tool/plugin, начать новую root-сессию.</li>
+</ul>
+<h3 id="74-бюджеты-генерации">7.4. Бюджеты генерации</h3>
+<p>Для всех ролей действует <code>process.md</code> 11.1: лимиты на один write/edit, на сессию
+и размер чанка. Большие артефакты пишутся по секциям/страницам/модулям; при
+достижении порога контекста роль останавливается и передаёт handoff. Не
+используйте compaction как инструмент декомпозиции.</p>
+<hr />
+<h2 id="8-команды-и-флаги">8. Команды и флаги</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Команда</th>
+<th>Аргумент</th>
+<th>Назначение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/harness-init</code></td>
+<td>—</td>
+<td>Инициализировать harness в текущем проекте</td>
+</tr>
+<tr>
+<td><code>/harness-feature</code></td>
+<td><code>&lt;slug&gt;</code>; <code>no-e2e</code>, <code>no-ux</code> для waiver</td>
+<td>Создать <code>pending</code> feature planning task <code>P-00</code></td>
+</tr>
+<tr>
+<td><code>/harness-bug</code></td>
+<td><code>&lt;report или BUG-XXX&gt;</code></td>
+<td>Создать/триажить <code>BUG-XXX</code> и pending bugfix tasks</td>
+</tr>
+<tr>
+<td><code>/harness-run</code></td>
+<td><code>T-XXX</code></td>
+<td>Запустить/продолжить ровно одну задачу</td>
+</tr>
+<tr>
+<td><code>/harness-board-update</code></td>
+<td><code>T-XXX</code> или <code>all</code></td>
+<td>Синхронизировать план/карточки/баги/checkpoints/коммиты; только без активной задачи</td>
+</tr>
+<tr>
+<td><code>/harness-board-report</code></td>
+<td>—</td>
+<td>Read-only отчёт по задачам, багам, review и блокерам</td>
+</tr>
+<tr>
+<td><code>/harness-doctor</code></td>
+<td>—</td>
+<td>Проверить установку, права, версии, индексы, модели, RAG</td>
+</tr>
+</tbody>
+</table></div>
+<p>Ограничения:</p>
+<ul>
+<li><code>/harness-run</code> принимает ровно один ID; несколько ID, диапазон или <code>all</code> —
+  ошибка.</li>
+<li><code>/harness-board-update</code> запрещён при <code>in_progress</code>/<code>awaiting_review</code>.</li>
+<li><code>/harness-feature</code> и <code>/harness-bug</code> только регистрируют <code>pending</code>-работу и не
+  запускают роли.</li>
+<li><code>default_agent</code> не переключается на harness.</li>
+<li>E2E только local/staging; production запрещён.</li>
+</ul>
+<hr />
+<h2 id="9-чек-листы">9. Чек-листы</h2>
+<h3 id="91-перед-стартом-задачи">9.1. Перед стартом задачи</h3>
+<ul>
+<li>[ ] <code>harness/process.md</code> и <code>docs/plan.md</code> существуют.</li>
+<li>[ ] В карточке есть <code>workflow</code>, <code>stage</code>, роль, <code>depends_on</code>, <code>acceptance</code>,
+  inputs, checkpoints и <code>CP-F</code>.</li>
+<li>[ ] Для bugfix есть <code>bug: BUG-XXX</code> и <code>severity</code>.</li>
+<li>[ ] Для feature явно указаны e2e/UX: required или waiver с причиной.</li>
+<li>[ ] Все <code>depends_on</code> в статусе <code>done</code>.</li>
+<li>[ ] Нет другой задачи в <code>in_progress</code>/<code>awaiting_review</code>.</li>
+<li>[ ] Для большой задачи записаны <code>chunks</code>, бюджеты и контекстный порог.</li>
+</ul>
+<h3 id="92-review-checkpoint">9.2. Review checkpoint</h3>
+<ul>
+<li>[ ] Прочитать <code>docs/checkpoints/T-XXX-CP-N.md</code>.</li>
+<li>[ ] Открыть все перечисленные артефакты и проверить acceptance.</li>
+<li>[ ] При необходимости выполнить указанные команды/тесты.</li>
+<li>[ ] Внести правки и/или замечания в checkpoint-файл.</li>
+<li>[ ] Записать <code>approved</code> или <code>changes_requested</code>.</li>
+<li>[ ] Запустить <code>/harness-run T-XXX</code>; не ожидать авто-продолжения.</li>
+</ul>
+<h3 id="93-закрытие-задачи">9.3. Закрытие задачи</h3>
+<ul>
+<li>[ ] Все пункты <code>acceptance</code> выполнены.</li>
+<li>[ ] Финальный <code>CP-F</code> одобрен.</li>
+<li>[ ] Plan, card, checkpoints, bug status/index обновлены.</li>
+<li>[ ] Activity/SVG перерисованы как производные (после авторитетных источников).</li>
+<li>[ ] Issue-индекс согласован.</li>
+<li>[ ] Финальный commit <code>T-XXX: ...</code> сделан.</li>
+</ul>
+<h3 id="94-bugfix">9.4. Bugfix</h3>
+<ul>
+<li>[ ] В отчёте есть observed/expected behavior, reproduction, environment.</li>
+<li>[ ] Дефект воспроизведён на базовой ревизии.</li>
+<li>[ ] Regression-тест падает до фикса.</li>
+<li>[ ] Фикс минимальный, без несвязанных изменений.</li>
+<li>[ ] Regression и релевантные suites зелёные.</li>
+<li>[ ] QA независимо подтвердил fail-before/pass-after.</li>
+<li>[ ] Bug статус корректен; P0/P1 postmortem есть.</li>
+</ul>
+<h3 id="95-hotfix">9.5. Hotfix</h3>
+<ul>
+<li>[ ] Severity P0/P1; <code>profile: hotfix</code> допустим.</li>
+<li>[ ] Активная задача не вытесняется; hotfix ждёт.</li>
+<li>[ ] Воспроизведение, regression, независимая QA и postmortem не отменяются.</li>
+<li>[ ] Docs могут быть отложены на follow-up, но зафиксированы.</li>
+<li>[ ] При contract/schema/security/multi-module/UI-flow изменении — эскалация.</li>
+</ul>
+<hr />
+<h2 id="10-типовые-ошибки-и-решения">10. Типовые ошибки и решения</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Симптом</th>
+<th>Причина</th>
+<th>Действие</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/harness-*</code> не видна</td>
+<td>opencode не перезапущен после установки</td>
+<td>Перезапустить opencode</td>
+</tr>
+<tr>
+<td>harness не стартует</td>
+<td>Нет <code>harness/process.md</code> или <code>docs/plan.md</code></td>
+<td>Выполнить <code>/harness-init</code></td>
+</tr>
+<tr>
+<td>Задача не стартует</td>
+<td>Зависимость не <code>done</code> или есть активная задача</td>
+<td>Проверить <code>depends_on</code> и board</td>
+</tr>
+<tr>
+<td>Запрошена вторая задача</td>
+<td>Одна активная задача across feature+bugfix</td>
+<td>Дождаться завершения/review; preemption запрещён</td>
+</tr>
+<tr>
+<td>Задача «висит» в <code>awaiting_review</code></td>
+<td>Нет явного решения в checkpoint-файле</td>
+<td>Review, записать <code>approved</code>/<code>changes_requested</code>, запустить <code>/harness-run</code></td>
+</tr>
+<tr>
+<td>Роль не остановилась на checkpoint</td>
+<td>В карточке нет checkpoints или старые agent-копии</td>
+<td>Добавить checkpoints; переустановить agents, перезапустить opencode</td>
+</tr>
+<tr>
+<td>Bug не воспроизводится</td>
+<td>Мало данных/нестабильное окружение</td>
+<td>Оставить <code>new</code>/<code>blocked</code>, запросить reproduction data</td>
+</tr>
+<tr>
+<td>Продуктовый баг попал в <code>docs/issues/</code></td>
+<td>Неверный реестр</td>
+<td>Перенести в <code>docs/bugs/</code>; harness issues оставить отдельно</td>
+</tr>
+<tr>
+<td><code>Subagent depth limit</code></td>
+<td><code>subagent_depth</code> отсутствует/1 или compaction handoff создал child</td>
+<td>Установить <code>subagent_depth: 2</code>, исправить/отключить plugin, новая root-сессия</td>
+</tr>
+<tr>
+<td>QA вернул пустой отчёт/<code>finish=length</code></td>
+<td><code>limit.context</code> выше реального <code>num_ctx</code> или мал output budget</td>
+<td><code>/harness-doctor</code>, сравнить <code>ollama show</code> с <code>limit.context</code>, нарезать чанк, новая сессия</td>
+</tr>
+<tr>
+<td>Артефакт превышает бюджет</td>
+<td>Слишком большая генерация</td>
+<td>Нарезать чанк по <code>process.md</code> 11.1, проверить <code>check-budget.ps1</code></td>
+</tr>
+<tr>
+<td><code>rag_sync</code> timeout / <code>Sync already running</code></td>
+<td>Индексация дольше MCP timeout</td>
+<td>Проверить <code>rag_search</code>, повторить после снятия lock, записать issue при повторе</td>
+</tr>
+<tr>
+<td>Диаграмма не рендерится</td>
+<td>Ошибка PlantUML</td>
+<td><code>check_syntax</code>, исправить <code>.puml</code>, повторить <code>render_file</code></td>
+</tr>
+<tr>
+<td>Issue-файлы не в индексе</td>
+<td>Запись создана вне <code>docs/issues/</code> или без строки</td>
+<td>Перенести, добавить строку, <code>/harness-doctor</code></td>
+</tr>
+<tr>
+<td>Версия проекта отличается</td>
+<td>Проект инициализирован старой версией</td>
+<td>Обновить осознанно; при необходимости vendor pin</td>
+</tr>
+<tr>
+<td>E2E runner не читает данные</td>
+<td>Невалидный/отсутствующий YAML dataset</td>
+<td>Проверить <code>e2e-test-data-*.yaml</code>, запустить validator</td>
+</tr>
+<tr>
+<td>Hotfix не стартует</td>
+<td>Активная задача ещё не завершена</td>
+<td>Дождаться; hotfix не вытесняет</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="11-глоссарий-и-источники">11. Глоссарий и источники</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Термин</th>
+<th>Значение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Harness</td>
+<td>Локальная система ролевых subagent-ов с общим планом и процессом</td>
+</tr>
+<tr>
+<td>Board</td>
+<td><code>docs/plan.md</code> — таблица задач, workflow, статусов, зависимостей, багов</td>
+</tr>
+<tr>
+<td>Workflow</td>
+<td><code>feature</code> (новое поведение) или <code>bugfix</code> (восстановление поведения)</td>
+</tr>
+<tr>
+<td>Task card</td>
+<td>Карточка задачи: id, workflow, stage, role, <code>depends_on</code>, <code>acceptance</code>, log</td>
+</tr>
+<tr>
+<td>Bug card</td>
+<td><code>BUG-XXX</code>: observed/expected behavior, reproduction, severity, fix, verification</td>
+</tr>
+<tr>
+<td>Hotfix</td>
+<td>Модификатор P0/P1; не отменяет reproduction, regression, QA, postmortem</td>
+</tr>
+<tr>
+<td>Acceptance</td>
+<td>Проверяемые критерии приёмки задачи</td>
+</tr>
+<tr>
+<td>Checkpoint</td>
+<td>Объявленная точка review с файлом в <code>docs/checkpoints/</code> и решением пользователя</td>
+</tr>
+<tr>
+<td><code>CP-F</code></td>
+<td>Обязательный финальный checkpoint до <code>done</code></td>
+</tr>
+<tr>
+<td><code>UC-E2E-NNN</code></td>
+<td>Стабильный ID end-to-end use case для тестов и QA</td>
+</tr>
+<tr>
+<td>ADR</td>
+<td>Architecture Decision Record</td>
+</tr>
+<tr>
+<td>MCP</td>
+<td>Протокол инструментов; здесь <code>plantuml-render</code> и <code>local-rag</code></td>
+</tr>
+<tr>
+<td>RAG</td>
+<td>Поиск по локальному индексу (FTS5 + LanceDB + Ollama)</td>
+</tr>
+<tr>
+<td>Derived activity</td>
+<td><code>docs/activity.puml/.svg</code> — визуализация, не источник статусов</td>
+</tr>
+<tr>
+<td>Waiver</td>
+<td>Явный отказ от e2e/UX с причиной, подтверждённый на checkpoint</td>
+</tr>
+</tbody>
+</table></div>
+<p>Источники:</p>
+<ul>
+<li><a href="../../harness/process.md"><code>harness/process.md</code></a> — общие правила процесса.</li>
+<li><a href="../../harness/workflows/feature.md"><code>harness/workflows/feature.md</code></a> — feature workflow.</li>
+<li><a href="../../harness/workflows/bugfix.md"><code>harness/workflows/bugfix.md</code></a> — bugfix workflow.</li>
+<li><a href="../../harness/commands/"><code>harness/commands/</code></a> — команды <code>/harness-*</code>.</li>
+<li><a href="../../harness/templates/"><code>harness/templates/</code></a> — шаблоны карточек, ADR, architecture description, OpenAPI, checkpoint, e2e, UX.</li>
+<li><a href="../../harness/agents/"><code>harness/agents/</code></a> — определения ролей.</li>
+<li><a href="../guides/harness-global.md"><code>docs/guides/harness-global.md</code></a> — установка, активация, troubleshooting.</li>
+<li><a href="../description/README.md"><code>docs/description/README.md</code></a> — описание решения и сценариев S-01..S-14.</li>
+<li><a href="../../README.md"><code>README.md</code></a> — обзор репозитория и быстрый старт.</li>
+<li><a href="../../requirements/initial.txt"><code>requirements/initial.txt</code></a> — исходные требования.</li>
+</ul>
+<hr />
+<h2 id="12-сборка-html">12. Сборка HTML</h2>
+<p>HTML-версия генерируется из этого файла и не требует сети:</p>
+<pre><code class="language-powershell">python docs/manual/build_html.py
+</code></pre>
+<p>Скрипт встраивает все SVG как <code>data:</code> URI, оборачивает диаграммы в zoomable-
+фигуры и собирает <code>docs/manual/index.html</code>. Требуются Python 3.12 и пакет
+<code>markdown</code>. После изменения <code>README.md</code>, шаблона или диаграмм пересоберите
+<code>index.html</code> и проверьте, что все диаграммы отрендерены.</p>
+  </main>
+</div>
+<footer class="page-footer wrap">
+  <p>Все диаграммы — PlantUML, встроены как SVG. Нажмите на диаграмму, чтобы открыть полноэкранный просмотр: колесо — масштаб, перетаскивание — панорама, Esc — закрыть.</p>
+</footer>
+<div class="lightbox" id="lightbox" hidden>
+  <div class="lightbox-dialog" role="dialog" aria-modal="true" aria-labelledby="lightbox-title">
+    <div class="lightbox-bar">
+      <div class="lightbox-title" id="lightbox-title">Диаграмма</div>
+      <div class="lightbox-actions">
+        <button type="button" data-action="zoom-out" title="Уменьшить">&minus;</button>
+        <span class="zoom-level" id="zoom-level">100%</span>
+        <button type="button" data-action="zoom-in" title="Увеличить">+</button>
+        <button type="button" data-action="fit" title="Вписать в экран">Вписать</button>
+        <button type="button" data-action="reset" title="Масштаб 100%">100%</button>
+        <a class="button-link" id="download-link" download="diagram.svg">Скачать SVG</a>
+        <button type="button" class="close" data-action="close" title="Закрыть (Esc)" aria-label="Закрыть">&times;</button>
+      </div>
+    </div>
+    <div class="lightbox-viewport" id="lightbox-viewport">
+      <img id="lightbox-image" alt="">
+      <div class="lightbox-hint">Колесо — масштаб | перетаскивание — панорама | Esc — закрыть</div>
+    </div>
+  </div>
+</div>
+<script>
+(() => {
+  const lightbox = document.getElementById('lightbox');
+  const viewport = document.getElementById('lightbox-viewport');
+  const image = document.getElementById('lightbox-image');
+  const titleEl = document.getElementById('lightbox-title');
+  const zoomLabel = document.getElementById('zoom-level');
+  const download = document.getElementById('download-link');
+  const closeBtn = lightbox.querySelector('[data-action="close"]');
+  let scale = 1;
+  let tx = 0;
+  let ty = 0;
+  let open = false;
+  let lastFocus = null;
+  let dragging = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let startTx = 0;
+  let startTy = 0;
+
+  function naturalSize() {
+    return {
+      nw: image.naturalWidth || 1200,
+      nh: image.naturalHeight || 800
+    };
+  }
+  function apply() {
+    image.style.transform = 'translate(' + tx + 'px, ' + ty + 'px) scale(' + scale + ')';
+    zoomLabel.textContent = Math.round(scale * 100) + '%';
+  }
+  function fit() {
+    const rect = viewport.getBoundingClientRect();
+    const size = naturalSize();
+    const s = Math.min(rect.width / size.nw, rect.height / size.nh) * 0.94;
+    scale = Math.max(0.05, Math.min(s, 20));
+    tx = (rect.width - size.nw * scale) / 2;
+    ty = (rect.height - size.nh * scale) / 2;
+    apply();
+  }
+  function zoomAt(mx, my, factor) {
+    const next = Math.max(0.05, Math.min(20, scale * factor));
+    const k = next / scale;
+    tx = mx - (mx - tx) * k;
+    ty = my - (my - ty) * k;
+    scale = next;
+    apply();
+  }
+  function zoomCenter(factor) {
+    const rect = viewport.getBoundingClientRect();
+    zoomAt(rect.width / 2, rect.height / 2, factor);
+  }
+  function reset100() {
+    const rect = viewport.getBoundingClientRect();
+    const size = naturalSize();
+    scale = 1;
+    tx = (rect.width - size.nw) / 2;
+    ty = (rect.height - size.nh) / 2;
+    apply();
+  }
+  function openViewer(src, title) {
+    lastFocus = document.activeElement;
+    const label = title || 'Диаграмма';
+    titleEl.textContent = label;
+    image.alt = label;
+    image.src = src;
+    download.href = src;
+    const safe = label.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, '-').slice(0, 80);
+    download.download = (safe || 'diagram') + '.svg';
+    lightbox.hidden = false;
+    open = true;
+    document.body.style.overflow = 'hidden';
+    const doFit = () => requestAnimationFrame(() => { if (open) fit(); });
+    if (image.complete && image.naturalWidth) doFit();
+    else image.addEventListener('load', doFit, { once: true });
+    closeBtn.focus();
+  }
+  function closeViewer() {
+    if (!open) return;
+    open = false;
+    lightbox.hidden = true;
+    image.removeAttribute('src');
+    document.body.style.overflow = '';
+    if (lastFocus && typeof lastFocus.focus === 'function') lastFocus.focus();
+  }
+  document.querySelectorAll('figure.diagram').forEach((figure) => {
+    const img = figure.querySelector('img');
+    if (!img) return;
+    const label = figure.dataset.title || img.alt;
+    figure.addEventListener('click', () => openViewer(img.src, label));
+    figure.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        openViewer(img.src, label);
+      }
+    });
+  });
+  lightbox.addEventListener('click', (event) => {
+    if (event.target === lightbox) closeViewer();
+  });
+  lightbox.querySelectorAll('[data-action]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const action = button.dataset.action;
+      if (action === 'zoom-in') zoomCenter(1.25);
+      else if (action === 'zoom-out') zoomCenter(1 / 1.25);
+      else if (action === 'fit') fit();
+      else if (action === 'reset') reset100();
+      else if (action === 'close') closeViewer();
+    });
+  });
+  viewport.addEventListener('wheel', (event) => {
+    if (!open) return;
+    event.preventDefault();
+    const rect = viewport.getBoundingClientRect();
+    const factor = event.deltaY < 0 ? 1.15 : 1 / 1.15;
+    zoomAt(event.clientX - rect.left, event.clientY - rect.top, factor);
+  }, { passive: false });
+  viewport.addEventListener('pointerdown', (event) => {
+    if (!open || event.button !== 0) return;
+    dragging = true;
+    viewport.classList.add('dragging');
+    viewport.setPointerCapture(event.pointerId);
+    dragStartX = event.clientX;
+    dragStartY = event.clientY;
+    startTx = tx;
+    startTy = ty;
+  });
+  viewport.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    tx = startTx + (event.clientX - dragStartX);
+    ty = startTy + (event.clientY - dragStartY);
+    apply();
+  });
+  function endDrag(event) {
+    if (!dragging) return;
+    dragging = false;
+    viewport.classList.remove('dragging');
+    if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
+  }
+  viewport.addEventListener('pointerup', endDrag);
+  viewport.addEventListener('pointercancel', endDrag);
+  viewport.addEventListener('dblclick', (event) => {
+    if (!open) return;
+    const rect = viewport.getBoundingClientRect();
+    zoomAt(event.clientX - rect.left, event.clientY - rect.top, 1.5);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (!open) return;
+    if (event.key === 'Escape') { event.preventDefault(); closeViewer(); }
+    else if (event.key === '+' || event.key === '=') { event.preventDefault(); zoomCenter(1.25); }
+    else if (event.key === '-') { event.preventDefault(); zoomCenter(1 / 1.25); }
+    else if (event.key === '0') { event.preventDefault(); fit(); }
+  });
+  window.addEventListener('resize', () => { if (open) fit(); });
+})();
+</script>
+</body>
+</html>

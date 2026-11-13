@@ -10,10 +10,11 @@ participant "docs/architecture" as docs
 participant "docs/analysis + docs/ux" as inputs
 participant "harness-orchestrator" as orch
 
-primary -> arch : task: ADR + diagrams + contracts
+primary -> arch : task: architecture description,\nADRs, diagrams, OpenAPI, contracts
 arch -> inputs : read requirements, e2e use cases,\nUX screen IDs and UI spec
-arch -> arch : choose the solution\nand alternatives
-arch -> docs : adr-NNN-*.md
+arch -> arch : define SCN/SVC/API IDs and\nscope/applicability
+arch -> docs : architecture-<slug>.md
+arch -> docs : component, per-scenario sequence,\ndata, class, and per-service swimlane .puml
 arch -> mcp : check_syntax (.puml)
 mcp --> arch : valid / errors
 alt syntax errors
@@ -22,6 +23,8 @@ alt syntax errors
 end
 arch -> mcp : render_file -> SVG
 mcp --> arch : .svg next to .puml
+arch -> docs : openapi-api-*.yaml/.json
 arch -> docs : contracts-*.md\nAPI, formats, errors
-arch --> orch : ADR, diagrams, contracts,\ndecomposition for coder
+arch -> arch : link every diagram/spec\nin the architecture description
+arch --> orch : architecture package,\nOpenAPI, contracts, decomposition for coder
 @enduml

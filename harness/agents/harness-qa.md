@@ -88,9 +88,9 @@ Before starting, verify that `harness/process.md`, the workflow file, and the ca
 
 1. Review artifacts against card `acceptance`.
 2. Review code: correctness, module boundaries, contracts, test coverage.
-3. Text/artifact review: compare diagrams as text (`.puml` source) and docs with ADRs/contracts; do not read images.
+3. Text/artifact review: compare diagrams as text (`.puml` source) and docs with ADRs/contracts; do not read images. Verify that the architecture description covers scope/applicability, components, `SCN`/`SVC`/`API`, data/class models, OpenAPI specs, and that every artifact is referenced.
 4. Run tests and verify independently (read-only).
-5. E2E coverage: build a requirement -> `UC-E2E-NNN` -> test matrix; verify use-case completeness, YAML dataset validity, cross-reference anchors (`#fixtures.*`, `#UC-E2E-*`), and that chunked artifacts form one consistent catalog.
+5. E2E coverage: build a requirement -> `UC-E2E-NNN` -> test matrix; verify use-case completeness, `UC-E2E` -> `SCN` mapping in the architecture description, YAML dataset validity, cross-reference anchors (`#fixtures.*`, `#UC-E2E-*`), and that chunked artifacts form one consistent catalog.
 6. E2E execution: run only the coder-provided runner (for example `scripts/e2e.ps1`, `make e2e`, `pytest -m e2e`) in an isolated local/staging test environment; collect evidence and clean up test data.
 7. E2E report: pass/fail per use case, defects with severity, traceability, residual risks.
 8. Verdict: `accept`/`reject` with numbered findings by severity (blocker/major/minor).

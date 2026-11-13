@@ -21,6 +21,10 @@
 | issues | ISSUE-... (links to docs/issues/ if problems occurred) |
 | commit | latest commit hash (snapshot or closure) |
 
+For R-01/R-02, `inputs` must list the current requirements, e2e use cases (when
+in scope), UX specs, and the architecture description; trace checks read
+`card.inputs`.
+
 ## Acceptance
 
 - [ ] Criterion 1 (verifiable).

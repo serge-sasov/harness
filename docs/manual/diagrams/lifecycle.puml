@@ -1,0 +1,28 @@
+@startuml
+skinparam defaultFontName Segoe UI
+title Жизненный цикл задачи и checkpoints
+
+[*] --> pending : /harness-feature | /harness-bug
+pending --> in_progress : /harness-run T-XXX\nпроверки пройдены
+in_progress --> awaiting_review : CHECKPOINT CP-N reached\ncheckpoint + snapshot commit
+awaiting_review --> in_progress : approved\n(intermediate checkpoint)
+awaiting_review --> in_progress : changes_requested\n(return to same checkpoint)
+awaiting_review --> done : CP-F approved\nacceptance + final commit
+awaiting_review --> failed : user reject
+in_progress --> failed : acceptance failure
+failed --> in_progress : fix and retry\n(max 3 attempts per chunk)
+in_progress --> blocked : external blocker /\n3 failed attempts
+blocked --> in_progress : blocker resolved
+done --> [*]
+
+note right of awaiting_review
+  Без явного approved задача
+  остаётся awaiting_review.
+  Правки пользователя authoritative.
+end note
+
+note bottom of in_progress
+  Одна активная задача across feature+bugfix.
+  Feature и bugfix не параллельны.
+end note
+@enduml

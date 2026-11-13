@@ -128,9 +128,12 @@ $globalFiles = @(
     (Join-Path $GlobalHarness "templates\e2e-use-case.md"),
     (Join-Path $GlobalHarness "templates\e2e-test-data.yaml"),
     (Join-Path $GlobalHarness "templates\ux-spec.md"),
+    (Join-Path $GlobalHarness "templates\architecture-description.md"),
+    (Join-Path $GlobalHarness "templates\openapi.yaml"),
     (Join-Path $GlobalHarness "scripts\new-issue.ps1"),
     (Join-Path $GlobalHarness "scripts\check-budget.ps1"),
     (Join-Path $GlobalHarness "scripts\validate-e2e-data.py"),
+    (Join-Path $GlobalHarness "scripts\validate-openapi.py"),
     (Join-Path $GlobalHarness "scripts\harness-lib.ps1"),
     (Join-Path $GlobalHarness "scripts\verify-artifacts.ps1"),
     (Join-Path $GlobalHarness "scripts\verify-stage.ps1"),
@@ -512,14 +515,16 @@ if ((Test-Path -LiteralPath $marker) -and (Test-Path -LiteralPath $plan)) {
     }
     $budgetScript = Join-Path $Project "harness\scripts\check-budget.ps1"
     $e2eValidator = Join-Path $Project "harness\scripts\validate-e2e-data.py"
-    if ((Test-Path -LiteralPath $budgetScript) -and (Test-Path -LiteralPath $e2eValidator)) {
-        Write-Ok "budget check and e2e data validator available in the project"
+    $openapiValidator = Join-Path $Project "harness\scripts\validate-openapi.py"
+    if ((Test-Path -LiteralPath $budgetScript) -and (Test-Path -LiteralPath $e2eValidator) -and (Test-Path -LiteralPath $openapiValidator)) {
+        Write-Ok "budget check and e2e/OpenAPI validators available in the project"
     }
     else {
-        Write-Warn "missing harness/scripts/check-budget.ps1 or validate-e2e-data.py; run /harness-init -Force"
+        Write-Warn "missing harness/scripts/check-budget.ps1, validate-e2e-data.py, or validate-openapi.py; run /harness-init -Force"
     }
     $newTemplates = @(
         "checkpoint.md", "e2e-use-case.md", "e2e-test-data.yaml", "ux-spec.md",
+        "architecture-description.md", "openapi.yaml",
         "task-card-feature.md", "task-card-bugfix.md", "bug-card.md"
     )
     $missingTemplates = @($newTemplates | Where-Object {
@@ -566,7 +571,7 @@ if ((Test-Path -LiteralPath $marker) -and (Test-Path -LiteralPath $plan)) {
     else {
         Write-Warn "missing harness/checks: $($missingChecks -join ', '); run /harness-init -Force"
     }
-    $projectScripts = @("harness-lib.ps1", "verify-artifacts.ps1", "verify-stage.ps1", "stage-done.ps1", "board-update.ps1", "measure-tokens.ps1")
+    $projectScripts = @("harness-lib.ps1", "verify-artifacts.ps1", "verify-stage.ps1", "stage-done.ps1", "board-update.ps1", "measure-tokens.ps1", "validate-openapi.py")
     $missingScripts = @($projectScripts | Where-Object {
         -not (Test-Path -LiteralPath (Join-Path $Project "harness\scripts\$_"))
     })

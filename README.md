@@ -27,12 +27,14 @@ Usage manual (RU, HTML): [`docs/manual/index.html`](docs/manual/index.html).
 - `harness/skills/harness/SKILL.md` - global skill with a short workflow
 - `harness/skills/harness-issues/SKILL.md` - harness issue tracking skill
 - `harness/templates/` - artifact templates (feature/bugfix task cards, bug card,
-  adr, plan-row, issue, checkpoint, e2e-use-case, e2e-test-data, ux-spec)
+  adr, architecture-description, openapi, plan-row, issue, checkpoint,
+  e2e-use-case, e2e-test-data, ux-spec)
 - `harness/checks/` - deterministic verification registry (`engine.json`,
   `feature.json`, `bugfix.json`)
 - `harness/scripts/` - `install.ps1`, `init.ps1`, `doctor.ps1`,
   `uninstall.ps1`, `new-issue.ps1`, `verify-artifacts.ps1`, `verify-stage.ps1`,
-  `stage-done.ps1`, `board-update.ps1`, `measure-tokens.ps1`
+  `stage-done.ps1`, `board-update.ps1`, `measure-tokens.ps1`,
+  `validate-e2e-data.py`, `validate-openapi.py`
 - `harness/version.json` - installation version
 - `docs/bugs/` - product bug registry (`BUG-XXX` cards + index)
 - `docs/issues/` - harness problem log (one MD per issue + index)
@@ -46,6 +48,8 @@ Usage manual (RU, HTML): [`docs/manual/index.html`](docs/manual/index.html).
 - `docs/analysis/` - requirements, e2e use cases and YAML test data
 - `docs/ux/` - user flows, screens, wireframes, UI spec, prototype catalog, and
   one HTML page per `UC-E2E-NNN`
+- `docs/architecture/` - architecture description, ADRs, contracts,
+  component/scenario/data/class/swimlane diagrams, and OpenAPI 3.x specs
 - `docs/activity.puml` / `activity.svg` - derived activity diagram, informational
   only; never a status, dependency, acceptance, or routing source
 - `docs/manual/` - practical usage manual (RU) with scenario map, artifact map,
@@ -162,16 +166,23 @@ no status/dependency changes, preemption, or parallel execution are allowed.
   `uc-e2e-NNN.html` page per in-scope use case (or a recorded waiver). Prototype
   page implementation may be delegated to `harness-coder` one page at a time;
   coder writes only `docs/ux/prototype/<slug>/**`, and UX validates the result.
-- The architect maps screens/use cases to contracts; the coder implements
+- The architect writes `docs/architecture/architecture-<slug>.md`, assigns
+  `SCN`/`SVC`/`API` IDs, and produces component, per-scenario sequence, data,
+  class, and per-service swimlane diagrams plus OpenAPI 3.x specs. All diagrams
+  and specs are linked from the architecture description; the coder implements
   deterministic e2e tests and an isolated runner; QA builds the coverage
   matrix, runs the suite, and reports traceability and defects.
 
 ## Versions
 
-- Current version: `2.5.0` (deterministic check engine, SHA256 evidence ledger,
-  `/harness-stage-done` with policy P2, executable acceptance criteria, token
-  usage metrics; includes 2.4.0 per-scenario UX HTML pages and the derived
-  activity rule, and 2.3.0 generation/context budgets).
+- Current version: `2.6.0` (architecture design package: overall architecture
+  description, component/per-scenario sequence/data/class/per-service swimlane
+  diagrams, OpenAPI 3.x specifications, coverage and link checks; includes 2.5.0
+  deterministic checks and P2 approval, 2.4.0 per-scenario UX HTML pages, and
+  2.3.0 generation/context budgets).
+- Upgrade note: R-02 checks cover every diagram/spec in `docs/architecture`.
+  Existing projects must add `architecture-*.md` and link legacy diagrams there,
+  or remove obsolete diagrams before resuming an R-01/R-02 task.
 - The global version is stored in `~/.config/opencode/harness/version.json`.
 - A project records the version in `harness/version.json` during `/harness-init`.
 - `/harness-doctor` warns about version divergence.

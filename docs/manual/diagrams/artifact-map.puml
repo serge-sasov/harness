@@ -1,0 +1,87 @@
+@startwbs
+skinparam defaultFontName Segoe UI
+title Карта артефактов: фазы, роли, результаты
+
+* Артефакты harness
+** Feature workflow
+*** P-00 Планирование\n(orchestrator)
+**** docs/plan.md
+**** docs/tasks/T-XXX-*.md
+*** A-01 Требования\n(analyst)
+**** docs/analysis/requirements-*.md
+**** docs/analysis/questions-*.md
+**** docs/analysis/glossary.md
+*** A-02 E2E use cases + data\n(analyst)
+**** docs/analysis/e2e-use-cases-*.md
+**** docs/analysis/e2e-test-data-*.yaml
+*** U-01 UX flows + screens\n(ux-designer)
+**** docs/ux/user-flows-*.md
+**** docs/ux/screens-*.md
+*** U-02 Wireframes + prototype\n(ux-designer, coder)
+**** docs/ux/wireframes-*.puml/.svg
+**** docs/ux/ui-spec-*.md
+**** docs/ux/prototype/slug/*
+*** R-01 Architecture + contracts\n(architect)
+**** docs/architecture/architecture-*.md
+**** docs/architecture/adr-*.md
+**** docs/architecture/contracts-*.md
+**** docs/architecture/openapi-api-*.yaml|json
+*** R-02 Diagrams + handoff\n(architect)
+**** components-*.puml/.svg
+**** sequence-scn-*.puml/.svg
+**** data-model-*.puml/.svg
+**** class-*.puml/.svg
+**** swimlane-svc-*.puml/.svg
+*** I-01 Implementation + tests\n(coder)
+**** src/, tests/
+**** Dockerfile, compose, Makefile
+*** I-02 E2E automation\n(coder)
+**** tests/e2e/
+**** scripts/e2e.ps1
+**** scripts/validate-e2e-data.py
+*** Q-01 E2E plan + coverage\n(qa)
+**** docs/qa/e2e-plan-*.md
+*** Q-02 QA + acceptance\n(qa, qa-vision)
+**** docs/qa/e2e-report-*.md
+**** docs/qa/review-T-XXX.md
+**** docs/qa/vision-review-*.md
+*** D-01 Documentation\n(doc-writer)
+**** README.md
+**** docs/guides/*
+**** finalized ADRs
+*** F-01 Closure + CP-F\n(orchestrator + lead)
+**** docs/plan.md, card, activity
+**** git commit
+** Bugfix workflow
+*** B-00 Triage\n(orchestrator)
+**** docs/bugs/BUG-XXX-*.md
+**** docs/bugs/README.md
+**** pending task cards
+*** B-01 Reproduction + root cause\n(coder)
+**** failing regression test
+**** card log
+*** B-02 Minimal fix + regression\n(coder)
+**** code + tests
+*** B-03 Independent verification\n(qa)
+**** docs/qa/review-T-XXX.md
+*** B-04 Docs / changelog\n(doc-writer, optional)
+**** CHANGELOG.md
+**** docs/guides/*
+*** B-05 Closure + postmortem\n(orchestrator + lead)
+**** bug status + index
+**** plan/card/activity + commit
+** Shared / всегда
+*** Orchestrator
+**** docs/plan.md
+**** docs/tasks/
+**** docs/checkpoints/
+**** docs/bugs/
+**** docs/activity.puml/.svg
+*** All roles
+**** docs/issues/ISSUE-*.md
+**** docs/issues/README.md
+*** User + orchestrator
+**** docs/checkpoints/T-XXX-CP-N.md
+*** Git
+**** commits T-XXX: ...
+@endwbs

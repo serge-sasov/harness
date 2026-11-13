@@ -91,7 +91,10 @@ report that the project is not initialized (`/harness-init`).
    for bugfix, acceptance criteria, checkpoint list, and a chunk plan. Estimate
    the artifact size; if it exceeds the section 11.1 budget, record `chunks`,
    `max_write_kb`, `max_session_kb`, and `context_stop_pct` in the card. A-02 is
-   chunked by default (2-3 use cases per Markdown/YAML chunk).
+   chunked by default (2-3 use cases per Markdown/YAML chunk). For R-01/R-02,
+   `card.artifacts` lists only unconditional architecture files; conditional
+   `openapi-api-*` and `swimlane-svc-*` outputs are governed by the architecture
+   description's `Scope and applicability` section and stage checks.
 5. Manage checkpoints with `harness/scripts/stage-done.ps1`: it runs the checks,
    writes the checks JSON/evidence ledger/checkpoint, applies P2, updates
    plan/card/activity, and commits the snapshot. Preview with

@@ -59,7 +59,7 @@ schema, security boundary, multiple modules, or a UI flow.
 | `harness-orchestrator` | board, bug registry, dependencies, checkpoints, acceptance, derived activity, commits |
 | `harness-analyst` | requirements, RAG, questions, glossary, e2e use cases/test data; bug impact |
 | `harness-ux-designer` | user flows, screen inventory, wireframes, UI spec, per-scenario HTML prototypes (may delegate page code to coder); UI bug impact |
-| `harness-architect` | ADRs, PlantUML, contracts; design-level root cause |
+| `harness-architect` | ADRs, overall architecture description, component/scenario/data/class/swimlane diagrams, OpenAPI specs, contracts; design-level root cause |
 | `harness-coder` | code, unit/integration/e2e tests, CI/CD, local runs; reproduction and regression fix |
 | `harness-qa` | text/code review, e2e coverage/run, independent bug verification, verdict |
 | `harness-qa-vision` | visual review of diagrams, wireframes, and screenshots |
@@ -81,7 +81,8 @@ The lead does not edit files itself; the orchestrator handles the board, bug reg
 - `docs/analysis/`: requirements, questions, glossary, e2e use cases and YAML test data;
 - `docs/ux/`: user flows, screens, wireframes, UI spec, prototype catalog and
   one HTML page per `UC-E2E-NNN` under `docs/ux/prototype/<slug>/`;
-- `docs/architecture/`, `docs/qa/`, `docs/guides/`: role artifacts;
+- `docs/architecture/`: architecture description, ADRs, contracts, component/scenario/data/class/swimlane PlantUML diagrams, and OpenAPI 3.x specs;
+- `docs/qa/`, `docs/guides/`: role artifacts;
 - `docs/issues/`: harness problem and solution log (skill `harness-issues`);
 - `src/`, `tests/`, `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`: code and CI/CD.
 

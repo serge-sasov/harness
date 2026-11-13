@@ -30,5 +30,11 @@ One or two sentences with the essence. Implementation contract details follow.
 
 ## Contracts and diagrams
 
-- Component diagram: `docs/architecture/*.puml` (link).
-- Interfaces/API: signatures, formats, errors.
+- Architecture description: `docs/architecture/architecture-<slug>.md` (link).
+- Component diagram: `docs/architecture/components-<slug>.puml` (link).
+- Scenario sequences: `docs/architecture/sequence-scn-*.puml` (links).
+- Data and class models: `docs/architecture/data-model-<slug>.puml`,
+  `docs/architecture/class-<slug>.puml` (links).
+- Service swimlanes: `docs/architecture/swimlane-svc-*.puml` (links).
+- Interfaces/API: signatures, formats, errors; OpenAPI 3.x specs
+  `docs/architecture/openapi-api-*.yaml|json`.

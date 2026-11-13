@@ -104,6 +104,8 @@ harness/
     e2e-use-case.md
     e2e-test-data.yaml
     ux-spec.md
+    architecture-description.md
+    openapi.yaml
   scripts/
     verify-artifacts.ps1
     verify-stage.ps1
@@ -111,6 +113,8 @@ harness/
     board-update.ps1
     measure-tokens.ps1
     harness-lib.ps1
+    validate-e2e-data.py
+    validate-openapi.py
 docs/
   plan.md
   activity.puml
@@ -219,8 +223,16 @@ Status colors: `pending` `#D3D3D3`, `in_progress` `#FFE082`,
   in-scope use case (or a recorded waiver), local `assets/`, and optional
   screenshots. The UX designer may delegate page code to `harness-coder` one page
   at a time; coder writes only the prototype area and UX accepts the result.
-- Architect: contracts cover the screen IDs, use-case IDs, and the e2e
-  environment/data consumption.
+- Architect: `docs/architecture/architecture-<slug>.md` is the single entry
+  point. It defines `SCN-NNN` scenarios, `SVC-NNN` services, and `API-NNN` REST
+  interfaces and links every artifact. Required diagrams: component,
+  per-scenario sequence, data model, class model, and per-service swimlane
+  (`.puml` + `.svg`). Required contracts: OpenAPI 3.x `openapi-api-*.yaml/.json`
+  per API. Contracts also cover screen IDs, use-case IDs, and the e2e
+  environment/data consumption. `No microservices` and `No REST API` must be
+  stated explicitly; silence is not a waiver. R-01/R-02 cards must list the
+  current requirements, e2e use cases (when in scope), UX specs, and the
+  architecture description in `inputs`; trace checks read `card.inputs`.
 - Coder: `tests/e2e/`, an isolated runner (for example `scripts/e2e.ps1`), and
   a dataset validator (for example `scripts/validate-e2e-data.py`; the baseline
   `harness/scripts/validate-e2e-data.py` is copied by `/harness-init`).
@@ -339,13 +351,17 @@ manually from the template.
 
 ## 6. Versions and pins
 
-- Current version: `2.5.0` (deterministic check engine, SHA256 evidence ledger,
-  `/harness-stage-done` with policy P2, executable acceptance, token usage
-  metrics; includes 2.4.0 per-scenario UX pages and the derived activity rule,
-  and 2.3.0 budgets/chunking).
+- Current version: `2.6.0` (architecture design package: overall architecture
+  description, component/per-scenario sequence/data/class/per-service swimlane
+  diagrams, OpenAPI 3.x specs, coverage and link checks; includes 2.5.0
+  deterministic checks and P2 approval, 2.4.0 per-scenario UX pages, and 2.3.0
+  budgets/chunking).
 - Global version: `~/.config/opencode/harness/version.json`.
 - Project version: `harness/version.json`, created by `/harness-init`.
 - `/harness-doctor` warns when the versions differ.
+- Upgrade note for 2.6.0: R-02 checks cover every diagram/spec in
+  `docs/architecture`. Add `architecture-*.md` and link legacy diagrams there,
+  or remove obsolete diagrams before resuming an R-01/R-02 task.
 
 **Version record** (currently used) records the version, but the project keeps
 using global files. This is convenient for a single user and frequent updates.
@@ -418,6 +434,10 @@ manually (the script prints a reminder).
 | task is stuck in `awaiting_review` | no explicit decision in the checkpoint file | review, record `approved`/`changes_requested`, resume `/harness-run T-XXX` |
 | role does not stop at a checkpoint | card has no `checkpoints` list or old agent copies | add checkpoints to the card; rerun install and restart opencode |
 | e2e runner cannot read test data | missing or invalid YAML dataset | check `docs/analysis/e2e-test-data-<slug>.yaml`; run the coder validator |
+| architecture templates or `validate-openapi.py` missing | the project was initialized by an older version | run `/harness-init -Force` with backup |
+| OpenAPI check fails | spec is not OpenAPI 3.x, has no `info`, `paths`, `responses`, `operationId`, or `x-harness-api-id` | fix the spec or regenerate it from `harness/templates/openapi.yaml` |
+| R-02 fails on missing sequence/swimlane | `SCN`/`SVC` IDs exist in the architecture description but no matching diagram | add the diagram or remove the inapplicable ID and record the waiver |
+| `architecture-links` fails | a diagram or OpenAPI file is not referenced in `architecture-*.md`, or an obsolete legacy diagram remains | add it to `## Diagram index`/`## REST API`, or remove the obsolete artifact |
 | version differs | the project was initialized by an older version | update the project deliberately; see pin |
 
 `/harness-doctor` checks the global installation, the verification engine

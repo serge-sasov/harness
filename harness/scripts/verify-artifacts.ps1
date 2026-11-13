@@ -47,6 +47,9 @@ function Get-FilesForParams {
     if ($P.source -eq 'card.artifacts') {
         $files = @($Ctx.Artifacts)
     }
+    elseif ($P.source -eq 'card.inputs') {
+        $files = @($Ctx.Inputs | Where-Object { $_ })
+    }
     elseif ($P.globs) {
         foreach ($g in @($P.globs)) {
             if ($g) { $files += Expand-Glob -Pattern ([string]$g) -AllFiles $Ctx.AllFiles }
@@ -321,7 +324,15 @@ function Check-IdsUnique {
 function Check-IdCoverage {
     param($P, $Ctx)
     $sourceFiles = @()
-    foreach ($g in @($P.source.globs)) { if ($g) { $sourceFiles += Expand-Glob -Pattern ([string]$g) -AllFiles $Ctx.AllFiles } }
+    if ($P.source -eq 'card.inputs') {
+        $sourceFiles = @($Ctx.Inputs | Where-Object { $_ })
+    }
+    elseif ($P.source -eq 'card.artifacts') {
+        $sourceFiles = @($Ctx.Artifacts)
+    }
+    else {
+        foreach ($g in @($P.source.globs)) { if ($g) { $sourceFiles += Expand-Glob -Pattern ([string]$g) -AllFiles $Ctx.AllFiles } }
+    }
     $targetFiles = @()
     foreach ($g in @($P.targets.globs)) { if ($g) { $targetFiles += Expand-Glob -Pattern ([string]$g) -AllFiles $Ctx.AllFiles } }
     if ($P.scope -eq 'card') {
@@ -392,6 +403,42 @@ function Check-CountMatch {
         return New-Result $P.id 'count-match' 'FAIL' "ids=$($ids.Count), files=$targetCount"
     }
     New-Result $P.id 'count-match' 'PASS' "$($ids.Count) = $targetCount"
+}
+
+function Check-ReferenceCoverage {
+    param($P, $Ctx)
+    $sourceFiles = @()
+    foreach ($g in @($P.sourceGlobs)) { if ($g) { $sourceFiles += Expand-Glob -Pattern ([string]$g) -AllFiles $Ctx.AllFiles } }
+    $targetFiles = @()
+    foreach ($g in @($P.targetGlobs)) { if ($g) { $targetFiles += Expand-Glob -Pattern ([string]$g) -AllFiles $Ctx.AllFiles } }
+    if ($P.scope -eq 'card') {
+        $sourceFiles = @($sourceFiles | Where-Object { $Ctx.Artifacts -contains $_ })
+        $targetFiles = @($targetFiles | Where-Object { $Ctx.Artifacts -contains $_ })
+    }
+    $sourceFiles = @($sourceFiles | Sort-Object -Unique)
+    $targetFiles = @($targetFiles | Sort-Object -Unique)
+    if ($sourceFiles.Count -eq 0) {
+        return New-Result $P.id 'reference-coverage' 'NOT_APPLICABLE' 'no source files'
+    }
+    if ($targetFiles.Count -eq 0) {
+        return New-Result $P.id 'reference-coverage' 'FAIL' 'no target files'
+    }
+    $targetText = ''
+    foreach ($f in $targetFiles) {
+        $text = Get-FileTextSafe -Root $Ctx.Root -RelPath $f
+        if ($null -ne $text) { $targetText += "`n" + $text }
+    }
+    $bad = @()
+    foreach ($f in $sourceFiles) {
+        $leaf = Split-Path -Leaf $f
+        if ($targetText.IndexOf($leaf, [System.StringComparison]::OrdinalIgnoreCase) -lt 0) {
+            $bad += $f
+        }
+    }
+    if ($bad.Count -gt 0) {
+        return New-Result $P.id 'reference-coverage' 'FAIL' ("not referenced: " + (($bad | Select-Object -First 8) -join ', '))
+    }
+    New-Result $P.id 'reference-coverage' 'PASS' "$($sourceFiles.Count) file(s) referenced by $($targetFiles.Count) target(s)"
 }
 
 function Check-DiffNoDelete {
@@ -657,6 +704,7 @@ function Invoke-Check {
             'ids-unique' { return Check-IdsUnique $P $Ctx }
             'id-coverage' { return Check-IdCoverage $P $Ctx }
             'count-match' { return Check-CountMatch $P $Ctx }
+            'reference-coverage' { return Check-ReferenceCoverage $P $Ctx }
             'diff-no-delete' { return Check-DiffNoDelete $P $Ctx }
             'tree-clean' { return Check-TreeClean $P $Ctx }
             'hash-match' { return Check-HashMatch $P $Ctx }
@@ -712,6 +760,7 @@ function Invoke-SelfTest {
             Root       = $Dir
             AllFiles   = $all
             Artifacts  = @()
+            Inputs     = @()
             Unresolved = @()
             Task       = 'T-999'
             Stage      = 'X'
@@ -752,6 +801,18 @@ function Invoke-SelfTest {
         New-TextFile $d 'p/uc-e2e-002.html' 'x'
         Invoke-Case -Name 'count-match mismatch' -Type 'count-match' -Params @{ sourceGlobs = @('docs/uc.md'); sourceRegex = 'UC-E2E-\d{3}'; targetGlobs = @('p/uc-e2e-*.html') } -Dir $d -Expect 'FAIL'
 
+        $d = New-CaseDir 'reference-bad'
+        New-TextFile $d 'docs/architecture/architecture-x.md' 'See components-a.puml only.'
+        New-TextFile $d 'docs/architecture/components-a.puml' '@startuml`n@enduml'
+        New-TextFile $d 'docs/architecture/sequence-scn-001.puml' '@startuml`n@enduml'
+        Invoke-Case -Name 'reference-coverage missing' -Type 'reference-coverage' -Params @{ sourceGlobs = @('docs/architecture/components-*.puml', 'docs/architecture/sequence-*.puml'); targetGlobs = @('docs/architecture/architecture-*.md') } -Dir $d -Expect 'FAIL'
+
+        $d = New-CaseDir 'reference-good'
+        New-TextFile $d 'docs/architecture/architecture-x.md' 'See components-a.puml and sequence-scn-001.puml.'
+        New-TextFile $d 'docs/architecture/components-a.puml' '@startuml`n@enduml'
+        New-TextFile $d 'docs/architecture/sequence-scn-001.puml' '@startuml`n@enduml'
+        Invoke-Case -Name 'reference-coverage present' -Type 'reference-coverage' -Params @{ sourceGlobs = @('docs/architecture/components-*.puml', 'docs/architecture/sequence-*.puml'); targetGlobs = @('docs/architecture/architecture-*.md') } -Dir $d -Expect 'PASS'
+
         $d = New-CaseDir 'puml-bad'
         New-TextFile $d 'd/a.puml' '@startuml`nA -> B`n'
         Invoke-Case -Name 'puml-syntax missing end' -Type 'puml-syntax' -Params @{ glob = 'd/*.puml' } -Dir $d -Expect 'FAIL'
@@ -786,7 +847,7 @@ function Invoke-SelfTest {
         $null = Invoke-Git -Root $d -Arguments @('add', '-A')
         $null = Invoke-Git -Root $d -Arguments @('-c', 'user.email=t@t', '-c', 'user.name=t', 'commit', '-qm', 'drop')
         $all = @(Get-AllFiles -Root $d)
-        $ctx = @{ Root = $d; AllFiles = $all; Artifacts = @('keep.txt'); Task = 'T-999'; Stage = 'X'; Card = @{}; BaseCommit = $baseCommit; Workflow = 'feature' }
+        $ctx = @{ Root = $d; AllFiles = $all; Artifacts = @('keep.txt'); Inputs = @(); Task = 'T-999'; Stage = 'X'; Card = @{}; BaseCommit = $baseCommit; Workflow = 'feature' }
         $def = [pscustomobject]@{ id = 'diff-no-delete deletion'; type = 'diff-no-delete'; params = [pscustomobject]@{ allow = @('keep.txt') } }
         $r = Invoke-Check -Def $def -Ctx $ctx
         Assert-Equal -Label 'diff-no-delete deletion' -Actual $r.result -Expected 'FAIL' -Failed ([ref]$failed)
@@ -885,12 +946,15 @@ if ($List) {
 $allFiles = @(Get-AllFiles -Root $Root)
 $declared = Expand-Artifacts -Items @($card['artifacts']) -AllFiles $allFiles -Root $Root
 $artifacts = @($declared.Files)
+$declaredInputs = Expand-Artifacts -Items @($card['inputs']) -AllFiles $allFiles -Root $Root
+$inputs = @($declaredInputs.Files)
 $baseCommit = Get-TaskBaseCommit -Root $Root -Card $card -Task $Task
 
 $ctx = @{
     Root       = $Root
     AllFiles   = $allFiles
     Artifacts  = $artifacts
+    Inputs     = $inputs
     Unresolved = @($declared.Unresolved)
     Task       = $Task
     Stage      = $Stage
