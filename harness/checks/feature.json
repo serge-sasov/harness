@@ -60,36 +60,43 @@
       ]
     },
     "R-01": {
-      "artifacts": ["docs/architecture/architecture-*.md", "docs/architecture/adr-*.md", "docs/architecture/contracts-*.md"],
+      "artifacts": ["docs/architecture/architecture-*.md", "docs/architecture/adr-*.md", "docs/architecture/components-*.puml", "docs/architecture/components-*.svg", "docs/architecture/sequence-scn-*.puml", "docs/architecture/sequence-scn-*.svg"],
       "checks": [
         { "id": "adr-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/adr-*.md"], "minCount": 1 } },
         { "id": "adr-sections", "type": "headings-required", "params": { "globs": ["docs/architecture/adr-*.md"], "headings": ["## Context", "## Decision", "## Alternatives", "## Consequences"], "scope": "card" } },
-        { "id": "contracts-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/contracts-*.md"], "minCount": 1 } },
         { "id": "architecture-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/architecture-*.md"], "minCount": 1 } },
-        { "id": "architecture-sections", "type": "headings-required", "params": { "globs": ["docs/architecture/architecture-*.md"], "headings": ["## Scope and applicability", "## Context and constraints", "## Decisions", "## Components", "## Services", "## Scenarios", "## Data model", "## Class model", "## REST API", "## Diagram index", "## Traceability"], "scope": "card" } },
-        { "id": "architecture-requirement-trace", "type": "id-coverage", "params": { "source": "card.inputs", "targets": { "globs": ["docs/architecture/architecture-*.md", "docs/architecture/adr-*.md", "docs/architecture/contracts-*.md"] }, "regex": "R-\\d{3}" } },
+        { "id": "architecture-sections", "type": "headings-required", "params": { "globs": ["docs/architecture/architecture-*.md"], "headings": ["## Scope and applicability", "## Context and constraints", "## Decisions", "## Components", "## Services", "## Scenarios", "## Diagram index"], "scope": "card" } },
+        { "id": "architecture-requirement-trace", "type": "id-coverage", "params": { "source": "card.inputs", "targets": { "globs": ["docs/architecture/architecture-*.md", "docs/architecture/adr-*.md"] }, "regex": "R-\\d{3}" } },
         { "id": "architecture-description-trace", "type": "id-coverage", "params": { "source": "card.inputs", "targets": { "globs": ["docs/architecture/architecture-*.md"] }, "regex": "R-\\d{3}" } },
         { "id": "scenario-ids", "type": "ids-unique", "params": { "globs": ["docs/architecture/architecture-*.md"], "regex": "SCN-\\d{3}", "definitions": true, "scope": "card" } },
         { "id": "service-ids", "type": "ids-unique", "params": { "globs": ["docs/architecture/architecture-*.md"], "regex": "SVC-\\d{3}", "definitions": true, "scope": "card" } },
-        { "id": "api-ids", "type": "ids-unique", "params": { "globs": ["docs/architecture/architecture-*.md"], "regex": "API-\\d{3}", "definitions": true, "scope": "card" } },
         { "id": "scenario-uc-coverage", "type": "id-coverage", "params": { "source": "card.inputs", "targets": { "globs": ["docs/architecture/architecture-*.md"] }, "regex": "UC-E2E-\\d{3}" } },
-        { "id": "openapi-count", "type": "count-match", "params": { "sourceGlobs": ["docs/architecture/architecture-*.md"], "sourceRegex": "API-\\d{3}", "targetGlobs": ["docs/architecture/openapi-api-*.yaml", "docs/architecture/openapi-api-*.yml", "docs/architecture/openapi-api-*.json"] } },
-        { "id": "openapi-ids", "type": "id-coverage", "params": { "source": { "globs": ["docs/architecture/architecture-*.md"] }, "targets": { "globs": ["docs/architecture/openapi-api-*.yaml", "docs/architecture/openapi-api-*.yml", "docs/architecture/openapi-api-*.json"] }, "regex": "API-\\d{3}" } },
-        { "id": "openapi-valid", "type": "python-validator", "params": { "script": "harness/scripts/validate-openapi.py", "globs": ["docs/architecture/openapi-api-*.yaml", "docs/architecture/openapi-api-*.yml", "docs/architecture/openapi-api-*.json"] } },
-        { "id": "architecture-openapi-links", "type": "reference-coverage", "params": { "sourceGlobs": ["docs/architecture/openapi-api-*.yaml", "docs/architecture/openapi-api-*.yml", "docs/architecture/openapi-api-*.json"], "targetGlobs": ["docs/architecture/architecture-*.md"] } }
-      ]
-    },
-    "R-02": {
-      "artifacts": ["docs/architecture/*.puml", "docs/architecture/*.svg"],
-      "checks": [
-        { "id": "diagram-syntax", "type": "puml-syntax", "params": { "globs": ["docs/architecture/*.puml"], "scope": "card" } },
-        { "id": "diagram-svg", "type": "svg-fresh", "params": { "globs": ["docs/architecture/*.puml"], "scope": "card" } },
-        { "id": "component-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/component*.puml"], "minCount": 1 } },
-        { "id": "data-model-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/data-model-*.puml"], "minCount": 1 } },
-        { "id": "class-diagram-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/class-*.puml"], "minCount": 1 } },
+        { "id": "component-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/components-*.puml"], "minCount": 1 } },
         { "id": "sequence-count", "type": "count-match", "params": { "sourceGlobs": ["docs/architecture/architecture-*.md"], "sourceRegex": "SCN-\\d{3}", "targetGlobs": ["docs/architecture/sequence-scn-*.puml"] } },
         { "id": "sequence-ids", "type": "id-coverage", "params": { "source": { "globs": ["docs/architecture/architecture-*.md"] }, "targets": { "globs": ["docs/architecture/sequence-scn-*.puml"] }, "regex": "SCN-\\d{3}" } },
         { "id": "sequence-uc-trace", "type": "id-coverage", "params": { "source": "card.inputs", "targets": { "globs": ["docs/architecture/sequence-scn-*.puml"] }, "regex": "UC-E2E-\\d{3}" } },
+        { "id": "diagram-syntax", "type": "puml-syntax", "params": { "globs": ["docs/architecture/components-*.puml", "docs/architecture/sequence-scn-*.puml"], "scope": "card" } },
+        { "id": "diagram-svg", "type": "svg-fresh", "params": { "globs": ["docs/architecture/components-*.puml", "docs/architecture/sequence-scn-*.puml"], "scope": "card" } },
+        { "id": "architecture-links", "type": "reference-coverage", "params": { "sourceGlobs": ["docs/architecture/components-*.puml", "docs/architecture/sequence-scn-*.puml"], "targetGlobs": ["docs/architecture/architecture-*.md"] } }
+      ]
+    },
+    "R-02": {
+      "artifacts": ["docs/architecture/architecture-*.md", "docs/architecture/contracts-*.md", "docs/architecture/*.puml", "docs/architecture/*.svg"],
+      "checks": [
+        { "id": "contracts-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/contracts-*.md"], "minCount": 1 } },
+        { "id": "contracts-requirement-trace", "type": "id-coverage", "params": { "source": "card.inputs", "targets": { "globs": ["docs/architecture/contracts-*.md"] }, "regex": "R-\\d{3}" } },
+        { "id": "architecture-sections", "type": "headings-required", "params": { "globs": ["docs/architecture/architecture-*.md"], "headings": ["## Scope and applicability", "## Context and constraints", "## Decisions", "## Components", "## Services", "## Scenarios", "## Data model", "## Class model", "## REST API", "## Diagram index", "## Traceability"], "scope": "card" } },
+        { "id": "architecture-requirement-trace", "type": "id-coverage", "params": { "source": "card.inputs", "targets": { "globs": ["docs/architecture/architecture-*.md", "docs/architecture/adr-*.md", "docs/architecture/contracts-*.md"] }, "regex": "R-\\d{3}" } },
+        { "id": "architecture-description-trace", "type": "id-coverage", "params": { "source": "card.inputs", "targets": { "globs": ["docs/architecture/architecture-*.md"] }, "regex": "R-\\d{3}" } },
+        { "id": "api-ids", "type": "ids-unique", "params": { "globs": ["docs/architecture/architecture-*.md"], "regex": "API-\\d{3}", "definitions": true, "scope": "card" } },
+        { "id": "openapi-count", "type": "count-match", "params": { "sourceGlobs": ["docs/architecture/architecture-*.md"], "sourceRegex": "API-\\d{3}", "targetGlobs": ["docs/architecture/openapi-api-*.yaml", "docs/architecture/openapi-api-*.yml", "docs/architecture/openapi-api-*.json"] } },
+        { "id": "openapi-ids", "type": "id-coverage", "params": { "source": { "globs": ["docs/architecture/architecture-*.md"] }, "targets": { "globs": ["docs/architecture/openapi-api-*.yaml", "docs/architecture/openapi-api-*.yml", "docs/architecture/openapi-api-*.json"] }, "regex": "API-\\d{3}" } },
+        { "id": "openapi-valid", "type": "python-validator", "params": { "script": "harness/scripts/validate-openapi.py", "globs": ["docs/architecture/openapi-api-*.yaml", "docs/architecture/openapi-api-*.yml", "docs/architecture/openapi-api-*.json"] } },
+        { "id": "architecture-openapi-links", "type": "reference-coverage", "params": { "sourceGlobs": ["docs/architecture/openapi-api-*.yaml", "docs/architecture/openapi-api-*.yml", "docs/architecture/openapi-api-*.json"], "targetGlobs": ["docs/architecture/architecture-*.md"] } },
+        { "id": "data-model-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/data-model-*.puml"], "minCount": 1 } },
+        { "id": "class-diagram-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/class-*.puml"], "minCount": 1 } },
+        { "id": "diagram-syntax", "type": "puml-syntax", "params": { "globs": ["docs/architecture/*.puml"], "scope": "card" } },
+        { "id": "diagram-svg", "type": "svg-fresh", "params": { "globs": ["docs/architecture/*.puml"], "scope": "card" } },
         { "id": "swimlane-count", "type": "count-match", "params": { "sourceGlobs": ["docs/architecture/architecture-*.md"], "sourceRegex": "SVC-\\d{3}", "targetGlobs": ["docs/architecture/swimlane-svc-*.puml"] } },
         { "id": "swimlane-ids", "type": "id-coverage", "params": { "source": { "globs": ["docs/architecture/architecture-*.md"] }, "targets": { "globs": ["docs/architecture/swimlane-svc-*.puml"] }, "regex": "SVC-\\d{3}" } },
         { "id": "architecture-links", "type": "reference-coverage", "params": { "sourceGlobs": ["docs/architecture/component*.puml", "docs/architecture/sequence-scn-*.puml", "docs/architecture/data-model-*.puml", "docs/architecture/class-*.puml", "docs/architecture/swimlane-svc-*.puml", "docs/architecture/openapi-api-*.yaml", "docs/architecture/openapi-api-*.yml", "docs/architecture/openapi-api-*.json"], "targetGlobs": ["docs/architecture/architecture-*.md"] } }

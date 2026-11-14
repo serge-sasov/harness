@@ -10,7 +10,18 @@
 | Class model | `class-<slug>.puml` |
 | Requirement sources | `docs/analysis/requirements-*.md` |
 
-## Scope and applicability
+<!--
+Stage ownership (do not rewrite an earlier stage):
+- R-01 Solution design: `## Scope and applicability`, `## Context and constraints`,
+  `## Decisions`, `## Components`, `## Services`, `## Scenarios`, `## Diagram index`.
+  Also `adr-NNN-<slug>.md` and `components-<slug>` / `sequence-scn-NNN` diagrams.
+- R-02 Interfaces and data model: `## Data model`, `## Class model`,
+  `## REST API`, `## Traceability`; `contracts-<slug>.md`; per-`SVC-NNN`
+  swimlanes; per-`API-NNN` OpenAPI specs; complete the `Diagram index`.
+Append at R-02 and preserve the R-01 sections and user edits.
+-->
+
+## Scope and applicability  (R-01)
 
 State the architecture depth explicitly. Use `required` or
 `not applicable (reason)` for every optional area.
@@ -66,18 +77,18 @@ scenario to requirements and, when e2e is in scope, to `UC-E2E-NNN`.
 |---|---|---|---|---|
 | SCN-001 | | R-001 | UC-E2E-001 | `sequence-scn-001-<slug>.puml` |
 
-## Data model
+## Data model  (R-02)
 
 Entities, relationships, ownership, identifiers, retention, and migration
 constraints. The diagram is `data-model-<slug>.puml`
 (`data-model-<slug>.svg`).
 
-## Class model
+## Class model  (R-02)
 
 Key domain classes, aggregates, value objects, invariants, and their
 relationships. The diagram is `class-<slug>.puml` (`class-<slug>.svg`).
 
-## REST API
+## REST API  (R-02)
 
 List REST APIs and their OpenAPI 3.x specifications. If the solution has no
 REST API, write `No REST API` and describe the actual interface style. One

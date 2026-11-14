@@ -80,9 +80,14 @@ here; workflow-specific stages and task graphs live in
 - Feature tasks with architecture scope must produce
   `docs/architecture/architecture-*.md` plus component, data, and class
   diagrams, a sequence diagram for every `SCN-NNN`, a swimlane for every
-  `SVC-NNN`, and an OpenAPI 3.x specification for every `API-NNN`. The
-  architecture description's `Scope and applicability` section is authoritative:
-  no `SVC-`/`API-` definitions means an explicit `No microservices`/`No REST API`
+  `SVC-NNN`, and an OpenAPI 3.x specification for every `API-NNN`. The design
+  is delivered in two architect stages: R-01 (Solution design) produces the ADR,
+  the architecture description core, component and per-`SCN` sequence diagrams,
+  and `SCN`/`SVC` IDs; R-02 (Interfaces and data model) extends that same
+  description with the data/class models, REST API, `API-NNN` IDs, OpenAPI
+  specs, contracts, and per-`SVC-NNN` swimlanes, and never rewrites or deletes
+  the R-01 work. The architecture description's `Scope and applicability` section
+  is authoritative: no `SVC-`/`API-` definitions means an explicit `No microservices`/`No REST API`
   statement and disables those conditional checks; silence is not a waiver.
   `SCN`/`SVC`/`API` identifiers are project-global; never reuse them across
   architecture descriptions.
@@ -248,10 +253,7 @@ here; workflow-specific stages and task graphs live in
     CP-1 impact/acceptance (bugfix escalation);
   - ux-designer: CP-1 flows and screens, CP-2 wireframes/prototype/UI spec
     (feature); CP-1 UI impact/fix spec (bugfix escalation);
-  - architect: CP-1 ADR, contracts, architecture description with scope,
-    `SCN`/`SVC`/`API` IDs, and OpenAPI specs; CP-2 component, scenario sequence,
-    data, class, and per-service swimlane diagrams plus decomposition
-    (feature); CP-1 design/root-cause decision (bugfix escalation);
+  - architect: CP-1 design (ADR, architecture description core, component and per-`SCN` sequence diagrams, `SCN`/`SVC` IDs); CP-2 interfaces and data model (contracts, OpenAPI, data/class models, per-service swimlanes, `API` IDs, full traceability) (feature); CP-1 design/root-cause decision (bugfix escalation);
   - coder: CP-1 reproduction/root cause and failing regression (bugfix) or
     implementation and unit/integration tests (feature); CP-2 fix/regression or
     e2e automation and local run;

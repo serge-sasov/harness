@@ -91,7 +91,11 @@ report that the project is not initialized (`/harness-init`).
    for bugfix, acceptance criteria, checkpoint list, and a chunk plan. Estimate
    the artifact size; if it exceeds the section 11.1 budget, record `chunks`,
    `max_write_kb`, `max_session_kb`, and `context_stop_pct` in the card. A-02 is
-   chunked by default (2-3 use cases per Markdown/YAML chunk). For R-01/R-02,
+    chunked by default (2-3 use cases per Markdown/YAML chunk). R-01 produces
+    only the architecture description core, ADR, component, and per-SCN sequence
+    diagrams; R-02 appends contracts, OpenAPI, data/class models, and
+    per-service swimlanes. Keep R-01 and R-02 edits to the same
+    `architecture-<slug>.md` file so the second stage never overwrites the first.
    `card.artifacts` lists only unconditional architecture files; conditional
    `openapi-api-*` and `swimlane-svc-*` outputs are governed by the architecture
    description's `Scope and applicability` section and stage checks.

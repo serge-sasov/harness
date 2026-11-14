@@ -67,15 +67,28 @@ Before starting, verify that `harness/process.md`, the workflow file, and the ca
 
 ### Feature workflow
 
+Feature work is delivered in two architect stages. R-01 produces the design; R-02 delivers the interfaces and data model on top of the same description.
+
+#### R-01 Solution design (CP-1)
+
 1. Architecture Decision Records: context, decision, alternatives, consequences.
-2. Overall architecture description `docs/architecture/architecture-<slug>.md` with the mandatory sections: scope/applicability, context/constraints, decisions, components, services, scenarios, data model, class model, REST API, diagram index, traceability.
-3. Define stable IDs in the architecture description: `SCN-NNN` for every runtime scenario, `SVC-NNN` for every microservice, `API-NNN` for every REST API. IDs are project-global: continue numbering across architecture descriptions and never reuse an ID. If a set does not apply, state `No microservices` or `No REST API` explicitly.
-4. PlantUML diagrams: one component diagram, one sequence diagram per `SCN-NNN`, one data model diagram, one class diagram, and one swimlane process diagram per `SVC-NNN`.
-5. OpenAPI 3.x specifications for every `API-NNN`, one canonical file per API.
-6. Interface contracts: API, data formats, errors, module boundaries, e2e environment and test-data consumption.
-7. Decompose the solution into modules/services for the `coder` role; link every diagram/spec in the architecture description.
-8. Consume `docs/ux/` artifacts when the task includes a user-facing interface; align contracts with screen IDs and interaction rules.
-9. Choose technologies within the local stack (Ollama, Python/Node, local Docker).
+2. Overall architecture description `docs/architecture/architecture-<slug>.md` with the mandatory sections: scope/applicability, context/constraints, decisions, components, services, scenarios, diagram index. The data model, class model, REST API, and traceability sections are completed at R-02.
+3. Define stable IDs in the architecture description: `SCN-NNN` for every runtime scenario and `SVC-NNN` for every microservice. IDs are project-global: continue numbering across architecture descriptions and never reuse an ID. State `No microservices` explicitly when a set does not apply. `API-NNN` for REST APIs are assigned at R-02.
+4. One component PlantUML diagram and one sequence diagram per `SCN-NNN`, each rendered to an SVG next to the `.puml`.
+5. Decompose the solution into modules/services for the `coder` role; link the component and sequence diagrams in the description.
+6. Consume `docs/ux/` artifacts when the task includes a user-facing interface; align the scenario flows with screen IDs and interaction rules.
+7. Choose technologies within the local stack (Ollama, Python/Node, local Docker).
+
+#### R-02 Interfaces and data model (CP-2)
+
+Append to the R-01 description; preserve the existing sections and the user's edits. Do not rewrite or delete.
+1. Extend the description with the data model, class model, REST API, and traceability sections.
+2. Assign `API-NNN` IDs for every REST API (continue project-global numbering from the R-01 set).
+3. One OpenAPI 3.x specification per `API-NNN`, one canonical file with `x-harness-api-id`.
+4. One data model diagram, one class diagram, and one swimlane process diagram per `SVC-NNN` (activity syntax with `|Lane|` partitions), each rendered to an SVG.
+5. Interface contracts `docs/architecture/contracts-<slug>.md`: API, data formats, errors, module boundaries, e2e environment and test-data consumption.
+6. Complete the `Diagram index` (add data/class/swimlane) and the `Traceability` section; link every diagram/spec in the description.
+7. Hand off modules and interfaces to the `coder` role with a clear separation of responsibilities.
 
 ### Bugfix workflow (only when the card asks for design/root-cause escalation)
 
@@ -88,17 +101,17 @@ Before starting, verify that `harness/process.md`, the workflow file, and the ca
 
 - `docs/architecture/adr-NNN-<slug>.md`: decisions using the ADR template.
 - `docs/architecture/architecture-<slug>.md`: overall solution architecture
-  description and single entry point for all design artifacts.
-- `docs/architecture/components-<slug>.puml` + `.svg`: component diagram.
+  description and single entry point for all design artifacts. Written first at R-01 with the core sections, then extended at R-02.
+- `docs/architecture/components-<slug>.puml` + `.svg`: component diagram (R-01).
 - `docs/architecture/sequence-scn-<nnn>-<slug>.puml` + `.svg`: one per
-  `SCN-NNN`.
-- `docs/architecture/data-model-<slug>.puml` + `.svg`: data model.
-- `docs/architecture/class-<slug>.puml` + `.svg`: class model.
+  `SCN-NNN` (R-01).
+- `docs/architecture/data-model-<slug>.puml` + `.svg`: data model (R-02).
+- `docs/architecture/class-<slug>.puml` + `.svg`: class model (R-02).
 - `docs/architecture/swimlane-svc-<nnn>-<slug>.puml` + `.svg`: one per
-  `SVC-NNN`.
+  `SVC-NNN` (R-02).
 - `docs/architecture/openapi-api-<nnn>-<slug>.yaml|json`: one per `API-NNN`,
-  with `x-harness-api-id`.
-- `docs/architecture/contracts-<slug>.md`: interfaces and formats.
+  with `x-harness-api-id` (R-02).
+- `docs/architecture/contracts-<slug>.md`: interfaces and formats (R-02).
 - Every `.puml`, `.svg`, and OpenAPI file must be referenced in the
   architecture description's `Diagram index` or `REST API` table.
 - For bugfix design: append findings to your card log and report them; do not edit the bug card.
@@ -116,7 +129,7 @@ diagram sets by scenario or service across sessions.
 
 ## Checkpoints
 
-Feature: stop at CP-1 (ADR and contracts) and CP-2 (diagrams and decomposition) if declared. Bugfix: stop at CP-1 (root-cause/design decision) if declared. Do not continue past a checkpoint; report artifacts and a verification checklist. After user approval, read `docs/checkpoints/T-XXX-CP-N.md`, the user remarks, and `git diff` since the snapshot; preserve user edits.
+Feature: stop at CP-1 (R-01 solution design: ADR, architecture description core, component and scenario sequence diagrams, `SCN`/`SVC` IDs) and CP-2 (R-02 interfaces and data model: contracts, OpenAPI, data/class models, swimlane diagrams, `API` IDs, full traceability) if declared. Bugfix: stop at CP-1 (root-cause/design decision) if declared. Do not continue past a checkpoint; report artifacts and a verification checklist. After user approval, read `docs/checkpoints/T-XXX-CP-N.md`, the user remarks, and `git diff` since the snapshot; preserve user edits.
 
 ## Mandatory diagram checks
 
@@ -134,12 +147,16 @@ Coverage rules:
 
 ## Verification and evidence
 
-- R-01 checks: ADR sections (`Context`, `Decision`, `Alternatives`,
-  `Consequences`), contracts, architecture description headings, `SCN`/`SVC`/
-  `API` ID uniqueness, requirement trace, OpenAPI schema validity, and
-  OpenAPI links in the description. R-02 checks: `puml-syntax`, `svg-fresh`
-  (SVG newer than `.puml`, no deprecation banner), diagram existence,
-  scenario/service coverage, use-case trace, and architecture links.
+- R-01 checks (design): ADR sections (`Context`, `Decision`, `Alternatives`,
+  `Consequences`), architecture description headings, `SCN`/`SVC` ID
+  uniqueness, requirement trace, requirement-to-scenario trace, component
+  existence, per-`SCN` sequence coverage, `puml-syntax`, `svg-fresh` for the
+  component and sequence diagrams, and their references in the description.
+- R-02 checks (interfaces/data): `contracts-requirement-trace`, full
+  architecture description headings, `API-NNN` uniqueness, OpenAPI count, IDs
+  and schema validity, OpenAPI links, data model, class model, per-`SVC-NNN`
+  swimlane coverage, `puml-syntax`, `svg-fresh` for all diagrams, and full
+  architecture links.
 - Run `verify-stage.ps1 -Task T-XXX -Stage R-01|R-02` before reporting; a stale
   SVG, missing scenario/service diagram, invalid OpenAPI file, unlinked artifact,
   or missing section fails the checkpoint.

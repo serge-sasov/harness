@@ -59,7 +59,7 @@ schema, security boundary, multiple modules, or a UI flow.
 | `harness-orchestrator` | board, bug registry, dependencies, checkpoints, acceptance, derived activity, commits |
 | `harness-analyst` | requirements, RAG, questions, glossary, e2e use cases/test data; bug impact |
 | `harness-ux-designer` | user flows, screen inventory, wireframes, UI spec, per-scenario HTML prototypes (may delegate page code to coder); UI bug impact |
-| `harness-architect` | ADRs, overall architecture description, component/scenario/data/class/swimlane diagrams, OpenAPI specs, contracts; design-level root cause |
+| `harness-architect` | R-01 Solution design: ADR, architecture description core, component and per-SCN sequence diagrams, `SCN`/`SVC` IDs; R-02 Interfaces and data model: contracts, `API` IDs, OpenAPI specs, data/class models, per-service swimlanes, handoff; design-level root cause |
 | `harness-coder` | code, unit/integration/e2e tests, CI/CD, local runs; reproduction and regression fix |
 | `harness-qa` | text/code review, e2e coverage/run, independent bug verification, verdict |
 | `harness-qa-vision` | visual review of diagrams, wireframes, and screenshots |

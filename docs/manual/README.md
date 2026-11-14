@@ -3,8 +3,8 @@
 | Поле | Значение |
 |---|---|
 | Статус | current |
-| Версия harness | 2.6.0 |
-| Дата | 2026-11-13 |
+| Версия harness | 2.7.0 |
+| Дата | 2026-11-14 |
 | Область | локальный мультиагентный harness: feature + bugfix workflows |
 | Нормативные источники | [`harness/process.md`](../../harness/process.md), [`harness/workflows/feature.md`](../../harness/workflows/feature.md), [`harness/workflows/bugfix.md`](../../harness/workflows/bugfix.md) |
 | HTML-версия | [`index.html`](index.html) |

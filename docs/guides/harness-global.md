@@ -351,15 +351,16 @@ manually from the template.
 
 ## 6. Versions and pins
 
-- Current version: `2.6.0` (architecture design package: overall architecture
-  description, component/per-scenario sequence/data/class/per-service swimlane
-  diagrams, OpenAPI 3.x specs, coverage and link checks; includes 2.5.0
+- Current version: `2.7.0` (architect stage split: Solution design (R-01) and
+  Interfaces and data model (R-02), ADR-004; overall architecture description,
+  component/per-scenario sequence/data/class/per-service swimlane diagrams,
+  OpenAPI 3.x specs, coverage and link checks; includes 2.6.0
   deterministic checks and P2 approval, 2.4.0 per-scenario UX pages, and 2.3.0
   budgets/chunking).
 - Global version: `~/.config/opencode/harness/version.json`.
 - Project version: `harness/version.json`, created by `/harness-init`.
 - `/harness-doctor` warns when the versions differ.
-- Upgrade note for 2.6.0: R-02 checks cover every diagram/spec in
+- Upgrade note for 2.7.0: R-02 covers every diagram/spec in
   `docs/architecture`. Add `architecture-*.md` and link legacy diagrams there,
   or remove obsolete diagrams before resuming an R-01/R-02 task.
 

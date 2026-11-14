@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Status | current |
-| Date | 2026-11-13 |
-| Version | 2.6.0 |
+| Date | 2026-11-14 |
+| Version | 2.7.0 |
 | Scope | local multi-agent harness (feature + bugfix workflows) + pilot "Mini-CRUD service" |
 | Requirements source | [`requirements/initial.txt`](../../requirements/initial.txt) |
 | Process rules | [`harness/process.md`](../../harness/process.md) |
