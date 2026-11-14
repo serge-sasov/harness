@@ -1,4 +1,4 @@
-# T-045: Pilot the UoW model on the architect stages
+﻿# T-045: Pilot the UoW model on the architect stages
 
 | Field | Value |
 |---|---|
@@ -7,7 +7,7 @@
 | workflow | feature |
 | stage | implementation |
 | role | architect |
-| status | pending |
+| status | done |
 | hold | true |
 | depends_on | T-041, T-042, T-043 |
 | inputs | `docs/metrics/T-041-pilot.md`, `C:/study/ai/research/ai-task-tracker/docs/architecture/architecture-ai-task-tracker.md`, `C:/study/ai/research/ai-task-tracker/docs/architecture/adr-ai-task-tracker.md`, `C:/study/ai/research/ai-task-tracker/docs/architecture/contracts-ai-task-tracker.md`, `C:/study/ai/research/ai-task-tracker/docs/architecture/openapi-api-*.yaml` |
@@ -34,9 +34,9 @@
 
 | ID | Stage | Artifacts | Checks | Status | Review file |
 |---|---|---|---|---|---|
-| CP-1 | chunk plans | `T-006.json`, `T-007.json`, briefs | n/a | pending | `docs/checkpoints/T-045-CP-1.md` |
-| CP-2 | replay and metrics | replayed chunks, metrics file | n/a | pending | `docs/checkpoints/T-045-CP-2.md` |
-| CP-F | final acceptance | all task artifacts | n/a | pending | `docs/checkpoints/T-045-CP-F.md` |
+| CP-1 | chunk plans | `T-006.json`, `T-007.json`, briefs | n/a | approved | `docs/checkpoints/T-045-CP-1.md` |
+| CP-2 | replay and metrics | replayed chunks, metrics file | n/a | approved | `docs/checkpoints/T-045-CP-2.md` |
+| CP-F | final acceptance | all task artifacts | n/a | approved | `docs/checkpoints/T-045-CP-F.md` |
 
 ## Blockers
 
@@ -45,3 +45,4 @@
 ## Log
 
 - 2026-11-14: card created for T-045 (phase B, step 4). `hold: true`: the architect is the role with the largest measured overshoot, so the replay must be reviewed by the user.
+- 2026-11-14: T-006 (8 chunks) and T-007 (13 chunks) plans valid and complete; replays T-006.R1 (API-004 spec, 27 min, 11.7x, found BUG-001) and T-007.R2 (SCN-001, 44 min, 10.7x, identical); metrics in docs/metrics/T-045-pilot-architect.md; CP-1, CP-2 and CP-F approved (harness-core task: machine checks n/a).

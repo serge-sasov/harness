@@ -281,8 +281,8 @@ def validate(ledger_path: str, root: str | None, check_hash: bool = True) -> dic
         for key in ("in", "out", "cr"):
             if key not in chunk["usage"]:
                 err("E_SCHEMA", "usage.%s is required" % key, cid)
-        if chunk["state"] == "done" and not chunk["produced"]:
-            err("E_STATE", "a done chunk must list produced files", cid)
+        if chunk["state"] == "done" and not chunk["produced"] and (chunk["owns"] or []):
+            err("E_STATE", "a done chunk with an owned set must list produced files", cid)
         if chunk["state"] in STATES_WITH_ISSUE and not chunk["issues"]:
             err("E_STATE", "a blocked chunk must reference an issue", cid)
 

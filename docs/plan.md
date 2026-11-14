@@ -68,7 +68,7 @@ derived visualizations only.
 | T-042 | feature | UoW contract for analyst, ux-designer, qa, doc-writer, orchestrator | architect | T-041 | done | - | five role prompts, `harness.md`, `process.md`, skill | - | working tree |
 | T-043 | feature | Chunk checks: `chunk-ownership-no-overlap`, `chunk-coverage`, `chunk-budget` | architect | T-041 | done | - | `harness/checks/feature.json`, `bugfix.json`, `verify-artifacts.ps1` | - | working tree |
 | T-044 | feature | Templates, docs, release 3.0.0 | doc-writer | T-042, T-043 | done | - | templates, `README.md`, guide, `CHANGELOG.md`, `version.json`, docs rebuild | - | working tree |
-| T-045 | feature | Second pilot: R-01/R-02 under the UoW model (ai-task-tracker) | architect | T-041, T-042, T-043 | pending | - | ai-task-tracker `docs/chunks/T-006.json`, `T-007.json`, `docs/metrics/T-045-pilot-architect.md` | - | - |
+| T-045 | feature | Second pilot: R-01/R-02 under the UoW model (ai-task-tracker) | architect | T-041, T-042, T-043 | done | - | ai-task-tracker `docs/chunks/T-006.json`, `T-007.json`, `docs/metrics/T-045-pilot-architect.md` | - | working tree |
 | T-046 | feature | Migrate I-02, Q-01, Q-02 to the UoW model and close the rollout | orchestrator | T-045 | pending | - | ai-task-tracker `docs/chunks/T-009..T-011.json`, cards, `docs/plan.md` | - | - |
 | T-022 | feature | Harness 2.2.1 smoke test: feature + bugfix | qa | T-019, T-021, T-029 | pending | - | `docs/qa/smoke-2.2.1.md` | - | - |
 
