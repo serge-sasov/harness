@@ -1,4 +1,4 @@
-# T-040: Unit-of-work contract in the pilot role prompts and process rules
+﻿# T-040: Unit-of-work contract in the pilot role prompts and process rules
 
 | Field | Value |
 |---|---|
@@ -7,7 +7,7 @@
 | workflow | feature |
 | stage | implementation |
 | role | architect |
-| status | pending |
+| status | done |
 | hold | false |
 | depends_on | T-037, T-038, T-039 |
 | inputs | `docs/architecture/adr-006-recursive-decomposition.md`, `harness/process.md`, `harness/agents/harness-coder.md`, `harness/agents/harness-architect.md`, `harness/workflows/feature.md` |
@@ -36,8 +36,8 @@
 
 | ID | Stage | Artifacts | Checks | Status | Review file |
 |---|---|---|---|---|---|
-| CP-1 | rules and pilot prompts | process.md, coder/architect prompts | n/a | pending | `docs/checkpoints/T-040-CP-1.md` |
-| CP-F | final acceptance | all task artifacts | n/a | pending | `docs/checkpoints/T-040-CP-F.md` |
+| CP-1 | rules and pilot prompts | process.md, coder/architect prompts | n/a | approved | `docs/checkpoints/T-040-CP-1.md` |
+| CP-F | final acceptance | all task artifacts | n/a | approved | `docs/checkpoints/T-040-CP-F.md` |
 
 ## Blockers
 
@@ -46,3 +46,4 @@
 ## Log
 
 - 2026-11-14: card created for T-040 (phase A, step 4). Applies the ADR-006 contract to the two pilot roles only; the other five roles are T-042.
+- 2026-11-14: process.md sections 0/11.1/12/13, coder and architect ## Chunks, workflow, skill, and lead prompt updated to the UoW contract with depth 3; roles granted docs/chunks/** edit and chunk.ps1/chunk-validate.py bash; global install refreshed; doctor green (no warnings); CP-1 and CP-F approved (harness-core task: machine checks n/a).

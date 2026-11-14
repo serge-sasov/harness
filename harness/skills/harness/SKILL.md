@@ -73,6 +73,7 @@ The lead does not edit files itself; the orchestrator handles the board, bug reg
 - `docs/tasks/T-XXX-*.md`: feature/bugfix task cards with inputs, applicability, `workflow`, `stage`, and checkpoints;
 - `docs/bugs/BUG-XXX-*.md` and `docs/bugs/README.md`: product bug reports and index, owned by the orchestrator;
 - `docs/checkpoints/T-XXX-CP-N.md`: user review decisions, edits, remarks, and `*.checks.json` machine results;
+- `docs/chunks/T-XXX.json` and `docs/chunks/T-XXX/<id>.brief.md`: chunk ledger (single source of truth for per-chunk progress) and chunk briefs; machine fields are written only by `chunk.ps1` and `stage-done.ps1`;
 - `docs/evidence/T-XXX.md`: append-only SHA256 ledger; `docs/metrics/`: token usage reports;
 - `harness/checks/`: deterministic registry (`engine.json`, `feature.json`, `bugfix.json`);
 - `docs/activity.puml` / `.svg`: derived visual progress aid only, never a
@@ -101,7 +102,7 @@ Every task has at least one checkpoint; `CP-F` is mandatory before `done`. At a 
 
 A task is closed only by the card's `acceptance` criteria and `CP-F` approval. On failure, set `failed` with the cause in `Blockers`; up to 3 attempts per chunk, then `blocked`. A bug that cannot be reproduced after 3 attempts is `blocked` with evidence, not a speculative fix.
 
-Generation is budgeted per `process.md` 11.1: A-02 and large code stages are chunked, artifacts are written incrementally, and a role stops at the context threshold with a handoff. `harness-analyst` and `harness-coder` may spawn self-sub-sessions of their own role for chunks (depth 2, sequential, no grandchildren). The single cross-role exception is `harness-ux-designer -> harness-coder` for prototype pages: one child at a time, same UX task, coder writes only `docs/ux/prototype/**`; all other cross-role calls are forbidden.
+Generation is budgeted per `process.md` 11.1 and executed chunk by chunk. `docs/chunks/T-XXX.json` is the single source of truth for chunk progress; the card and board carry a summary only. A generator role writes the chunk plan (`chunk.ps1 init`/`add`/`plan`) before authoring, then loops `claim -> produce -> complete`. `harness-analyst`, `harness-architect`, and `harness-coder` may spawn same-role self-sub-sessions for chunks up to depth 3 (`d1 -> d2 -> d3`, sequential, one child at a time); depth 4 and parallel children are forbidden. `stage-done.ps1` refuses to close a checkpoint while a chunk of that stage is not `done`. The single cross-role exception is `harness-ux-designer -> harness-coder` for prototype pages: one child at a time, depth 2, same UX task, coder writes only `docs/ux/prototype/**`; all other cross-role calls are forbidden.
 
 For any harness problem, blocker, or workaround, use the `harness-issues` skill and create a record in `docs/issues/`; the orchestrator updates the index and includes the issue in the task commit. `/harness-doctor` verifies that every issue file is indexed and that no issue lives in a root `harness-issues/` directory.
 

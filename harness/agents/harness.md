@@ -133,10 +133,12 @@ use this mode for ordinary tasks.
    then re-render activity/SVG as derived artifacts.
 6. Give the role: task ID, card path, workflow file, `acceptance`, `inputs`,
    workflow applicability, checkpoint list, shared rules in
-   `harness/process.md`, and the `chunks`/`budget` fields. For bugfix, also give
+   `harness/process.md`, and the chunk plan location
+   (`docs/chunks/T-XXX.json`) plus the `budget` field. For bugfix, also give
    the `BUG-XXX` card and require reproduction/root cause/failing regression
    before the fix. Require the role to stop at the next checkpoint. A generator
-   role (analyst, coder) may process the chunks in self-sub-sessions. The only
+   role (analyst, architect, coder) may process the chunks in same-role
+   self-sub-sessions up to depth 3 (`d1 -> d2 -> d3`, sequential). The only
    nested cross-role call is `ux-designer -> harness-coder` for prototype pages;
    it is part of the same UX task. The lead routes all other cross-role work and
    must not run role work inline. Status comes from the plan, card, and
@@ -174,11 +176,13 @@ use this mode for ordinary tasks.
   the same session; a timeout alone is not a task failure. If it happened during
   an oversized single generation, split the chunk and use a fresh session.
 - Do not call subagents outside the harness role list. Generator roles may spawn
-  self-sub-sessions of their own role for chunks (depth 2, sequential); the lead
-  must verify `subagent_depth: 2` and self-allow in the role before relying on
-  it. The single cross-role exception is `ux-designer -> harness-coder` for
-  prototype pages; verify the UX agent has the coder task allow and do not treat
-  the nested call as a second task or parallel role.
+  same-role self-sub-sessions for chunks up to depth 3 (`d1 -> d2 -> d3`,
+  sequential, one child at a time); the lead must verify `subagent_depth: 3` and
+  the self-allow in the role before relying on it, and remember that a config
+  change applies only after an opencode restart. The single cross-role exception
+  is `ux-designer -> harness-coder` for prototype pages; verify the UX agent has
+  the coder task allow and do not treat the nested call as a second task or
+  parallel role.
 - Do not start a second run/task, preempt a feature with a bugfix, or run
   `board-update` while a task is active (`in_progress` or `awaiting_review`).
 - Do not close a task without `CP-F` approval; do not infer user approval from

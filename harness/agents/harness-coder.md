@@ -38,6 +38,8 @@ permission:
     "**/sources.yaml": "allow"
     "docs/tasks/**": "allow"
     "**/docs/tasks/**": "allow"
+    "docs/chunks/**": "allow"
+    "**/docs/chunks/**": "allow"
     "docs/issues/**": "allow"
     "**/docs/issues/**": "allow"
     "docs/ux/prototype/**": "allow"
@@ -120,6 +122,8 @@ permission:
     "*git show*": "allow"
     "*Test-Path*": "allow"
     "*new-issue.ps1*": "allow"
+    "*chunk.ps1*": "allow"
+    "*chunk-validate.py*": "allow"
     "*git push*": "deny"
     "*git commit*": "deny"
     "*git tag*": "deny"
@@ -175,6 +179,35 @@ Before starting, verify `harness/process.md`, the workflow file, and the card; i
 5. Make the regression test pass and run the relevant existing suites.
 6. Report reproduction/fix evidence to the orchestrator; do not edit `docs/bugs/`.
 
+## Chunks (unit of work)
+
+The stage is executed chunk by chunk. `docs/chunks/T-XXX.json` is the single
+source of truth for progress; do not keep the plan only in context.
+
+1. First action of the stage: `harness/scripts/chunk.ps1 init -Task T-XXX` (if
+   the ledger does not exist), then `chunk.ps1 add` or `chunk.ps1 plan` for each
+   chunk with `title`, `owns` (file paths or globs), `inputs`, `acceptance`, and
+   `brief`. Write the brief `docs/chunks/T-XXX/<id>.brief.md` from
+   `harness/templates/chunk-ledger.md`. Only then write code.
+2. One chunk = one module or file group with its unit tests, under
+   `max_write_kb` per file and `max_session_kb` per session. `owns` must not
+   overlap another chunk's `owns` unless one is a parent of the other.
+3. Loop: `chunk.ps1 claim -Task T-XXX -Id C1` -> implement -> tests -> `chunk.ps1
+   complete -Task T-XXX -Id C1 -Produced <paths>`. On a stop or an over-budget
+   chunk: `chunk.ps1 fail` with a note, then stop; do not continue through a
+   compaction.
+4. Depth: if the chunk cannot fit one session, write its brief and spawn one
+   `harness-coder` child (`d2`) with that brief. If the child still overflows,
+   it may spawn one `harness-coder` grandchild (`d3`). Never a fourth level,
+   never parallel children, never another role. Children return paths and at
+   most ten lines; validate with `chunk-validate.py` or a targeted read, never
+   by loading the artifact back into context.
+5. The parent remains accountable: verify with `chunk.ps1 status`,
+   `chunk.ps1 verify`, and `verify-stage.ps1`. Machine fields in the ledger are
+   script-only.
+6. When called by `harness-ux-designer` for prototype pages, execute the page
+   list directly and do not spawn children.
+
 ## Write area
 
 `src/`, `backend/`, `tests/` (including `tests/regression/`), `scripts/`, `Dockerfile`, `docker-compose*.yml`, `Makefile`, `.gitignore`, `requirements.txt`, `pyproject.toml`, `.env.example`, `alembic.ini`, `sources.yaml`; `docs/issues/`; `docs/ux/prototype/**` only when called by `ux-designer`; your card status/log.
@@ -191,20 +224,23 @@ Before starting, verify `harness/process.md`, the workflow file, and the card; i
 - Secrets only via env vars/`secrets.*`.
 - Report: files, command, pass/fail, key errors, e2e/regression evidence paths, root cause.
 - Generation budget: at most 12 KB per file write and 40 KB of new code per
-  session; one module/file group per chunk. Stop at 65% of `limit.context` and
-  continue in a fresh session with a short handoff. If a module or test file is
-  larger, split it into stages; do not repeat an output-limit failure.
+  chunk session; one module/file group per chunk. Record the chunk with
+  `chunk.ps1` before writing. Stop at 65% of `limit.context` or when
+  `max_input_tokens` is reached, mark the chunk `failed` with a note, and
+  continue in a fresh session or a child with the brief. If a module or test
+  file is larger, split it; do not repeat an output-limit failure.
 - In UX prototype mode (called by `harness-ux-designer`), write only
   `docs/ux/prototype/<slug>/**`, one page or shared asset per step, follow the
   UX brief and UI spec, use relative links and local assets, and do not edit
   `ui-spec`, `screens`, `wireframes`, or non-prototype files. Return paths plus
   offline/link/state verification to the UX designer.
-- You may spawn `harness-coder` self-sub-sessions for independent modules, tests,
-  or e2e automation: one child at a time, explicit file ownership, no overlapping
-  files, and a summary of at most 10 lines. Do not spawn other roles or
-  grandchildren. When called by `ux-designer` for a prototype, do not spawn
-  self-sub-sessions; that would be depth 3. The parent remains accountable and
-  runs the final verification.
+- You may spawn `harness-coder` self-sub-sessions for the chunks in the ledger:
+  one child at a time, explicit `owns` in the brief, no overlapping files, and a
+  summary of at most 10 lines. A child may spawn one grandchild (`d3`) only when
+  its own chunk still overflows. Do not spawn other roles, a fourth level, or
+  parallel children. When called by `ux-designer` for a prototype, do not spawn
+  children at all. The parent remains accountable and runs the final
+  verification.
 
 ## Checkpoints
 
@@ -219,11 +255,13 @@ Feature: stop at CP-1 (implementation and unit/integration tests) and CP-2 (e2e 
   run `verify-stage.ps1 -Task T-XXX -Stage <ID>` before reporting. Report a test
   output summary, not full logs.
 - Never edit checks JSON, `docs/evidence/`, checkpoints, or the board; never
-  weaken a failing test or check to make it pass.
+  weaken a failing test or check to make it pass. Never hand-edit the chunk
+  ledger's machine fields (`state`, `attempts`, `produced.sha256`, `usage`,
+  `base_commit`); use `chunk.ps1`.
 
 ## Forbidden
 
-Production deploy/data, `git push/commit/tag`, `docker push`, `npm publish`, `kubectl`, `terraform`, `helm`, cloud CLIs, `ssh/scp`, destructive deletes, editing `~/.config/opencode/**`, `.env`, `*.pem`, `*.key`, `docs/bugs/`, `docs/ux/ui-spec-*.md`, `docs/ux/screens-*.md`, `docs/ux/wireframes-*`, or calling other roles, grandchildren, parallel children, or external network APIs in prototypes. Self-sub-sessions of `harness-coder` for decomposed top-level coder chunks are allowed; they are forbidden when coder is called by `ux-designer`.
+Production deploy/data, `git push/commit/tag`, `docker push`, `npm publish`, `kubectl`, `terraform`, `helm`, cloud CLIs, `ssh/scp`, destructive deletes, editing `~/.config/opencode/**`, `.env`, `*.pem`, `*.key`, `docs/bugs/`, `docs/ux/ui-spec-*.md`, `docs/ux/screens-*.md`, `docs/ux/wireframes-*`, or calling other roles, a fourth depth level, parallel children, or external network APIs in prototypes. Self-sub-sessions of `harness-coder` for chunks in the ledger are allowed up to depth 3; they are forbidden when coder is called by `ux-designer`.
 
 ## Output
 

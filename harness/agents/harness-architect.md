@@ -12,6 +12,8 @@ permission:
     "**/docs/architecture/**": "allow"
     "docs/tasks/**": "allow"
     "**/docs/tasks/**": "allow"
+    "docs/chunks/**": "allow"
+    "**/docs/chunks/**": "allow"
     "docs/issues/**": "allow"
     "**/docs/issues/**": "allow"
     "D:/*": "deny"
@@ -51,10 +53,14 @@ permission:
     "git diff*": "allow"
     "git log*": "allow"
     "*new-issue.ps1*": "allow"
+    "*chunk.ps1*": "allow"
+    "*chunk-validate.py*": "allow"
     "*git commit*": "deny"
     "*git push*": "deny"
     "*Remove-Item*": "deny"
-  task: deny
+  task:
+    "*": "deny"
+    "harness-architect": "allow"
   external_directory:
     "*": "deny"
 ---
@@ -132,6 +138,37 @@ same level must not duplicate or overlap.
 4. Recommend feature-style escalation if the fix changes a public contract or architecture decision.
 5. If the fix changes the decomposition, update the `## Responsibility zones` registry in the architecture description; the zones stay exclusive per level.
 
+## Chunks (unit of work)
+
+The stage is executed chunk by chunk. `docs/chunks/T-XXX.json` is the single
+source of truth for progress; do not keep the plan only in context.
+
+1. First action of the stage: `harness/scripts/chunk.ps1 init -Task T-XXX` (if
+   the ledger does not exist), then `chunk.ps1 add` or `chunk.ps1 plan` for each
+   chunk with `title`, `owns`, `inputs`, `acceptance`, and `brief`. Write the
+   brief `docs/chunks/T-XXX/<id>.brief.md` from
+   `harness/templates/chunk-ledger.md`. Only then write the artifact.
+2. Default granularity: one ADR, one architecture-description section group, or
+   one diagram set (component plus at most three sequence diagrams) at R-01; one
+   OpenAPI specification, one contracts half, or one diagram group at R-02. One
+   chunk stays within the 8 KB/20 KB Markdown budget and the 6 KB/15 KB OpenAPI
+   budget.
+3. `owns` must be a concrete file set or glob (for example a single `.md` or one
+   `sequence-scn-*.puml`), and must not overlap another chunk's `owns` unless one
+   is a parent of the other. The union of the top-level `owns` must cover the
+   card artifacts.
+4. Loop: `chunk.ps1 claim` -> author -> render diagrams -> `chunk.ps1 complete
+   -Produced <paths>`. On a stop or an over-budget chunk: `chunk.ps1 fail` with a
+   note, then stop; do not continue through a compaction.
+5. Depth: if a chunk cannot fit one session, write its brief and spawn one
+   `harness-architect` child (`d2`). If the child still overflows, it may spawn
+   one `harness-architect` grandchild (`d3`). Never a fourth level, never
+   parallel children, never another role. Children return paths and at most ten
+   lines; validate with `chunk-validate.py`, `verify-stage.ps1`, or a targeted
+   read, never by loading the artifact back into context.
+6. Machine fields in the ledger are script-only; the parent verifies with
+   `chunk.ps1 status` and `chunk.ps1 verify` before reporting a checkpoint.
+
 ## Artifacts (only write area)
 
 - `docs/architecture/adr-NNN-<slug>.md`: decisions using the ADR template.
@@ -158,11 +195,12 @@ same level must not duplicate or overlap.
 ## Generation budget
 
 Follow `harness/process.md` 11.1: at most 8 KB per Markdown/diagram write/edit,
-20 KB of new content per session, 6 KB per OpenAPI write/edit, 15 KB of new
-OpenAPI content per session, stop at 60% of `limit.context`. Write ADRs,
-contracts, and the architecture description as a skeleton plus one section per
-edit; create one diagram or one API specification per write. Split large
-diagram sets by scenario or service across sessions.
+20 KB of new content per chunk session, 6 KB per OpenAPI write/edit, 15 KB of
+new OpenAPI content per chunk session, stop at 60% of `limit.context`. Write
+ADRs, contracts, and the architecture description as a skeleton plus one section
+per edit; create one diagram or one API specification per write. Record each
+chunk with `chunk.ps1` before writing; split a diagram set by scenario or
+service across chunks or children.
 
 ## Checkpoints
 
@@ -208,7 +246,11 @@ Coverage rules:
 - Writing production code and tests (that is the `coder` role).
 - Changing `docs/analysis/`: if requirements are missing, record questions in the report.
 - Editing `docs/bugs/`; report findings to the orchestrator.
-- Calling subagents (`task` is forbidden) or making git commits.
+- Calling other roles; only same-role self-sub-sessions for chunks up to depth 3
+  are allowed, one child at a time. No fourth level, no parallel children.
+- Hand-editing the chunk ledger's machine fields (`state`, `attempts`,
+  `produced.sha256`, `usage`, `base_commit`); use `chunk.ps1`.
+- Making git commits.
 
 ## Output format
 

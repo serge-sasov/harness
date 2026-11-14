@@ -18,7 +18,7 @@ Use `workflow: feature` for:
 
 | ID | Stage | Content | Role | Artifacts | Checks (`harness/checks/feature.json`) | Depends on | Applicability | Checkpoint |
 |---|---|---|---|---|---|---|---|---|
-| P-00 | Feature planning | Fix scope, inputs, e2e/UX applicability, checkpoint list; create the task graph and cards | orchestrator | `docs/plan.md`, `docs/tasks/T-XXX-*.md` | plan-board, cards-exist, card-fields, deps-acyclic | Predecessor tasks | Always | CP-1 plan, CP-F |
+| P-00 | Feature planning | Fix scope, inputs, e2e/UX applicability, checkpoint list; create the task graph and cards; record the per-stage chunk granularity and budget | orchestrator | `docs/plan.md`, `docs/tasks/T-XXX-*.md` | plan-board, cards-exist, card-fields, deps-acyclic | Predecessor tasks | Always | CP-1 plan, CP-F |
 | A-01 | Requirements analysis | Collect/refine FR/NFR, constraints, questions, glossary; atomic `R-NNN` | analyst | `docs/analysis/requirements-*.md`, `questions-*.md`, `glossary.md` | requirements-exist, requirements-ids, requirements-atomic, open-questions | P-00 | Always | CP-1 |
 | A-02 | E2E use cases and data | Derive e2e scenarios, assign `UC-E2E-NNN`, describe steps/data/expectations and traceability; produce YAML dataset in 2-3 UC chunks; one CP-2 after all chunks validate | analyst | `docs/analysis/e2e-use-cases-*.md`, `e2e-test-data-*.yaml` | e2e-use-cases-exist, e2e-yaml-exist, e2e-yaml-valid, uc-ids, requirement-coverage | A-01 | If e2e in scope; otherwise waiver | CP-2 |
 | U-01 | UX flows and screens | Personas, journeys, information architecture, screen inventory, screen states | ux-designer | `docs/ux/user-flows-*.md`, `screens-*.md` (+ optional `.puml/.svg`) | user-flows-exist, screens-exist, screen-ids, flows-requirements, screens-states | A-01, A-02 | If UI in scope; otherwise waiver | CP-1 |
@@ -72,6 +72,13 @@ Rules:
   `harness-coder` under the process exception (depth 2, sequential, coder writes
   only `docs/ux/prototype/<slug>/**`); U-02 remains one UX task and one
   checkpoint.
+- Every artifact-producing stage is executed chunk by chunk: the role writes
+  `docs/chunks/T-XXX.json` before authoring, and `stage-done.ps1 -Chunk` refuses
+  to close the stage checkpoint while a chunk is not `done`. Default granularity
+  is in `harness/process.md` 11.1 and ADR-006.
+- A chunk that cannot fit one session is split by the same role into a `d2`
+  child, and again into a `d3` child if needed; the ceiling is 3. Children are
+  sequential, never parallel, and never cross-role.
 - The orchestrator must not create a second active task.
 
 ## Default checkpoints
