@@ -1,4 +1,4 @@
-# T-046: Migrate the remaining ai-task-tracker stages to the UoW model
+﻿# T-046: Migrate the remaining ai-task-tracker stages to the UoW model
 
 | Field | Value |
 |---|---|
@@ -7,7 +7,7 @@
 | workflow | feature |
 | stage | implementation |
 | role | orchestrator |
-| status | pending |
+| status | done |
 | hold | false |
 | depends_on | T-045 |
 | inputs | `docs/metrics/T-041-pilot.md`, `docs/metrics/T-045-pilot-architect.md`, `C:/study/ai/research/ai-task-tracker/docs/tasks/T-009-e2e-automation.md`, `C:/study/ai/research/ai-task-tracker/docs/tasks/T-010-e2e-plan.md`, `C:/study/ai/research/ai-task-tracker/docs/tasks/T-011-qa-acceptance.md` |
@@ -34,8 +34,8 @@
 
 | ID | Stage | Artifacts | Checks | Status | Review file |
 |---|---|---|---|---|---|
-| CP-1 | chunk plans and cards | three ledgers, three cards | n/a | pending | `docs/checkpoints/T-046-CP-1.md` |
-| CP-F | final acceptance | all task artifacts | n/a | pending | `docs/checkpoints/T-046-CP-F.md` |
+| CP-1 | chunk plans and cards | three ledgers, three cards | n/a | approved | `docs/checkpoints/T-046-CP-1.md` |
+| CP-F | final acceptance | all task artifacts | n/a | approved | `docs/checkpoints/T-046-CP-F.md` |
 
 ## Blockers
 
@@ -44,3 +44,4 @@
 ## Log
 
 - 2026-11-14: card created for T-046 (phase B, step 5).
+- 2026-11-14: cards and ledgers for T-009 (7), T-010 (3), T-011 (4) created and valid; harness re-synced to 3.0.0 in ai-task-tracker; rollout closure note docs/metrics/T-046-rollout.md; CP-1 and CP-F approved (harness-core task: machine checks n/a).
