@@ -766,6 +766,78 @@ function Get-ZoneLevelRows {
     return [pscustomobject]@{ Found = $false; Body = '' }
 }
 
+function Check-ChunkLedger {
+    param($P, $Ctx)
+    $rule = if ($P.rule) { [string]$P.rule } else { 'all' }
+    if (-not $Ctx.Task) { return New-Result $P.id 'chunk-ledger' 'NOT_APPLICABLE' 'no task' }
+    $ledgerRel = "docs/chunks/$($Ctx.Task).json"
+    $ledgerPath = Join-Path $Ctx.Root ($ledgerRel -replace '/', '\')
+    if (-not (Test-Path -LiteralPath $ledgerPath)) {
+        return New-Result $P.id 'chunk-ledger' 'NOT_APPLICABLE' "no ledger $ledgerRel (legacy task)"
+    }
+    $validator = Join-Path $PSScriptRoot 'chunk-validate.py'
+    if (-not (Test-Path -LiteralPath $validator)) { return New-Result $P.id 'chunk-ledger' 'FAIL' 'chunk-validate.py missing next to verify-artifacts.ps1' }
+
+    if ($rule -eq 'budget') {
+        $ledger = (Read-Utf8 $ledgerPath) | ConvertFrom-Json
+        $maxWrite = [double]$ledger.budget.max_write_kb
+        $maxSession = [double]$ledger.budget.max_session_kb
+        if ($maxWrite -le 0) { $maxWrite = 12 }
+        if ($maxSession -le 0) { $maxSession = 40 }
+        $hits = @()
+        foreach ($c in @($ledger.chunks)) {
+            $total = 0.0
+            foreach ($prod in @($c.produced)) {
+                $abs = Join-Path $Ctx.Root (([string]$prod.path) -replace '/', '\')
+                if (-not (Test-Path -LiteralPath $abs -PathType Leaf)) { continue }
+                $kb = (Get-Item -LiteralPath $abs).Length / 1024.0
+                $total += $kb
+                if ($kb -gt $maxWrite) {
+                    $hits += ('{0}: {1} {2} KB > {3} KB write' -f $c.id, $prod.path, [math]::Round($kb, 1), $maxWrite)
+                }
+            }
+            if ($total -gt $maxSession) {
+                $hits += ('{0}: {1} KB > {2} KB session' -f $c.id, [math]::Round($total, 1), $maxSession)
+            }
+        }
+        if ($hits.Count -gt 0) { return New-Result $P.id 'chunk-ledger' 'FAIL' (($hits | Select-Object -First 6) -join '; ') }
+        $count = @($ledger.chunks).Count
+        $detail = '{0} chunk(s) within {1}/{2} KB' -f $count, $maxWrite, $maxSession
+        return New-Result $P.id 'chunk-ledger' 'PASS' $detail
+    }
+
+    $python = Get-Command python -ErrorAction SilentlyContinue
+    if (-not $python) { $python = Get-Command py -ErrorAction SilentlyContinue }
+    if (-not $python) { return New-Result $P.id 'chunk-ledger' 'NOT_APPLICABLE' 'python not found' }
+    $out = & $python.Source $validator $ledgerPath '--root' $Ctx.Root '--json' '--no-hash' 2>&1
+    $text = ($out | ForEach-Object { [string]$_ }) -join "`n"
+    $m = [regex]::Match($text, '(?s)\{.*\}')
+    if (-not $m.Success) { return New-Result $P.id 'chunk-ledger' 'FAIL' "validator output is not JSON: $($text.Trim())" }
+    try { $data = $m.Value | ConvertFrom-Json } catch { return New-Result $P.id 'chunk-ledger' 'FAIL' "validator JSON parse failed: $($_.Exception.Message)" }
+    $sets = @{
+        ownership = @('E_JSON', 'E_SCHEMA', 'E_TASK_ID', 'E_DUP_ID', 'E_PARENT', 'E_PARENT_INHERIT', 'E_CYCLE',
+            'E_DEPTH', 'E_STATE', 'E_ROLE_AREA', 'E_OWN_OVERLAP', 'E_PRODUCED_OUTSIDE', 'E_PRODUCED_MISSING',
+            'E_HASH_MISMATCH', 'E_BUDGET')
+        coverage  = @('E_COVERAGE', 'E_OWN_OUTSIDE_CARD')
+        all       = @()
+    }
+    $errors = @($data.errors)
+    if ($rule -eq 'all') {
+        if ($errors.Count -gt 0) {
+            $detail = ($errors | Select-Object -First 6 | ForEach-Object { '{0} {1}' -f $_.code, $_.message }) -join '; '
+            return New-Result $P.id 'chunk-ledger' 'FAIL' $detail
+        }
+    }
+    else {
+        $hits = @($errors | Where-Object { $sets[$rule] -contains $_.code })
+        if ($hits.Count -gt 0) {
+            $detail = ($hits | Select-Object -First 6 | ForEach-Object { '{0} {1}' -f $_.code, $_.message }) -join '; '
+            return New-Result $P.id 'chunk-ledger' 'FAIL' $detail
+        }
+    }
+    New-Result $P.id 'chunk-ledger' 'PASS' ("{0} chunk(s), rule {1}" -f $data.chunks, $rule)
+}
+
 function Check-ZonesUnique {
     param($P, $Ctx)
     $files = Get-FilesForParams $P $Ctx
@@ -955,6 +1027,7 @@ function Invoke-Check {
             'deps-acyclic' { return Check-DepsAcyclic $P $Ctx }
             'python-validator' { return Check-PythonValidator $P $Ctx }
             'zones-unique' { return Check-ZonesUnique $P $Ctx }
+    'chunk-ledger' { return Check-ChunkLedger $P $Ctx }
             'manual' {
                 $reason = if ($P.reason) { [string]$P.reason } else { 'semantic review' }
                 return New-Result $id 'manual' 'MANUAL' $reason
@@ -1222,6 +1295,35 @@ function Invoke-SelfTest {
         ) -join "`n"
         New-TextFile $d 'docs/architecture/architecture-x.md' $mixedDoc
         Invoke-Case -Name 'zones-unique waiver with unfilled table' -Type 'zones-unique' -Params @{ globs = @('docs/architecture/architecture-*.md'); levels = @('components', 'modules') } -Dir $d -Expect 'FAIL'
+
+        $chunkHead = '{"task":"T-999","version":1,"budget":{"max_write_kb":12,"max_session_kb":__S__,'
+        $chunkHead += '"context_stop_pct":65,"max_turns":40,"max_input_tokens":60000,"max_wall_min":45},"chunks":['
+        $chunkTail = ']}'
+
+        $d = New-CaseDir 'chunk-valid'
+        New-TextFile $d 'docs/chunks/T-999.json' (($chunkHead -replace '__S__', '40') + '{"id":"C1","parent":null,"stage":"I-01","role":"coder","depth":1,"title":"core","state":"pending","owns":["src/**"],"inputs":[],"brief":"docs/chunks/T-999/C1.brief.md","acceptance":[],"produced":[],"base_commit":"abc1234","attempts":0,"usage":{"in":0,"out":0,"cr":0,"min":0},"issues":[],"notes":[],"started":null,"finished":null}' + $chunkTail)
+        Invoke-Case -Name 'chunk-ledger valid' -Type 'chunk-ledger' -Params @{ rule = 'ownership' } -Dir $d -Expect 'PASS'
+
+        $d = New-CaseDir 'chunk-missing'
+        Invoke-Case -Name 'chunk-ledger missing' -Type 'chunk-ledger' -Params @{ rule = 'ownership' } -Dir $d -Expect 'NOT_APPLICABLE'
+
+        $d = New-CaseDir 'chunk-overlap'
+        $two = '{"id":"C1","parent":null,"stage":"I-01","role":"coder","depth":1,"title":"core","state":"pending","owns":["src/**"],"inputs":[],"brief":"docs/chunks/T-999/C1.brief.md","acceptance":[],"produced":[],"base_commit":"abc1234","attempts":0,"usage":{"in":0,"out":0,"cr":0,"min":0},"issues":[],"notes":[],"started":null,"finished":null},'
+        $two += '{"id":"C2","parent":null,"stage":"I-01","role":"coder","depth":1,"title":"api","state":"pending","owns":["src/api/**"],"inputs":[],"brief":"docs/chunks/T-999/C2.brief.md","acceptance":[],"produced":[],"base_commit":"abc1234","attempts":0,"usage":{"in":0,"out":0,"cr":0,"min":0},"issues":[],"notes":[],"started":null,"finished":null}'
+        New-TextFile $d 'docs/chunks/T-999.json' (($chunkHead -replace '__S__', '40') + $two + $chunkTail)
+        Invoke-Case -Name 'chunk-ledger owns overlap' -Type 'chunk-ledger' -Params @{ rule = 'ownership' } -Dir $d -Expect 'FAIL'
+
+        $d = New-CaseDir 'chunk-coverage'
+        New-TextFile $d 'docs/tasks/T-999-x.md' "| Field | Value |`n|---|---|`n| title | x |`n| artifacts | ``src/**`` |"
+        New-TextFile $d 'src/a.py' 'print(1)'
+        New-TextFile $d 'docs/chunks/T-999.json' (($chunkHead -replace '__S__', '40') + '{"id":"C1","parent":null,"stage":"I-01","role":"coder","depth":1,"title":"core","state":"pending","owns":["other/**"],"inputs":[],"brief":"docs/chunks/T-999/C1.brief.md","acceptance":[],"produced":[],"base_commit":"abc1234","attempts":0,"usage":{"in":0,"out":0,"cr":0,"min":0},"issues":[],"notes":[],"started":null,"finished":null}' + $chunkTail)
+        Invoke-Case -Name 'chunk-ledger uncovered artifact' -Type 'chunk-ledger' -Params @{ rule = 'coverage' } -Dir $d -Expect 'FAIL'
+
+        $d = New-CaseDir 'chunk-budget'
+        New-TextFile $d 'src/a.py' ('x' * 4096)
+        $big = '{"id":"C1","parent":null,"stage":"I-01","role":"coder","depth":1,"title":"core","state":"done","owns":["src/**"],"inputs":[],"brief":"docs/chunks/T-999/C1.brief.md","acceptance":[],"produced":[{"path":"src/a.py","sha256":"' + ('0' * 64) + '"}],"base_commit":"abc1234","attempts":1,"usage":{"in":0,"out":0,"cr":0,"min":0},"issues":[],"notes":[],"started":null,"finished":null}'
+        New-TextFile $d 'docs/chunks/T-999.json' (($chunkHead -replace '__S__', '1') + $big + $chunkTail)
+        Invoke-Case -Name 'chunk-ledger budget overrun' -Type 'chunk-ledger' -Params @{ rule = 'budget' } -Dir $d -Expect 'FAIL'
     }
     finally {
         Remove-Item -LiteralPath $base -Recurse -Force -ErrorAction SilentlyContinue

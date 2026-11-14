@@ -251,6 +251,9 @@ Feature: stop at CP-1 (implementation and unit/integration tests) and CP-2 (e2e 
 - I-01 checks: source/tests exist, no `TODO`/`FIXME` in artifacts, no secrets.
   I-02 checks: e2e tests, runner, validator, cleanup, no production endpoints.
   Bugfix checks cover reproduction, regression, and no-secret/no-TODO rules.
+  Chunk checks (type `chunk-ledger`): `chunk-ownership-no-overlap`,
+  `chunk-coverage`, `chunk-budget`; they read `docs/chunks/T-XXX.json` and are
+  `NOT_APPLICABLE` only when the task has no ledger.
 - Prefer deterministic scripts for fixtures, arithmetic, and data validation;
   run `verify-stage.ps1 -Task T-XXX -Stage <ID>` before reporting. Report a test
   output summary, not full logs.

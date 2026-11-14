@@ -238,6 +238,9 @@ Coverage rules:
 - Run `verify-stage.ps1 -Task T-XXX -Stage R-01|R-02` before reporting; a stale
   SVG, missing scenario/service diagram, invalid OpenAPI file, unlinked artifact,
   or missing section fails the checkpoint.
+- Chunk checks (type `chunk-ledger`): `chunk-ownership-no-overlap`,
+  `chunk-coverage`, `chunk-budget`; they read `docs/chunks/T-XXX.json` and are
+  `NOT_APPLICABLE` only when the task has no ledger.
 - Never edit checks JSON, `docs/evidence/`, checkpoints, or the board. Do not
   re-read inputs already summarized in a handoff.
 

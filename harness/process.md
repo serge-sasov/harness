@@ -488,6 +488,11 @@ stop and request decomposition instead of attempting a larger write.
 - `stage-done.ps1` refuses to close a checkpoint while a chunk of that stage is
   not `done`. Machine fields (`state`, `attempts`, `produced.sha256`, `usage`,
   `base_commit`) are written only by `chunk.ps1` and `stage-done.ps1`.
+- Chunk checks (type `chunk-ledger`): `chunk-ownership-no-overlap` (schema, ids,
+  depth, state, `owns` overlap, produced-inside-owns, role write area),
+  `chunk-coverage` (every existing file under the card artifacts is owned), and
+  `chunk-budget` (per-file `max_write_kb` and per-chunk `max_session_kb`). A task
+  without a ledger yields `NOT_APPLICABLE`, never `FAIL`.
 - The `ux-designer` may delegate prototype pages to one `harness-coder` child at
   a time: explicit page brief, non-overlapping files under
   `docs/ux/prototype/<slug>/`, and a return of paths plus a summary of at most
