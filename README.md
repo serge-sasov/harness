@@ -179,9 +179,9 @@ no status/dependency changes, preemption, or parallel execution are allowed.
   Interfaces and data model (R-02), ADR-004; overall architecture description,
   component/per-scenario sequence/data/class/per-service swimlane diagrams,
   OpenAPI 3.x specifications, coverage and link checks; includes 2.6.0
-  deterministic checks and P2 approval, 2.5.0
   deterministic checks and P2 approval, 2.4.0 per-scenario UX HTML pages, and
   2.3.0 generation/context budgets).
+- Full version history: [`CHANGELOG.md`](CHANGELOG.md).
 - Upgrade note: R-02 checks cover every diagram/spec in `docs/architecture`.
   Existing projects must add `architecture-*.md` and link legacy diagrams there,
   or remove obsolete diagrams before resuming an R-01/R-02 task.
