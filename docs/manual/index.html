@@ -1265,7 +1265,12 @@ vendor copy (если включён). Board и задачи при обслуж
 <tr>
 <td>Общее описание</td>
 <td><code>architecture-&lt;slug&gt;.md</code></td>
-<td>Всегда; обязательные разделы scope/applicability, components, services, scenarios, data/class model, REST API, diagram index, traceability</td>
+<td>Всегда; обязательные разделы scope/applicability, components, services, responsibility zones, scenarios, data/class model, REST API, diagram index, traceability</td>
+</tr>
+<tr>
+<td>Зоны ответственности</td>
+<td>раздел <code>## Responsibility zones</code> в <code>architecture-&lt;slug&gt;.md</code></td>
+<td>Иерархия <code>компонент -&gt; модуль (опционально) -&gt; класс</code>; каждый элемент указывает <code>Owns</code> и <code>Does not own</code>; зоны одного уровня не дублируются и не пересекаются; модули <code>MOD-NNN</code>, классы <code>CLS-NNN</code>; уровень отсутствует только с явным waiver</td>
 </tr>
 <tr>
 <td>Компонентная диаграмма</td>
@@ -1307,8 +1312,15 @@ requirements, e2e use cases (если e2e в scope), UX и architecture-опис
 2.5.0, свяжите старые диаграммы в <code>architecture-*.md</code> или удалите устаревшие.
 Проверки: <code>architecture-exist</code>,
 <code>architecture-sections</code>, <code>scenario-ids</code>, <code>service-ids</code>, <code>api-ids</code>,
-<code>openapi-valid</code>, <code>sequence-count</code>, <code>swimlane-count</code>, <code>architecture-links</code>;
+<code>openapi-valid</code>, <code>sequence-count</code>, <code>swimlane-count</code>, <code>architecture-links</code>,
+<code>responsibility-zones</code>, <code>module-ids</code>, <code>class-ids</code>,
+<code>zones-overlap-review</code> (ручная проверка семантического пересечения зон);
 рендер — через MCP <code>plantuml-render</code>.</p>
+<p>Для проектов, обновлённых с 2.8.0, добавьте в <code>architecture-&lt;slug&gt;.md</code> раздел
+<code>## Responsibility zones</code> с таблицами <code>Components</code>, <code>Modules</code>, <code>Classes</code> и
+явными waiver-фразами <code>No module decomposition (reason)</code> /
+<code>No class model (reason)</code>: без него проверка <code>responsibility-zones</code> не
+проходит.</p>
 <h3 id="62-bugfix-фазы-роли-артефакты-checkpoints">6.2. Bugfix: фазы, роли, артефакты, checkpoints</h3>
 <div class="table-scroll"><table>
 <thead>
@@ -1434,7 +1446,7 @@ requirements, e2e use cases (если e2e в scope), UX и architecture-опис
 <td>Architecture</td>
 <td><code>docs/architecture/</code></td>
 <td>architect</td>
-<td>Architecture description, ADR, contracts, component/scenario/data/class/swimlane diagrams, OpenAPI</td>
+<td>Architecture description с реестром зон ответственности, ADR, contracts, component/scenario/data/class/swimlane diagrams, OpenAPI</td>
 </tr>
 <tr>
 <td>QA</td>
@@ -1608,7 +1620,7 @@ requirements, e2e use cases (если e2e в scope), UX и architecture-опис
 </tr>
 <tr>
 <td>architect</td>
-<td>CP-1 ADR, architecture description, SCN/SVC/API, OpenAPI; CP-2 component/scenario/data/class/swimlane diagrams and decomposition</td>
+<td>CP-1 ADR, architecture description, SCN/SVC/MOD, зоны ответственности компонентов и модулей; CP-2 component/scenario/data/class/swimlane diagrams, CLS/API, зоны классов и decomposition</td>
 <td>CP-1 design/root-cause</td>
 </tr>
 <tr>

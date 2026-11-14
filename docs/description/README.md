@@ -285,14 +285,18 @@ accepted; UX screen IDs/UI spec are available when the task has a UI.
 Source: [`diagrams/seq-04-architect.puml`](diagrams/seq-04-architect.puml).
 
 **Result:** an ADR from the template, the overall architecture description
-`docs/architecture/architecture-<slug>.md` with `SCN`/`SVC`/`API` IDs,
-component and per-scenario sequence diagrams, data and class models, per-service
-swimlane diagrams, OpenAPI 3.x specifications, interface contracts, and
-decomposition for the coder. All diagrams and specs are linked from the
-architecture description. **Mandatory control:** every diagram passes
+`docs/architecture/architecture-<slug>.md` with `SCN`/`SVC`/`MOD`/`CLS`/`API`
+IDs, the `## Responsibility zones` registry, component and per-scenario sequence
+diagrams, data and class models, per-service swimlane diagrams, OpenAPI 3.x
+specifications, interface contracts, and decomposition for the coder. All
+diagrams and specs are linked from the architecture description. **Zones:** the
+hierarchy is `component -> module (optional) -> class`; every element states
+what it owns and what it does not own, and no two elements of the same level own
+the same functions. **Mandatory control:** every diagram passes
 `check_syntax`, then `render_file`; the registry checks scenario/service/API
-coverage, OpenAPI validity, and artifact links; syntax errors are fixed before
-handoff. A decision without alternatives is not acceptable.
+coverage, responsibility zones (`responsibility-zones`, `module-ids`,
+`class-ids`), OpenAPI validity, and artifact links; syntax errors are fixed
+before handoff. A decision without alternatives is not acceptable.
 
 ### S-05. Implementation, unit and e2e tests (coder)
 
@@ -829,7 +833,7 @@ are required.
 | `docs/issues/` | harness problem and solution log |
 | `docs/analysis/` | pilot requirements, e2e UC/data |
 | `docs/ux/` | flows, screens, wireframes, UI spec, prototype catalog and per-scenario HTML pages |
-| `docs/architecture/` | architecture description, ADRs, contracts, component/scenario/data/class/swimlane diagrams, OpenAPI specs |
+| `docs/architecture/` | architecture description with the responsibility zones registry, ADRs, contracts, component/scenario/data/class/swimlane diagrams, OpenAPI specs |
 | `docs/qa/` | reviews, e2e plans/reports |
 | `docs/activity.puml/.svg` | derived plan activity diagram (informational) |
 | `docs/description/` | this description, diagrams, and HTML |

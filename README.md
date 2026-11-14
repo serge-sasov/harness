@@ -175,16 +175,22 @@ no status/dependency changes, preemption, or parallel execution are allowed.
 
 ## Versions
 
-- Current version: `2.7.0` (architect stage split: Solution design (R-01) and
-  Interfaces and data model (R-02), ADR-004; overall architecture description,
-  component/per-scenario sequence/data/class/per-service swimlane diagrams,
-  OpenAPI 3.x specifications, coverage and link checks; includes 2.6.0
-  deterministic checks and P2 approval, 2.4.0 per-scenario UX HTML pages, and
-  2.3.0 generation/context budgets).
+- Current version: `2.8.0` (architect responsibility zones: hierarchy
+  `component -> module (optional) -> class`, exclusive zones per level,
+  `MOD-NNN`/`CLS-NNN` project-global IDs, `## Responsibility zones` section in
+  the architecture description, new `zones-unique` check type, ADR-005;
+  includes 2.7.0 architect stage split (Solution design R-01, Interfaces and
+  data model R-02), 2.6.0 deterministic checks and P2 approval, 2.4.0
+  per-scenario UX HTML pages, and 2.3.0 generation/context budgets).
 - Full version history: [`CHANGELOG.md`](CHANGELOG.md).
 - Upgrade note: R-02 checks cover every diagram/spec in `docs/architecture`.
   Existing projects must add `architecture-*.md` and link legacy diagrams there,
   or remove obsolete diagrams before resuming an R-01/R-02 task.
+- Upgrade note (2.8.0): architecture descriptions written before 2.8.0 have no
+  `## Responsibility zones` section and fail the `responsibility-zones` check.
+  Add the section with the level tables and the explicit `No module
+  decomposition (reason)` / `No class model (reason)` waivers before the next
+  R-01/R-02 checkpoint.
 - The global version is stored in `~/.config/opencode/harness/version.json`.
 - A project records the version in `harness/version.json` during `/harness-init`.
 - `/harness-doctor` warns about version divergence.

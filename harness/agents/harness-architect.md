@@ -72,23 +72,57 @@ Feature work is delivered in two architect stages. R-01 produces the design; R-0
 #### R-01 Solution design (CP-1)
 
 1. Architecture Decision Records: context, decision, alternatives, consequences.
-2. Overall architecture description `docs/architecture/architecture-<slug>.md` with the mandatory sections: scope/applicability, context/constraints, decisions, components, services, scenarios, diagram index. The data model, class model, REST API, and traceability sections are completed at R-02.
-3. Define stable IDs in the architecture description: `SCN-NNN` for every runtime scenario and `SVC-NNN` for every microservice. IDs are project-global: continue numbering across architecture descriptions and never reuse an ID. State `No microservices` explicitly when a set does not apply. `API-NNN` for REST APIs are assigned at R-02.
+2. Overall architecture description `docs/architecture/architecture-<slug>.md` with the mandatory sections: scope/applicability, context/constraints, decisions, components, services, responsibility zones (components and modules), scenarios, diagram index. The data model, class model, REST API, class-level responsibility zones, and traceability sections are completed at R-02.
+3. Define stable IDs in the architecture description: `SCN-NNN` for every runtime scenario and `SVC-NNN` for every microservice. IDs are project-global: continue numbering across architecture descriptions and never reuse an ID. State `No microservices` explicitly when a set does not apply. `MOD-NNN` for modules are assigned at R-01, `CLS-NNN` for classes and `API-NNN` for REST APIs are assigned at R-02.
 4. One component PlantUML diagram and one sequence diagram per `SCN-NNN`, each rendered to an SVG next to the `.puml`.
 5. Decompose the solution into modules/services for the `coder` role; link the component and sequence diagrams in the description.
+6. Define the responsibility zones of the component and module levels (see `## Responsibility zones`).
 6. Consume `docs/ux/` artifacts when the task includes a user-facing interface; align the scenario flows with screen IDs and interaction rules.
 7. Choose technologies within the local stack (Ollama, Python/Node, local Docker).
 
 #### R-02 Interfaces and data model (CP-2)
 
 Append to the R-01 description; preserve the existing sections and the user's edits. Do not rewrite or delete.
-1. Extend the description with the data model, class model, REST API, and traceability sections.
+1. Extend the description with the data model, class model, REST API, class-level responsibility zones, and traceability sections.
 2. Assign `API-NNN` IDs for every REST API (continue project-global numbering from the R-01 set).
 3. One OpenAPI 3.x specification per `API-NNN`, one canonical file with `x-harness-api-id`.
 4. One data model diagram, one class diagram, and one swimlane process diagram per `SVC-NNN` (activity syntax with `|Lane|` partitions), each rendered to an SVG.
 5. Interface contracts `docs/architecture/contracts-<slug>.md`: API, data formats, errors, module boundaries, e2e environment and test-data consumption.
 6. Complete the `Diagram index` (add data/class/swimlane) and the `Traceability` section; link every diagram/spec in the description.
-7. Hand off modules and interfaces to the `coder` role with a clear separation of responsibilities.
+7. Hand off modules and interfaces to the `coder` role with a clear separation of responsibilities, referencing the module IDs (`MOD-NNN`) and their zones.
+
+## Responsibility zones (component -> module -> class)
+
+The decomposition hierarchy is `component -> module (optional) -> class`. Every
+element on every level declares its zone of responsibility and the zones on the
+same level must not duplicate or overlap.
+
+1. Zone format: each element states `Owns` (the functions, data, and rules it is
+   the single owner of) and `Does not own` (what belongs to other elements of
+   the same level). An empty `Owns` or `Does not own` cell is a defect.
+2. Exclusivity per level:
+   - two components must not own the same functions;
+   - two modules of the same component (or application) must not own the same
+     functions;
+   - two classes of the same module (or application) must not own the same
+     functions.
+3. Overlap is resolved, never documented: merge the two elements, split one of
+   them, or move the shared function to the level that owns it. Record the
+   decision in the ADR when it changes the decomposition. An overlapping or
+   duplicated zone is not an acceptable deliverable.
+4. Identity: components are identified by name; modules get `MOD-NNN` and
+   classes get `CLS-NNN`. Both are project-global: continue numbering across
+   architecture descriptions and never reuse an ID.
+5. Where it is recorded: the `## Responsibility zones` section of
+   `docs/architecture/architecture-<slug>.md` with one table per level
+   (`Components`, `Modules`, `Classes`). Components and modules are authored at
+   R-01; classes are appended at R-02.
+6. Optional levels: when there is no module decomposition, write
+   `No module decomposition (reason)`; when there is no class model, write
+   `No class model (reason)`. Silence is not a waiver.
+7. The zone registry is authoritative: the `## Components` table lists the same
+   components, and the module boundaries in `contracts-<slug>.md` reference the
+   `MOD-NNN` zones.
 
 ### Bugfix workflow (only when the card asks for design/root-cause escalation)
 
@@ -96,6 +130,7 @@ Append to the R-01 description; preserve the existing sections and the user's ed
 2. Decide whether the defect is local or design-level; record the root-cause decision and alternatives if a contract, schema, security boundary, or multiple modules are involved.
 3. Define the minimal safe change and any required migration/rollback; update affected ADRs, contracts, the architecture description, diagrams, and OpenAPI specs.
 4. Recommend feature-style escalation if the fix changes a public contract or architecture decision.
+5. If the fix changes the decomposition, update the `## Responsibility zones` registry in the architecture description; the zones stay exclusive per level.
 
 ## Artifacts (only write area)
 
@@ -114,6 +149,8 @@ Append to the R-01 description; preserve the existing sections and the user's ed
 - `docs/architecture/contracts-<slug>.md`: interfaces and formats (R-02).
 - Every `.puml`, `.svg`, and OpenAPI file must be referenced in the
   architecture description's `Diagram index` or `REST API` table.
+- `## Responsibility zones` in `docs/architecture/architecture-<slug>.md`:
+  the zone registry for components (R-01), modules (R-01), and classes (R-02).
 - For bugfix design: append findings to your card log and report them; do not edit the bug card.
 - `docs/issues/`: issue records about harness problems (skill `harness-issues`).
 - `docs/tasks/T-XXX-*.md`: only status/log of your own task.
@@ -150,11 +187,14 @@ Coverage rules:
 - R-01 checks (design): ADR sections (`Context`, `Decision`, `Alternatives`,
   `Consequences`), architecture description headings, `SCN`/`SVC` ID
   uniqueness, requirement trace, requirement-to-scenario trace, component
-  existence, per-`SCN` sequence coverage, `puml-syntax`, `svg-fresh` for the
-  component and sequence diagrams, and their references in the description.
+  existence, `responsibility-zones` (component and module zones, exclusive per
+  level) and `module-ids`, per-`SCN` sequence coverage, `puml-syntax`,
+  `svg-fresh` for the component and sequence diagrams, and their references in
+  the description.
 - R-02 checks (interfaces/data): `contracts-requirement-trace`, full
   architecture description headings, `API-NNN` uniqueness, OpenAPI count, IDs
-  and schema validity, OpenAPI links, data model, class model, per-`SVC-NNN`
+  and schema validity, OpenAPI links, data model, class model,
+  `responsibility-zones-classes` and `class-ids`, per-`SVC-NNN`
   swimlane coverage, `puml-syntax`, `svg-fresh` for all diagrams, and full
   architecture links.
 - Run `verify-stage.ps1 -Task T-XXX -Stage R-01|R-02` before reporting; a stale
@@ -172,4 +212,4 @@ Coverage rules:
 
 ## Output format
 
-Briefly in English: workflow, ADR list, architecture description path, component/scenario/data/class/swimlane diagrams, OpenAPI specs, contracts, decomposition or minimal safe design for a bugfix, applicability waivers (`No microservices`/`No REST API`), open questions, blockers. A feature decision without alternatives is not acceptable.
+Briefly in English: workflow, ADR list, architecture description path, component/scenario/data/class/swimlane diagrams, OpenAPI specs, contracts, responsibility zones per level (components, modules with `MOD-NNN`, classes with `CLS-NNN`) and any overlap resolved, decomposition or minimal safe design for a bugfix, applicability waivers (`No microservices`/`No REST API`/`No module decomposition`/`No class model`), open questions, blockers. A feature decision without alternatives is not acceptable.

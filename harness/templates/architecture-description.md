@@ -13,11 +13,13 @@
 <!--
 Stage ownership (do not rewrite an earlier stage):
 - R-01 Solution design: `## Scope and applicability`, `## Context and constraints`,
-  `## Decisions`, `## Components`, `## Services`, `## Scenarios`, `## Diagram index`.
+  `## Decisions`, `## Components`, `## Services`, `## Responsibility zones`
+  (components and modules), `## Scenarios`, `## Diagram index`.
   Also `adr-NNN-<slug>.md` and `components-<slug>` / `sequence-scn-NNN` diagrams.
 - R-02 Interfaces and data model: `## Data model`, `## Class model`,
-  `## REST API`, `## Traceability`; `contracts-<slug>.md`; per-`SVC-NNN`
-  swimlanes; per-`API-NNN` OpenAPI specs; complete the `Diagram index`.
+  `## REST API`, class rows in `## Responsibility zones`, `## Traceability`;
+  `contracts-<slug>.md`; per-`SVC-NNN` swimlanes; per-`API-NNN` OpenAPI specs;
+  complete the `Diagram index`.
 Append at R-02 and preserve the R-01 sections and user edits.
 -->
 
@@ -32,9 +34,10 @@ service, or API.
 
 - REST API: required / not applicable (reason)
 - Microservices: required / not applicable (reason)
+- Module decomposition: required / not applicable (reason)
+- Class model: required / not applicable (reason)
 - Runtime scenarios: required / not applicable (reason)
 - Data model: required / not applicable (reason)
-- Class model: required / not applicable (reason)
 - Waivers: none / list with reason
 
 ## Context and constraints
@@ -51,8 +54,10 @@ security and data constraints. Link requirements `R-NNN` and ADRs.
 ## Components
 
 Describe the component decomposition. Every component has a responsibility,
-public interface, and dependencies. The diagram is
-`components-<slug>.puml` (`components-<slug>.svg`).
+public interface, and dependencies. The zone of each component (what it owns and
+what it does not own) is registered in `## Responsibility zones`, which is the
+authoritative registry. The diagram is `components-<slug>.puml`
+(`components-<slug>.svg`).
 
 | Component | Responsibility | Interfaces | Depends on |
 |---|---|---|---|
@@ -67,6 +72,39 @@ needs one swimlane process diagram.
 | ID | Service | Responsibility | Interfaces | Swimlane |
 |---|---|---|---|---|
 | SVC-001 | | | | `swimlane-svc-001-<slug>.puml` |
+
+## Responsibility zones
+
+The decomposition hierarchy is `component -> module (optional) -> class`. Every
+element declares the functions it owns and the functions it explicitly does not
+own. Zones on the same level must not duplicate or overlap: no two components,
+no two modules of the same component (or application), and no two classes of the
+same module (or application) may own the same functions. Resolve an overlap by
+merging, splitting, or moving the shared function to the owning level, and
+record the decision in the ADR. Components are identified by name, modules by
+`MOD-NNN`, classes by `CLS-NNN` (project-global, never reused).
+
+### Components  (R-01)
+
+| Component | Owns (zone) | Does not own | Depends on |
+|---|---|---|---|
+| Component A | | | |
+
+### Modules  (R-01, optional)
+
+`No module decomposition (reason)` when the solution has no module layer.
+
+| ID | Module | Parent component | Owns (zone) | Does not own | Depends on |
+|---|---|---|---|---|---|
+| MOD-001 | | | | | |
+
+### Classes  (R-02)
+
+`No class model (reason)` when the solution has no class model.
+
+| ID | Class | Parent module / application | Owns (zone) | Does not own | Depends on |
+|---|---|---|---|---|---|
+| CLS-001 | | | | | |
 
 ## Scenarios
 
@@ -86,7 +124,10 @@ constraints. The diagram is `data-model-<slug>.puml`
 ## Class model  (R-02)
 
 Key domain classes, aggregates, value objects, invariants, and their
-relationships. The diagram is `class-<slug>.puml` (`class-<slug>.svg`).
+relationships. Every class gets a `CLS-NNN` ID and a zone in
+`## Responsibility zones` (classes of the same module or application must not
+own the same functions). The diagram is `class-<slug>.puml`
+(`class-<slug>.svg`).
 
 ## REST API  (R-02)
 

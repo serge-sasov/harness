@@ -86,11 +86,24 @@ here; workflow-specific stages and task graphs live in
   and `SCN`/`SVC` IDs; R-02 (Interfaces and data model) extends that same
   description with the data/class models, REST API, `API-NNN` IDs, OpenAPI
   specs, contracts, and per-`SVC-NNN` swimlanes, and never rewrites or deletes
-  the R-01 work. The architecture description's `Scope and applicability` section
+  the R-01 work.   The architecture description's `Scope and applicability` section
   is authoritative: no `SVC-`/`API-` definitions means an explicit `No microservices`/`No REST API`
   statement and disables those conditional checks; silence is not a waiver.
   `SCN`/`SVC`/`API` identifiers are project-global; never reuse them across
   architecture descriptions.
+- The decomposition hierarchy is `component -> module (optional) -> class`. Every
+  component, module, and class declares a responsibility zone in the
+  `## Responsibility zones` section of the architecture description: what it
+  owns (`Owns`) and what it explicitly does not own (`Does not own`). Zones on
+  the same level must not duplicate or overlap: two components must not own the
+  same functions, two modules of the same component (or application) must not
+  own the same functions, and two classes of the same module (or application)
+  must not own the same functions. Overlap is resolved by merging, splitting,
+  or moving the shared function to the owning level, and the decision is
+  recorded in the ADR. Modules are optional (`No module decomposition
+  (reason)`), classes are optional (`No class model (reason)`); silence is not a
+  waiver. `MOD-NNN` (modules) and `CLS-NNN` (classes) are project-global and
+  never reused.
 - Bugfix tasks use reproduction evidence and regression tests instead of a new
   e2e dataset by default; e2e/UX/architecture are add-ons when the fix changes a
   contract, crosses modules, or affects a UI flow.
@@ -253,7 +266,7 @@ here; workflow-specific stages and task graphs live in
     CP-1 impact/acceptance (bugfix escalation);
   - ux-designer: CP-1 flows and screens, CP-2 wireframes/prototype/UI spec
     (feature); CP-1 UI impact/fix spec (bugfix escalation);
-  - architect: CP-1 design (ADR, architecture description core, component and per-`SCN` sequence diagrams, `SCN`/`SVC` IDs); CP-2 interfaces and data model (contracts, OpenAPI, data/class models, per-service swimlanes, `API` IDs, full traceability) (feature); CP-1 design/root-cause decision (bugfix escalation);
+  - architect: CP-1 design (ADR, architecture description core, component and per-`SCN` sequence diagrams, `SCN`/`SVC` IDs, responsibility zones for components and modules); CP-2 interfaces and data model (contracts, OpenAPI, data/class models, per-service swimlanes, `API` IDs, class-level responsibility zones, full traceability) (feature); CP-1 design/root-cause decision (bugfix escalation);
   - coder: CP-1 reproduction/root cause and failing regression (bugfix) or
     implementation and unit/integration tests (feature); CP-2 fix/regression or
     e2e automation and local run;

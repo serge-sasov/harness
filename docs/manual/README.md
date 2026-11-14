@@ -629,7 +629,8 @@ vendor copy (если включён). Board и задачи при обслуж
 
 | Артефакт | Путь | Правило |
 |---|---|---|
-| Общее описание | `architecture-<slug>.md` | Всегда; обязательные разделы scope/applicability, components, services, scenarios, data/class model, REST API, diagram index, traceability |
+| Общее описание | `architecture-<slug>.md` | Всегда; обязательные разделы scope/applicability, components, services, responsibility zones, scenarios, data/class model, REST API, diagram index, traceability |
+| Зоны ответственности | раздел `## Responsibility zones` в `architecture-<slug>.md` | Иерархия `компонент -> модуль (опционально) -> класс`; каждый элемент указывает `Owns` и `Does not own`; зоны одного уровня не дублируются и не пересекаются; модули `MOD-NNN`, классы `CLS-NNN`; уровень отсутствует только с явным waiver |
 | Компонентная диаграмма | `components-<slug>.puml/.svg` | Всегда |
 | Sequence-диаграмма сценария | `sequence-scn-<nnn>-<slug>.puml/.svg` | По одной на каждый `SCN-NNN` |
 | Диаграмма данных | `data-model-<slug>.puml/.svg` | Всегда |
@@ -645,8 +646,16 @@ requirements, e2e use cases (если e2e в scope), UX и architecture-опис
 2.5.0, свяжите старые диаграммы в `architecture-*.md` или удалите устаревшие.
 Проверки: `architecture-exist`,
 `architecture-sections`, `scenario-ids`, `service-ids`, `api-ids`,
-`openapi-valid`, `sequence-count`, `swimlane-count`, `architecture-links`;
+`openapi-valid`, `sequence-count`, `swimlane-count`, `architecture-links`,
+`responsibility-zones`, `module-ids`, `class-ids`,
+`zones-overlap-review` (ручная проверка семантического пересечения зон);
 рендер — через MCP `plantuml-render`.
+
+Для проектов, обновлённых с 2.8.0, добавьте в `architecture-<slug>.md` раздел
+`## Responsibility zones` с таблицами `Components`, `Modules`, `Classes` и
+явными waiver-фразами `No module decomposition (reason)` /
+`No class model (reason)`: без него проверка `responsibility-zones` не
+проходит.
 
 ### 6.2. Bugfix: фазы, роли, артефакты, checkpoints
 
@@ -672,7 +681,7 @@ requirements, e2e use cases (если e2e в scope), UX и architecture-опис
 | Git commits | репозиторий | orchestrator | История задачи и checkpoint-снимков |
 | Analysis | `docs/analysis/` | analyst | Требования, вопросы, glossary, e2e UC/YAML |
 | UX | `docs/ux/` | ux-designer (+ coder для prototype) | Flows, screens, wireframes, UI spec, prototype |
-| Architecture | `docs/architecture/` | architect | Architecture description, ADR, contracts, component/scenario/data/class/swimlane diagrams, OpenAPI |
+| Architecture | `docs/architecture/` | architect | Architecture description с реестром зон ответственности, ADR, contracts, component/scenario/data/class/swimlane diagrams, OpenAPI |
 | QA | `docs/qa/` | qa, qa-vision | Plans, reports, reviews, verdicts |
 | Guides | `docs/guides/`, `README.md` | doc-writer | Пользовательская и техническая документация |
 | Code/tests | `src/`, `tests/`, `scripts/` | coder | Реализация, тесты, runner, CI/CD |
@@ -741,7 +750,7 @@ requirements, e2e use cases (если e2e в scope), UX и architecture-опис
 |---|---|---|
 | analyst | CP-1 требования; CP-2 e2e UC/YAML | CP-1 impact/acceptance при эскалации |
 | ux-designer | CP-1 flows/screens; CP-2 wireframes/prototype/UI spec | CP-1 UI impact/fix spec |
-| architect | CP-1 ADR, architecture description, SCN/SVC/API, OpenAPI; CP-2 component/scenario/data/class/swimlane diagrams and decomposition | CP-1 design/root-cause |
+| architect | CP-1 ADR, architecture description, SCN/SVC/MOD, зоны ответственности компонентов и модулей; CP-2 component/scenario/data/class/swimlane diagrams, CLS/API, зоны классов и decomposition | CP-1 design/root-cause |
 | coder | CP-1 implementation/unit+integration; CP-2 e2e automation/local run | CP-1 reproduction/root cause + failing regression; CP-2 fix/regression |
 | qa | CP-1 plan/coverage; CP-2 report/verdict | CP-1 report; CP-F |
 | doc-writer | CP-1 documentation draft | CP-1 changelog/guide |

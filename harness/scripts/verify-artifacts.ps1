@@ -679,7 +679,248 @@ function Check-PythonValidator {
     New-Result $P.id 'python-validator' 'PASS' "$($files.Count) file(s)"
 }
 
+function Normalize-Zone {
+    param([string]$Text)
+    if ($null -eq $Text) { return '' }
+    $t = $Text.ToLowerInvariant()
+    $t = [regex]::Replace($t, '[^0-9a-z]+', ' ')
+    return ($t.Trim() -replace '\s+', ' ')
+}
+
+function Split-MarkdownRow {
+    param([string]$Line)
+    $t = ([string]$Line).Trim()
+    if ($t.StartsWith('|')) { $t = $t.Substring(1) }
+    if ($t.EndsWith('|')) { $t = $t.Substring(0, $t.Length - 1) }
+    return @($t -split '\|' | ForEach-Object { $_.Trim() })
+}
+
+function Get-MarkdownTables {
+    param([string]$Text)
+    if ($null -eq $Text) { return @() }
+    $lines = $Text -split "`r?`n"
+    $tables = @()
+    $i = 0
+    while ($i -lt $lines.Count) {
+        if ($lines[$i] -match '^\s*\|.*\|\s*$') {
+            $header = Split-MarkdownRow $lines[$i]
+            $rows = @()
+            $j = $i + 1
+            while ($j -lt $lines.Count -and $lines[$j] -match '^\s*\|.*\|\s*$') {
+                $cells = Split-MarkdownRow $lines[$j]
+                $isSeparator = $true
+                foreach ($c in $cells) { if ($c -notmatch '^:?-{2,}:?$') { $isSeparator = $false; break } }
+                if (-not $isSeparator -and $cells.Count -gt 0) { $rows += , $cells }
+                $j++
+            }
+            $tables += [pscustomobject]@{ Header = @($header); Rows = @($rows) }
+            $i = $j
+        }
+        else { $i++ }
+    }
+    return $tables
+}
+
+function Get-SectionLines {
+    param([string[]]$Lines, [string]$Heading)
+    $start = -1
+    $level = 0
+    for ($i = 0; $i -lt $Lines.Count; $i++) {
+        if ($Lines[$i] -match ('^\s*(#+)\s*' + [regex]::Escape($Heading) + '\s*$')) {
+            $start = $i
+            $level = $Matches[1].Length
+            break
+        }
+    }
+    if ($start -lt 0) { return $null }
+    $end = $Lines.Count
+    for ($i = $start + 1; $i -lt $Lines.Count; $i++) {
+        if ($Lines[$i] -match '^\s*(#+)\s+\S') {
+            if ($Matches[1].Length -le $level) { $end = $i; break }
+        }
+    }
+    if ($end -le ($start + 1)) { return @() }
+    return @($Lines[($start + 1)..($end - 1)])
+}
+
+function Get-ZoneLevelRows {
+    param([string[]]$SectionLines, [string]$Level, [string]$Alt = '')
+    $subs = @{}
+    $current = $null
+    $buf = @()
+    foreach ($l in @($SectionLines)) {
+        if ($l -match '^\s*###\s+(.+?)\s*$') {
+            if ($null -ne $current) { $subs[$current] = ($buf -join "`n") }
+            $current = $Matches[1]
+            $buf = @()
+        }
+        else { $buf += $l }
+    }
+    if ($null -ne $current) { $subs[$current] = ($buf -join "`n") }
+    foreach ($k in @($subs.Keys)) {
+        $heading = $k.ToLowerInvariant()
+        if ($heading.Contains($Level.ToLowerInvariant()) -or ($Alt -and $heading.Contains($Alt.ToLowerInvariant()))) {
+            return [pscustomobject]@{ Found = $true; Body = [string]$subs[$k] }
+        }
+    }
+    return [pscustomobject]@{ Found = $false; Body = '' }
+}
+
+function Check-ZonesUnique {
+    param($P, $Ctx)
+    $files = Get-FilesForParams $P $Ctx
+    if ($files.Count -eq 0) { return New-Result $P.id 'zones-unique' 'NOT_APPLICABLE' 'no files matched' }
+    $levels = @($P.levels | Where-Object { $_ })
+    if ($levels.Count -eq 0) { $levels = @('components', 'modules', 'classes') }
+    $heading = if ($P.heading) { [string]$P.heading } else { 'Responsibility zones' }
+    $bad = @()
+    $zoneCount = 0
+    foreach ($f in $files) {
+        $text = Get-FileTextSafe -Root $Ctx.Root -RelPath $f
+        if ($null -eq $text) { $bad += "$f (missing)"; continue }
+        $lines = $text -split "`r?`n"
+        $section = Get-SectionLines -Lines $lines -Heading $heading
+        if ($null -eq $section) { $bad += "$f missing '## $heading' section"; continue }
+
+        $componentNames = @()
+        $componentsSection = Get-SectionLines -Lines $lines -Heading 'Components'
+        if ($null -ne $componentsSection) {
+            $ctables = Get-MarkdownTables ($componentsSection -join "`n")
+            if ($ctables.Count -gt 0) {
+                foreach ($r in @($ctables[0].Rows)) {
+                    if ($r.Count -gt 0 -and ($r[0]).Trim()) { $componentNames += ($r[0]).Trim() }
+                }
+            }
+        }
+
+        $levelZones = @{}
+        foreach ($level in $levels) {
+            $singular = if ($level -match 'ses$') { $level.Substring(0, $level.Length - 2) } else { $level.TrimEnd('s') }
+            $sub = Get-ZoneLevelRows -SectionLines $section -Level $level -Alt $singular
+            $waiverRx = '(?im)^[\s>*`]*No\s+' + $singular + 's?\b'
+            $hasWaiver = if ($sub.Found) { [bool]($sub.Body -match $waiverRx) } else { [bool]($text -match $waiverRx) }
+            if (-not $sub.Found) {
+                if ($hasWaiver) { continue }
+                $bad += "$f missing '${level}' zone table and no waiver statement"
+                continue
+            }
+
+            $tables = Get-MarkdownTables $sub.Body
+            $table = $null
+            foreach ($t in @($tables)) {
+                $h = ($t.Header -join ' ').ToLowerInvariant()
+                if ($h -match 'owns' -and $h -match 'does not own') { $table = $t; break }
+            }
+            if ($null -eq $table -or @($table.Rows).Count -eq 0) {
+                if ($hasWaiver) { continue }
+                if ($null -eq $table) { $bad += "$f missing zone table with 'Owns' and 'Does not own' columns ($level)" }
+                else { $bad += "$f empty '${level}' zone table and no waiver statement" }
+                continue
+            }
+
+            $header = @($table.Header)
+            $idxOwns = -1; $idxNotOwns = -1; $idxParent = -1; $idxId = -1
+            for ($c = 0; $c -lt $header.Count; $c++) {
+                $h = ([string]$header[$c]).ToLowerInvariant()
+                if ($h -match 'does not own') { $idxNotOwns = $c }
+                elseif ($h -match 'owns') { if ($idxOwns -lt 0) { $idxOwns = $c } }
+                if ($h -match 'parent') { $idxParent = $c }
+                if ($h -match '^(id|component|module|class)\b') { if ($idxId -lt 0) { $idxId = $c } }
+            }
+            if ($idxOwns -lt 0 -or $idxNotOwns -lt 0) {
+                $bad += "$f zone table needs 'Owns' and 'Does not own' columns ($level)"
+                continue
+            }
+
+            $zones = @()
+            $ids = @{}
+            foreach ($row in @($table.Rows)) {
+                $id = if ($idxId -ge 0 -and $row.Count -gt $idxId) { ([string]$row[$idxId]).Trim() } else { '' }
+                $owns = if ($row.Count -gt $idxOwns) { ([string]$row[$idxOwns]).Trim() } else { '' }
+                $notOwns = if ($row.Count -gt $idxNotOwns) { ([string]$row[$idxNotOwns]).Trim() } else { '' }
+                $parent = if ($idxParent -ge 0 -and $row.Count -gt $idxParent) { ([string]$row[$idxParent]).Trim() } else { '' }
+                if (-not $id) { $bad += "$f ${level}: row without an id or name"; continue }
+                if (-not $owns) { $bad += "$f $level '$id': empty 'Owns'"; continue }
+                if (-not $notOwns) { $bad += "$f $level '$id': empty 'Does not own'"; continue }
+                if ($ids.ContainsKey($id)) { $bad += "$f ${level}: duplicate id '$id'" }
+                else { $ids[$id] = $true }
+                $zones += [pscustomobject]@{
+                    Id      = $id
+                    Owns    = $owns
+                    NotOwns = $notOwns
+                    Parent  = $parent
+                    Key     = (Normalize-Zone $owns)
+                }
+            }
+            $zoneCount += $zones.Count
+            $levelZones[$level] = $zones
+
+            $seen = @{}
+            foreach ($z in $zones) {
+                $k = "$level|$($z.Parent)|$($z.Key)"
+                if ($seen.ContainsKey($k)) { $bad += "$f ${level}: duplicated zone '$($z.Owns)' in '$($z.Id)' and '$($seen[$k])'" }
+                else { $seen[$k] = $z.Id }
+            }
+            foreach ($a in $zones) {
+                foreach ($b in $zones) {
+                    if ($a.Id -eq $b.Id) { continue }
+                    if ($a.Parent -ne $b.Parent) { continue }
+                    $na = $a.Key
+                    $nb = (Normalize-Zone $b.NotOwns)
+                    if ($na.Length -ge 8 -and $nb.Contains($na)) {
+                        $bad += "$f ${level}: '$($b.Id)' excludes '$($a.Owns)' that '$($a.Id)' owns"
+                    }
+                }
+            }
+        }
+
+        $componentZones = @()
+        if ($levelZones.ContainsKey('components')) { $componentZones = @($levelZones['components']) }
+        if ($levelZones.ContainsKey('components') -and $componentNames.Count -gt 0) {
+            $cmpLower = @($componentNames | ForEach-Object { $_.ToLowerInvariant() })
+            foreach ($z in $componentZones) {
+                if ($cmpLower -notcontains $z.Id.ToLowerInvariant()) {
+                    $bad += "${f}: component '$($z.Id)' is not listed in the '## Components' table"
+                }
+            }
+            $zoneLower = @($componentZones | ForEach-Object { $_.Id.ToLowerInvariant() })
+            foreach ($n in $componentNames) {
+                if ($zoneLower -notcontains $n.ToLowerInvariant()) {
+                    $bad += "${f}: component '$n' has no responsibility zone"
+                }
+            }
+        }
+
+        $moduleIds = @()
+        if ($levelZones.ContainsKey('modules')) {
+            foreach ($z in @($levelZones['modules'])) { $moduleIds += $z.Id }
+        }
+        $componentIds = @($componentZones | ForEach-Object { $_.Id })
+        foreach ($level in $levels) {
+            if (-not $levelZones.ContainsKey($level)) { continue }
+            if ($level -eq 'components') { continue }
+            foreach ($z in @($levelZones[$level])) {
+                if (-not $z.Parent) { $bad += "$f $level '$($z.Id)': empty parent"; continue }
+                if ($level -eq 'modules') {
+                    if (@($componentIds | Where-Object { $_ -eq $z.Parent }).Count -eq 0) {
+                        $bad += "$f modules '$($z.Id)': unknown parent component '$($z.Parent)'"
+                    }
+                }
+                else {
+                    $ok = (@($moduleIds | Where-Object { $_ -eq $z.Parent }).Count -gt 0) -or
+                        (@($componentIds | Where-Object { $_ -eq $z.Parent }).Count -gt 0) -or
+                        ($z.Parent.ToLowerInvariant() -eq 'application')
+                    if (-not $ok) { $bad += "$f $level '$($z.Id)': unknown parent '$($z.Parent)'" }
+                }
+            }
+        }
+    }
+    if ($bad.Count -gt 0) { return New-Result $P.id 'zones-unique' 'FAIL' (($bad | Select-Object -First 8) -join '; ') }
+    New-Result $P.id 'zones-unique' 'PASS' "$($files.Count) file(s), $zoneCount zone(s)"
+}
+
 function Invoke-Check {
+
     param($Def, $Ctx)
     $id = [string]$Def.id
     $type = [string]$Def.type
@@ -713,6 +954,7 @@ function Invoke-Check {
             'card-fields' { return Check-CardFields $P $Ctx }
             'deps-acyclic' { return Check-DepsAcyclic $P $Ctx }
             'python-validator' { return Check-PythonValidator $P $Ctx }
+            'zones-unique' { return Check-ZonesUnique $P $Ctx }
             'manual' {
                 $reason = if ($P.reason) { [string]$P.reason } else { 'semantic review' }
                 return New-Result $id 'manual' 'MANUAL' $reason
@@ -866,6 +1108,120 @@ function Invoke-SelfTest {
         New-TextFile $d 'p/uc-e2e-001.html' '<html lang="ru"><head><title>P</title></head><body><a href="index.html">back</a></body></html>'
         Invoke-Case -Name 'sanity headings pass' -Type 'headings-required' -Params @{ glob = 'docs/*.md'; headings = @('## Required') } -Dir $d -Expect 'PASS'
         Invoke-Case -Name 'sanity index pass' -Type 'index-pages-links' -Params @{ indexGlobs = @('p/index.html'); pagesGlobs = @('p/uc-e2e-*.html') } -Dir $d -Expect 'PASS'
+
+        $zoneDoc = @(
+            '# Architecture',
+            '',
+            '## Components',
+            '',
+            '| Component | Responsibility | Interfaces | Depends on |',
+            '|---|---|---|---|',
+            '| Api | http | rest | - |',
+            '| Core | domain | - | - |',
+            '',
+            '## Responsibility zones',
+            '',
+            '### Components',
+            '',
+            '| Component | Owns (zone) | Does not own | Depends on |',
+            '|---|---|---|---|',
+            '| Api | http transport and request routing | business rules | - |',
+            '| Core | business rules and persistence | http transport | - |',
+            '',
+            '### Modules',
+            '',
+            '| ID | Module | Parent component | Owns (zone) | Does not own | Depends on |',
+            '|---|---|---|---|---|---|',
+            '| MOD-001 | http | Api | request parsing and routing | domain validation | - |',
+            '',
+            '### Classes',
+            '',
+            '| ID | Class | Parent module / application | Owns (zone) | Does not own | Depends on |',
+            '|---|---|---|---|---|---|',
+            '| CLS-001 | Request | MOD-001 | request parsing | business rules | - |'
+        ) -join "`n"
+
+        $d = New-CaseDir 'zones-good'
+        New-TextFile $d 'docs/architecture/architecture-x.md' $zoneDoc
+        Invoke-Case -Name 'zones-unique valid' -Type 'zones-unique' -Params @{ globs = @('docs/architecture/architecture-*.md'); levels = @('components', 'modules', 'classes') } -Dir $d -Expect 'PASS'
+
+        $d = New-CaseDir 'zones-missing-section'
+        New-TextFile $d 'docs/architecture/architecture-x.md' "# Architecture`n`n## Components`n`n| Component | Responsibility |`n|---|---|`n| Api | http |"
+        Invoke-Case -Name 'zones-unique missing section' -Type 'zones-unique' -Params @{ globs = @('docs/architecture/architecture-*.md') } -Dir $d -Expect 'FAIL'
+
+        $d = New-CaseDir 'zones-duplicate'
+        New-TextFile $d 'docs/architecture/architecture-x.md' ($zoneDoc -replace '\| Api \| http transport and request routing \|', '| Api | business rules and persistence |')
+        Invoke-Case -Name 'zones-unique duplicate zone' -Type 'zones-unique' -Params @{ globs = @('docs/architecture/architecture-*.md'); levels = @('components') } -Dir $d -Expect 'FAIL'
+
+        $d = New-CaseDir 'zones-empty'
+        New-TextFile $d 'docs/architecture/architecture-x.md' ($zoneDoc -replace '\| Api \| http transport and request routing \| business rules \|', '| Api |  | business rules |')
+        Invoke-Case -Name 'zones-unique empty owns' -Type 'zones-unique' -Params @{ globs = @('docs/architecture/architecture-*.md'); levels = @('components') } -Dir $d -Expect 'FAIL'
+
+        $d = New-CaseDir 'zones-contradiction'
+        New-TextFile $d 'docs/architecture/architecture-x.md' ($zoneDoc -replace '\| Core \| business rules and persistence \| http transport \|', '| Core | business rules and persistence | http transport and request routing |')
+        Invoke-Case -Name 'zones-unique contradiction' -Type 'zones-unique' -Params @{ globs = @('docs/architecture/architecture-*.md'); levels = @('components') } -Dir $d -Expect 'FAIL'
+
+        $d = New-CaseDir 'zones-parent'
+        New-TextFile $d 'docs/architecture/architecture-x.md' ($zoneDoc -replace '\| MOD-001 \| http \| Api \|', '| MOD-001 | http | Missing |')
+        Invoke-Case -Name 'zones-unique unknown parent' -Type 'zones-unique' -Params @{ globs = @('docs/architecture/architecture-*.md'); levels = @('components', 'modules') } -Dir $d -Expect 'FAIL'
+
+        $d = New-CaseDir 'zones-waived'
+        $waivedDoc = @(
+            '# Architecture',
+            '',
+            '## Components',
+            '',
+            '| Component | Responsibility |',
+            '|---|---|',
+            '| Api | http |',
+            '',
+            '## Responsibility zones',
+            '',
+            '### Components',
+            '',
+            '| Component | Owns (zone) | Does not own |',
+            '|---|---|---|',
+            '| Api | http transport | business rules |',
+            '',
+            '### Modules',
+            '',
+            'No module decomposition (single component solution)'
+        ) -join "`n"
+        New-TextFile $d 'docs/architecture/architecture-x.md' $waivedDoc
+        Invoke-Case -Name 'zones-unique waived modules' -Type 'zones-unique' -Params @{ globs = @('docs/architecture/architecture-*.md'); levels = @('components', 'modules') } -Dir $d -Expect 'PASS'
+
+        $d = New-CaseDir 'zones-missing-level'
+        New-TextFile $d 'docs/architecture/architecture-x.md' ($zoneDoc -replace '(?s)### Modules.*?### Classes', '### Classes')
+        Invoke-Case -Name 'zones-unique missing level' -Type 'zones-unique' -Params @{ globs = @('docs/architecture/architecture-*.md'); levels = @('components', 'modules') } -Dir $d -Expect 'FAIL'
+
+        $d = New-CaseDir 'zones-waiver-with-table'
+        $mixedDoc = @(
+            '# Architecture',
+            '',
+            '## Components',
+            '',
+            '| Component | Responsibility |',
+            '|---|---|',
+            '| Api | http |',
+            '',
+            '## Responsibility zones',
+            '',
+            '### Components',
+            '',
+            '| Component | Owns (zone) | Does not own |',
+            '|---|---|---|',
+            '| Api | http transport | business rules |',
+            '',
+            '### Modules',
+            '',
+            'No module decomposition (placeholder text left in the template)',
+            '',
+            '| ID | Module | Parent component | Owns (zone) | Does not own |',
+            '|---|---|---|---|---|',
+            '| MOD-001 |  |  |  |  |'
+        ) -join "`n"
+        New-TextFile $d 'docs/architecture/architecture-x.md' $mixedDoc
+        Invoke-Case -Name 'zones-unique waiver with unfilled table' -Type 'zones-unique' -Params @{ globs = @('docs/architecture/architecture-*.md'); levels = @('components', 'modules') } -Dir $d -Expect 'FAIL'
     }
     finally {
         Remove-Item -LiteralPath $base -Recurse -Force -ErrorAction SilentlyContinue

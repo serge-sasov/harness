@@ -5,6 +5,7 @@ Version history of the local harness, newest first. Source of truth:
 
 | Version | Date | Task | Changes |
 |---|---|---|---|
+| 2.8.0 | 2026-11-14 | T-036 | Architect responsibility zones: hierarchy `component -> module (optional) -> class`, every element declares `Owns`/`Does not own`, zones must not duplicate or overlap within a level; `MOD-NNN`/`CLS-NNN` project-global IDs; new `## Responsibility zones` section in the architecture description template; new check type `zones-unique` with self-tests; checks `responsibility-zones`, `module-ids`, `class-ids`, `zones-overlap-review` (manual) at R-01/R-02; ADR-005; process, workflow, role, skill, and docs synced. |
 | 2.7.0 | 2026-11-14 | T-035 | Architect stage split: R-01 Solution design (ADR, architecture description core, component and per-`SCN` sequence diagrams, `SCN`/`SVC` IDs) and R-02 Interfaces and data model (contracts, `API-NNN` IDs, OpenAPI 3.x specs, data/class models, per-service swimlanes, full traceability); new `contracts-requirement-trace`; ADR-004; checks, workflow, role, templates, process, and docs synced. |
 | 2.6.0 | 2026-11-13 | - | Architecture design package: overall architecture description, component/per-scenario sequence/data/class/per-service swimlane diagrams, OpenAPI 3.x validation, coverage and link checks; Russian manual with offline HTML. |
 | 2.5.0 | 2026-11-13 | T-031, T-032, T-033, T-034 | Deterministic verification engine and checks registry, P2 checkpoint approval, SHA256 evidence ledger, token usage metrics; install/init/doctor; global install and pilot sync. |

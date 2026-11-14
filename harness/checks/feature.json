@@ -72,12 +72,15 @@
         { "id": "service-ids", "type": "ids-unique", "params": { "globs": ["docs/architecture/architecture-*.md"], "regex": "SVC-\\d{3}", "definitions": true, "scope": "card" } },
         { "id": "scenario-uc-coverage", "type": "id-coverage", "params": { "source": "card.inputs", "targets": { "globs": ["docs/architecture/architecture-*.md"] }, "regex": "UC-E2E-\\d{3}" } },
         { "id": "component-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/components-*.puml"], "minCount": 1 } },
+        { "id": "responsibility-zones", "type": "zones-unique", "params": { "globs": ["docs/architecture/architecture-*.md"], "levels": ["components", "modules"], "scope": "card" } },
+        { "id": "module-ids", "type": "ids-unique", "params": { "globs": ["docs/architecture/architecture-*.md"], "regex": "MOD-\\d{3}", "definitions": true } },
         { "id": "sequence-count", "type": "count-match", "params": { "sourceGlobs": ["docs/architecture/architecture-*.md"], "sourceRegex": "SCN-\\d{3}", "targetGlobs": ["docs/architecture/sequence-scn-*.puml"] } },
         { "id": "sequence-ids", "type": "id-coverage", "params": { "source": { "globs": ["docs/architecture/architecture-*.md"] }, "targets": { "globs": ["docs/architecture/sequence-scn-*.puml"] }, "regex": "SCN-\\d{3}" } },
         { "id": "sequence-uc-trace", "type": "id-coverage", "params": { "source": "card.inputs", "targets": { "globs": ["docs/architecture/sequence-scn-*.puml"] }, "regex": "UC-E2E-\\d{3}" } },
         { "id": "diagram-syntax", "type": "puml-syntax", "params": { "globs": ["docs/architecture/components-*.puml", "docs/architecture/sequence-scn-*.puml"], "scope": "card" } },
         { "id": "diagram-svg", "type": "svg-fresh", "params": { "globs": ["docs/architecture/components-*.puml", "docs/architecture/sequence-scn-*.puml"], "scope": "card" } },
-        { "id": "architecture-links", "type": "reference-coverage", "params": { "sourceGlobs": ["docs/architecture/components-*.puml", "docs/architecture/sequence-scn-*.puml"], "targetGlobs": ["docs/architecture/architecture-*.md"] } }
+        { "id": "architecture-links", "type": "reference-coverage", "params": { "sourceGlobs": ["docs/architecture/components-*.puml", "docs/architecture/sequence-scn-*.puml"], "targetGlobs": ["docs/architecture/architecture-*.md"] } },
+        { "id": "zones-overlap-review", "type": "manual", "params": { "reason": "component and module responsibility zones: no two elements of the same level own the same functions" } }
       ]
     },
     "R-02": {
@@ -95,11 +98,14 @@
         { "id": "architecture-openapi-links", "type": "reference-coverage", "params": { "sourceGlobs": ["docs/architecture/openapi-api-*.yaml", "docs/architecture/openapi-api-*.yml", "docs/architecture/openapi-api-*.json"], "targetGlobs": ["docs/architecture/architecture-*.md"] } },
         { "id": "data-model-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/data-model-*.puml"], "minCount": 1 } },
         { "id": "class-diagram-exist", "type": "file-exists", "params": { "globs": ["docs/architecture/class-*.puml"], "minCount": 1 } },
+        { "id": "responsibility-zones", "type": "zones-unique", "params": { "globs": ["docs/architecture/architecture-*.md"], "levels": ["components", "modules", "classes"], "scope": "card" } },
+        { "id": "class-ids", "type": "ids-unique", "params": { "globs": ["docs/architecture/architecture-*.md"], "regex": "CLS-\\d{3}", "definitions": true } },
         { "id": "diagram-syntax", "type": "puml-syntax", "params": { "globs": ["docs/architecture/*.puml"], "scope": "card" } },
         { "id": "diagram-svg", "type": "svg-fresh", "params": { "globs": ["docs/architecture/*.puml"], "scope": "card" } },
         { "id": "swimlane-count", "type": "count-match", "params": { "sourceGlobs": ["docs/architecture/architecture-*.md"], "sourceRegex": "SVC-\\d{3}", "targetGlobs": ["docs/architecture/swimlane-svc-*.puml"] } },
         { "id": "swimlane-ids", "type": "id-coverage", "params": { "source": { "globs": ["docs/architecture/architecture-*.md"] }, "targets": { "globs": ["docs/architecture/swimlane-svc-*.puml"] }, "regex": "SVC-\\d{3}" } },
-        { "id": "architecture-links", "type": "reference-coverage", "params": { "sourceGlobs": ["docs/architecture/component*.puml", "docs/architecture/sequence-scn-*.puml", "docs/architecture/data-model-*.puml", "docs/architecture/class-*.puml", "docs/architecture/swimlane-svc-*.puml", "docs/architecture/openapi-api-*.yaml", "docs/architecture/openapi-api-*.yml", "docs/architecture/openapi-api-*.json"], "targetGlobs": ["docs/architecture/architecture-*.md"] } }
+        { "id": "architecture-links", "type": "reference-coverage", "params": { "sourceGlobs": ["docs/architecture/component*.puml", "docs/architecture/sequence-scn-*.puml", "docs/architecture/data-model-*.puml", "docs/architecture/class-*.puml", "docs/architecture/swimlane-svc-*.puml", "docs/architecture/openapi-api-*.yaml", "docs/architecture/openapi-api-*.yml", "docs/architecture/openapi-api-*.json"], "targetGlobs": ["docs/architecture/architecture-*.md"] } },
+        { "id": "zones-overlap-review", "type": "manual", "params": { "reason": "component, module, and class responsibility zones: no two elements of the same level own the same functions" } }
       ]
     },
     "I-01": {
