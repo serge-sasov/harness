@@ -59,7 +59,7 @@ derived visualizations only.
 | T-033 | feature | Process/templates/roles/commands 2.5.0 wiring | orchestrator | T-032 | done | - | `harness/process.md`, templates/workflows/agents/commands, README, guide | - | working tree |
 | T-034 | feature | Release 2.5.0: install/init/doctor, pilot sync | orchestrator | T-033 | done | - | `install/init/doctor`, `version.json`, global install, ai-task-tracker | - | working tree |
 | T-035 | feature | Release 2.7.0: architect stages R-01 design / R-02 interfaces+data model | architect | T-034 | done | - | `harness/checks/feature.json`, `workflows/feature.md`, `harness-architect.md`, `process.md`, templates, `docs/architecture/adr-004-*.md`, docs, `version.json`, global install | - | working tree |
-| T-036 | feature | Release 2.8.0: architect responsibility zones (component -> module -> class) | architect | T-035 | done | - | `harness-architect.md`, `process.md`, `workflows/feature.md`, templates, `harness/checks/feature.json`, `verify-artifacts.ps1`, `docs/architecture/adr-005-*.md`, docs, `version.json`, global install | - | working tree |
+| T-036 | feature | Release 2.8.0: architect responsibility zones (component -> module -> class) | architect | T-035 | done | - | `harness-architect.md`, `process.md`, `workflows/feature.md`, templates, `harness/checks/feature.json`, `verify-artifacts.ps1`, `docs/architecture/adr-005-*.md`, docs, `version.json`, global install | - | bfc9c25 |
 | T-022 | feature | Harness 2.2.1 smoke test: feature + bugfix | qa | T-019, T-021, T-029 | pending | - | `docs/qa/smoke-2.2.1.md` | - | - |
 
 ## Board rules

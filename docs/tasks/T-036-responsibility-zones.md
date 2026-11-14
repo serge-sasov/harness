@@ -19,7 +19,7 @@
 | base_commit | d5fd4e9 docs: add CHANGELOG with version history |
 | usage | n/a |
 | issues | - |
-| commit | pending |
+| commit | bfc9c25 |
 
 ## Acceptance
 
