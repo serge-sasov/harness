@@ -1,4 +1,4 @@
-# T-039: Depth-3 enablement and doctor checks
+﻿# T-039: Depth-3 enablement and doctor checks
 
 | Field | Value |
 |---|---|
@@ -7,7 +7,7 @@
 | workflow | feature |
 | stage | implementation |
 | role | orchestrator |
-| status | pending |
+| status | done |
 | hold | false |
 | depends_on | T-037 |
 | inputs | `docs/architecture/adr-006-recursive-decomposition.md`, `harness/scripts/install.ps1`, `harness/scripts/doctor.ps1`, `harness/scripts/uninstall.ps1`, `C:/Users/sergey/.config/opencode/opencode.jsonc` |
@@ -35,8 +35,8 @@
 
 | ID | Stage | Artifacts | Checks | Status | Review file |
 |---|---|---|---|---|---|
-| CP-1 | depth tooling | install/doctor/uninstall | n/a | pending | `docs/checkpoints/T-039-CP-1.md` |
-| CP-F | final acceptance | all task artifacts + smoke evidence | n/a | pending | `docs/checkpoints/T-039-CP-F.md` |
+| CP-1 | depth tooling | install/doctor/uninstall | n/a | approved | `docs/checkpoints/T-039-CP-1.md` |
+| CP-F | final acceptance | all task artifacts + smoke evidence | n/a | approved | `docs/checkpoints/T-039-CP-F.md` |
 
 ## Blockers
 
@@ -45,3 +45,4 @@
 ## Log
 
 - 2026-11-14: card created for T-039 (phase A, step 3). Verified before starting: opencode 1.18.33 resolves the top-level `subagent_depth` key (`opencode debug config` reports `"subagent_depth": 2` and no `experimental` block), so the depth change is a value change, not a schema move.
+- 2026-11-14: install/doctor/uninstall updated to depth 3; global install refreshed; resolved config reports 3; runtime smoke test passed in a fresh opencode run process (DEPTH3_OK), in-session failure recorded as ISSUE-20261114-193500; CP-1 and CP-F approved (harness-core task: machine checks n/a).

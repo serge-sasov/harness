@@ -284,7 +284,7 @@ if (Test-Path -LiteralPath $configPath) {
         Write-Warn "no permission.task block in opencode.jsonc; run install.ps1 for explicit allow rules"
     }
 
-    $selfSessionRoles = @("harness-analyst", "harness-coder")
+    $selfSessionRoles = @("harness-analyst", "harness-architect", "harness-coder")
     $expectedCrossRole = @{ "harness-ux-designer" = "harness-coder" }
     $crossRole = @()
     foreach ($agentFile in $agentFiles) {
@@ -309,6 +309,10 @@ if (Test-Path -LiteralPath $configPath) {
             else {
                 Write-Warn "$roleName lacks self task allow; chunked self-sub-sessions will fail"
             }
+        }
+        $noSelfRoles = @("harness-orchestrator", "harness-qa-vision", "harness-ux-designer", "harness")
+        if (($noSelfRoles -contains $roleName) -and ($taskAllows -contains $roleName)) {
+            Write-Warn "$roleName declares a self task allow that is unnecessary (depth-3-unreachable or ledger-owner role)"
         }
         if ($expectedCrossRole.ContainsKey($roleName)) {
             $expectedChild = $expectedCrossRole[$roleName]
@@ -410,15 +414,22 @@ if (Test-Path -LiteralPath $configPath) {
     $depthMatch = [regex]::Match($config, '"subagent_depth"\s*:\s*(\d+)')
     if ($depthMatch.Success) {
         $depth = [int]$depthMatch.Groups[1].Value
-        if ($depth -ge 2) {
-            Write-Ok "subagent_depth is $depth (depth-2 self/UX prototype calls enabled)"
+        if ($depth -ge 3) {
+            Write-Ok "subagent_depth is $depth (d1 -> d2 -> d3 same-role chains enabled)"
+        }
+        elseif ($depth -eq 2) {
+            Write-Warn "subagent_depth is 2; recursive decomposition needs >= 3 (d3 escalation disabled)"
         }
         else {
-            Write-Warn "subagent_depth is $depth; depth-2 self/UX prototype calls require >= 2"
+            Write-Warn "subagent_depth is $depth; self-sub-sessions require >= 2 and recursive decomposition >= 3"
         }
+        if ($depth -gt 3) {
+            Write-Warn "subagent_depth is $depth; harness caps the chain at 3 levels, a larger value only enables unintended nesting"
+        }
+        Write-Info "depth 3 multiplies sessions and wall-clock time; split only on budget overflow (ADR-006, decision 7)"
     }
     else {
-        Write-Warn "subagent_depth not set; run install.ps1 or add top-level `"subagent_depth`": 2"
+        Write-Warn "subagent_depth not set; run install.ps1 or add top-level `"subagent_depth`": 3"
     }
 
     $ragKey = [regex]::Match($config, '"local-rag"\s*:\s*\{')

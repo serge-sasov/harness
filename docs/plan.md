@@ -1,4 +1,4 @@
-# Plan (board)
+﻿# Plan (board)
 
 Process rules: `harness/process.md`.
 Workflows: `harness/workflows/feature.md`, `harness/workflows/bugfix.md`.
@@ -62,7 +62,7 @@ derived visualizations only.
 | T-036 | feature | Release 2.8.0: architect responsibility zones (component -> module -> class) | architect | T-035 | done | - | `harness-architect.md`, `process.md`, `workflows/feature.md`, templates, `harness/checks/feature.json`, `verify-artifacts.ps1`, `docs/architecture/adr-005-*.md`, docs, `version.json`, global install | - | bfc9c25 |
 | T-037 | feature | ADR-006: recursive same-role decomposition (UoW, chunk ledger, depth 3) | architect | T-036 | done | - | `docs/architecture/adr-006-*.md`, `docs/architecture/adr-006-*.puml/.svg` | - | working tree |
 | T-038 | feature | Chunk ledger + `chunk.ps1` + `chunk-validate.py` + stage-done/measure-tokens integration | coder | T-037 | done | - | `harness/scripts/chunk.ps1`, `chunk-validate.py`, `stage-done.ps1`, `measure-tokens.ps1`, `harness/templates/chunk-ledger.md` | - | working tree |
-| T-039 | feature | Depth 3: `subagent_depth: 3` in install/doctor/uninstall + smoke test | orchestrator | T-037 | pending | - | `harness/scripts/install.ps1`, `doctor.ps1`, `uninstall.ps1`, global install | - | - |
+| T-039 | feature | Depth 3: `subagent_depth: 3` in install/doctor/uninstall + smoke test | orchestrator | T-037 | done | - | `harness/scripts/install.ps1`, `doctor.ps1`, `uninstall.ps1`, global install | - | working tree |
 | T-040 | feature | UoW contract in `harness-coder`/`harness-architect` + `process.md` depth-3 rules | architect | T-037, T-038, T-039 | pending | - | `harness/agents/harness-coder.md`, `harness-architect.md`, `harness/process.md`, `workflows/feature.md`, skill | - | - |
 | T-041 | feature | Pilot: sync harness into ai-task-tracker, re-plan and run T-008 chunks C4a..C6d | orchestrator | T-038, T-039, T-040 | pending | - | ai-task-tracker `harness/`, `docs/chunks/T-008.json`, `docs/metrics/T-041-pilot.md` | - | - |
 | T-042 | feature | UoW contract for analyst, ux-designer, qa, doc-writer, orchestrator | architect | T-041 | pending | - | five role prompts, `harness.md`, `process.md`, skill | - | - |
