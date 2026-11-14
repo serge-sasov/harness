@@ -68,7 +68,10 @@ Only `done` chunks count as coverage. A partially written file makes a chunk
 - Children are sequential, one at a time, never parallel.
 - `owns` must be disjoint between chunks that are not ancestor/descendant. A
   parent's `owns` is the union of its children's `owns`.
-- The union of the top-level `owns` must cover the card artifacts of that stage.
+- Every existing file under the card artifacts of that stage must be owned by
+  some top-level chunk (`chunk-coverage`), and a chunk may not own a path outside
+  those artifacts (`E_OWN_OUTSIDE_CARD`). Card artifacts are usually coarse globs
+  (`src/**`), so the check walks the real files instead of comparing globs.
 - `owns` must stay inside the role write area (`process.md` section 12) plus
   `docs/chunks/**` and `docs/issues/**`.
 

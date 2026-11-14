@@ -61,9 +61,11 @@ a cold session.
    ancestor/descendant of each other may own overlapping paths, including chunks
    under different parents. A parent's `owns` is the union of its children's
    `owns`, so an ancestor may overlap a descendant by design. Every produced
-   path must be inside the chunk's `owns`. The union of the top-level `owns` must
-   cover the artifacts the card declares for that stage. Ownership is resolved at
-   planning time; a re-plan is recorded in the ledger, not negotiated mid-chunk.
+   path must be inside the chunk's `owns`. Every existing file under the
+   artifacts the card declares for that stage must be owned by some top-level
+   chunk, and no chunk may own a path outside those artifacts. Ownership is
+   resolved at planning time; a re-plan is recorded in the ledger, not negotiated
+   mid-chunk.
 6. **Depth policy.** `d1` is the role session the lead calls; it plans, verifies,
    and may write the chunks that fit the budget. `d2` is a same-role child for a
    chunk that does not fit one session. `d3` is a further same-role split of a

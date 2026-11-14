@@ -113,6 +113,16 @@ def covers(owner: str, target: str) -> bool:
     return bool(glob_to_regex(owner).match(witness(target)))
 
 
+def list_files(root: str) -> list[str]:
+    skip = {".git", "node_modules", "bin", "obj", "__pycache__", "target", "dist", ".venv", ".idea"}
+    found: list[str] = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in skip and not d.startswith(".harness-backup")]
+        for name in filenames:
+            found.append(fwd(os.path.relpath(os.path.join(dirpath, name), root)))
+    return found
+
+
 def sha256_file(path: str) -> str:
     h = hashlib.sha256()
     with open(path, "rb") as fh:
@@ -371,10 +381,22 @@ def validate(ledger_path: str, root: str | None, check_hash: bool = True) -> dic
     elif artifacts:
         top = [c for c in index.values() if c["parent"] is None]
         owns_all = [str(x) for c in top for x in c["owns"] or []]
+        existing = list_files(root)
         for pattern in artifacts:
-            if not any(covers(own, pattern) for own in owns_all):
-                err("E_COVERAGE", "card artifact %r is not covered by any top-level owns"
-                    % pattern)
+            if any(ch in pattern for ch in "*?["):
+                matched = [f for f in existing if path_matches(f, pattern)]
+                for found in matched:
+                    if not any(path_matches(found, own) for own in owns_all):
+                        err("E_COVERAGE",
+                            "%r matches card artifact %r but no top-level chunk owns it"
+                            % (found, pattern))
+            elif not any(covers(own, pattern) for own in owns_all):
+                err("E_COVERAGE",
+                    "card artifact %r is not covered by any top-level owns" % pattern)
+        for own in owns_all:
+            if not any(covers(pattern, own) for pattern in artifacts):
+                err("E_OWN_OUTSIDE_CARD",
+                    "owns %r is outside the card artifacts" % own)
 
     return {
         "valid": not errors,
