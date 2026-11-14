@@ -236,6 +236,13 @@ def validate(ledger_path: str, root: str | None, check_hash: bool = True) -> dic
         err("E_SCHEMA", "chunks must be a non-empty list")
         return {"valid": False, "task": task, "errors": errors, "warnings": warnings}
 
+    baseline = data.get("baseline", [])
+    if baseline is None:
+        baseline = []
+    if not isinstance(baseline, list) or any(not isinstance(x, str) for x in baseline):
+        err("E_SCHEMA", "baseline must be a list of path strings")
+        baseline = []
+
     index: dict[str, dict] = {}
     for position, chunk in enumerate(chunks):
         label = "#%d" % position
@@ -386,6 +393,8 @@ def validate(ledger_path: str, root: str | None, check_hash: bool = True) -> dic
             if any(ch in pattern for ch in "*?["):
                 matched = [f for f in existing if path_matches(f, pattern)]
                 for found in matched:
+                    if any(path_matches(found, b) for b in baseline):
+                        continue
                     if not any(path_matches(found, own) for own in owns_all):
                         err("E_COVERAGE",
                             "%r matches card artifact %r but no top-level chunk owns it"
@@ -480,6 +489,10 @@ def self_test() -> int:
             ("deep child ok", base() | {"chunks": [base()["chunks"][0], dict(
                 base()["chunks"][0], id="C1a", parent="C1", depth=2,
                 owns=["backend/src/**"], produced=[], state="pending")]}, True),
+            ("baseline exempts legacy files", base() | {
+                "baseline": ["backend/src/a.py"],
+                "chunks": [dict(base()["chunks"][0], owns=["backend/other/**"],
+                                produced=[], state="pending")]}, True),
         ]
         for name, payload, expected in cases:
             path = os.path.join(docs, "chunks", "T-900.json")

@@ -17,6 +17,7 @@ Validator: `harness/scripts/chunk-validate.py`. Management:
 | `task` | string | `T-XXX`; must equal the file name |
 | `version` | int | schema version, currently `1` |
 | `updated` | string | ISO timestamp, written by the script |
+| `baseline` | string[] | optional: paths that existed before the ledger was adopted; excluded from coverage |
 | `budget.max_write_kb` | number | `process.md` 11.1 limit per write |
 | `budget.max_session_kb` | number | new content per role session |
 | `budget.context_stop_pct` | number | stop at this percentage of the context window |

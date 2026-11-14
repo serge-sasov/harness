@@ -509,26 +509,18 @@ function Get-SessionUsage {
     )
     $opencode = Get-Command opencode -ErrorAction SilentlyContinue
     if (-not $opencode) { return $null }
-    $leaf = Split-Path -Leaf $ProjectPath
-    if (-not $leaf) { $leaf = $ProjectPath }
-    $safe = $leaf.Replace("'", "''")
-    $where = "directory like '%$safe%'"
-    if ($Days -gt 0) {
-        $where += " and time_created >= (strftime('%s','now') - $($Days * 86400)) * 1000"
+    $clauses = @()
+    if ($ProjectPath) {
+        $leaf = Split-Path -Leaf $ProjectPath
+        if (-not $leaf) { $leaf = $ProjectPath }
+        $safe = $leaf.Replace("'", "''")
+        $clauses += "directory like '%$safe%'"
     }
-    $sql = @"
-with recursive s as (
-  select id,parent_id,title,tokens_input i,tokens_output o,tokens_reasoning rr,tokens_cache_read cr,cost,(time_updated-time_created)/60000 mins
-  from session where $where
-), chain(id,parent_id,root,rtitle,i,o,rr,cr,cost,mins) as (
-  select id,parent_id,id,title,i,o,rr,cr,cost,mins from s where parent_id is null
-  union all
-  select c.id,c.parent_id,ch.root,ch.rtitle,c.i,c.o,c.rr,c.cr,c.cost,c.mins
-  from chain ch join s c on c.parent_id=ch.id
-)
-select root, (rtitle), sum(i), sum(o), sum(rr), sum(cr), sum(cost), sum(mins), count(*)
-from chain group by root, rtitle order by root
-"@
+    if ($Days -gt 0) {
+        $clauses += "time_created >= (strftime('%s','now') - $($Days * 86400)) * 1000"
+    }
+    $where = if ($clauses.Count -gt 0) { 'where ' + ($clauses -join ' and ') } else { '' }
+    $sql = "select id, coalesce(parent_id,'') p, title, tokens_input i, tokens_output o, tokens_reasoning rr, tokens_cache_read cr, cost, (time_updated-time_created)/60000 mins from session $where"
     $out = & $opencode.Source db $sql 2>&1
     if ($LASTEXITCODE -ne 0) { return $null }
     $lines = @($out | ForEach-Object { [string]$_ })
@@ -539,15 +531,15 @@ from chain group by root, rtitle order by root
         $c = $line -split "`t"
         if ($c.Count -lt 9) { continue }
         $rows += [pscustomobject]@{
-            root       = $c[0]
-            title      = $c[1]
-            input      = [int64]$c[2]
-            output     = [int64]$c[3]
-            reasoning  = [int64]$c[4]
-            cache_read = [int64]$c[5]
-            cost       = [double]$c[6]
-            minutes    = [double]$c[7]
-            sessions   = [int]$c[8]
+            id         = $c[0]
+            parent     = $c[1]
+            title      = $c[2]
+            input      = [int64]$c[3]
+            output     = [int64]$c[4]
+            reasoning  = [int64]$c[5]
+            cache_read = [int64]$c[6]
+            cost       = [double]$c[7]
+            minutes    = [double]$c[8]
         }
     }
     $rows
@@ -557,26 +549,64 @@ function Get-ChunkUsage {
     param(
         [string]$Task = '',
         [string]$ProjectPath = (Get-Location).Path,
+        [string]$SessionRoot = '',
         [int]$Days = 0
     )
-    $rows = @(Get-SessionUsage -ProjectPath $ProjectPath -Days $Days)
-    if ($null -eq $rows) { return $null }
-    if ($rows.Count -eq 0) { return @() }
+    $sessions = @(Get-SessionUsage -ProjectPath $ProjectPath -Days $Days)
+    if ($null -eq $sessions) { return $null }
+    if ($sessions.Count -eq 0) { return @() }
+    $byId = @{}
+    foreach ($row in $sessions) { $byId[$row.id] = $row }
+    $inSession = $null
+    if ($SessionRoot) {
+        $inSession = @{}
+        foreach ($row in $sessions) {
+            $cursor = $row
+            $guard = 0
+            while ($cursor -and $guard -lt 64) {
+                if ($cursor.id -eq $SessionRoot) { $inSession[$row.id] = $true; break }
+                $next = $cursor.parent
+                if (-not $next -or -not $byId.ContainsKey($next)) { break }
+                $cursor = $byId[$next]
+                $guard++
+            }
+        }
+        if ($inSession.Count -eq 0) { return @() }
+    }
+    $resolved = @{}
+    foreach ($row in $sessions) {
+        $taskId = '~'
+        $chunkId = '~'
+        $cursor = $row
+        $guard = 0
+        while ($cursor -and $guard -lt 64) {
+            $m = [regex]::Match([string]$cursor.title, 'T-(\d{3,})(?:\.([A-Za-z0-9][A-Za-z0-9._-]*))?')
+            if ($m.Success) {
+                $taskId = 'T-' + $m.Groups[1].Value
+                if ($m.Groups[2].Success) { $chunkId = $m.Groups[2].Value }
+                break
+            }
+            $next = $cursor.parent
+            if (-not $next -or -not $byId.ContainsKey($next)) { break }
+            $cursor = $byId[$next]
+            $guard++
+        }
+        $resolved[$row.id] = "$taskId|$chunkId"
+    }
     $groups = @{}
-    foreach ($row in $rows) {
-        $m = [regex]::Match([string]$row.title, 'T-(\d{3,})(?:\.([A-Za-z0-9][A-Za-z0-9._-]*))?')
-        $taskId = if ($m.Success) { 'T-' + $m.Groups[1].Value } else { '~' }
-        $chunkId = if ($m.Success -and $m.Groups[2].Success) { $m.Groups[2].Value } else { '~' }
-        $key = "$taskId|$chunkId"
+    foreach ($row in $sessions) {
+        if ($inSession -and -not $inSession.ContainsKey($row.id)) { continue }
+        $key = $resolved[$row.id]
         if (-not $groups.ContainsKey($key)) {
+            $parts = $key -split '\|', 2
             $groups[$key] = [pscustomobject]@{
-                task = $taskId; chunk = $chunkId; sessions = 0
+                task = $parts[0]; chunk = $parts[1]; sessions = 0
                 input = [int64]0; output = [int64]0; reasoning = [int64]0
                 cache_read = [int64]0; cost = [double]0; minutes = [double]0
             }
         }
         $g = $groups[$key]
-        $g.sessions += $row.sessions
+        $g.sessions += 1
         $g.input += $row.input
         $g.output += $row.output
         $g.reasoning += $row.reasoning
@@ -585,7 +615,7 @@ function Get-ChunkUsage {
         $g.minutes += $row.minutes
     }
     $result = @($groups.Values | Sort-Object task, chunk)
-    if ($Task) { $result = @($result | Where-Object { $_.task -eq $Task }) }
+    if ($Task -and -not $SessionRoot) { $result = @($result | Where-Object { $_.task -eq $Task }) }
     foreach ($g in $result) {
         $ratio = 0
         if ($g.input -gt 0) { $ratio = [math]::Round([double]$g.cache_read / [double]$g.input, 1) }
