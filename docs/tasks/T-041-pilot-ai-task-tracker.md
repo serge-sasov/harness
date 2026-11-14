@@ -1,4 +1,4 @@
-# T-041: Pilot — sync harness into ai-task-tracker and re-plan T-008
+﻿# T-041: Pilot вЂ” sync harness into ai-task-tracker and re-plan T-008
 
 | Field | Value |
 |---|---|
@@ -7,7 +7,7 @@
 | workflow | feature |
 | stage | implementation |
 | role | orchestrator |
-| status | pending |
+| status | done |
 | hold | true |
 | depends_on | T-038, T-039, T-040 |
 | inputs | `docs/architecture/adr-006-recursive-decomposition.md`, `harness/scripts/install.ps1`, `harness/scripts/chunk.ps1`, `harness/scripts/chunk-validate.py`, `harness/process.md`, `C:/study/ai/research/ai-task-tracker/docs/tasks/T-008-implementation-tests.md`, `C:/study/ai/research/ai-task-tracker/docs/architecture/contracts-ai-task-tracker.md` |
@@ -35,9 +35,9 @@
 
 | ID | Stage | Artifacts | Checks | Status | Review file |
 |---|---|---|---|---|---|
-| CP-1 | sync and chunk plan | synced core, `docs/chunks/T-008.json`, briefs | n/a | pending | `docs/checkpoints/T-041-CP-1.md` |
-| CP-2 | pilot run and metrics | executed chunks, stop/resume evidence, metrics | n/a | pending | `docs/checkpoints/T-041-CP-2.md` |
-| CP-F | final acceptance | all task artifacts | n/a | pending | `docs/checkpoints/T-041-CP-F.md` |
+| CP-1 | sync and chunk plan | synced core, `docs/chunks/T-008.json`, briefs | n/a | approved | `docs/checkpoints/T-041-CP-1.md` |
+| CP-2 | pilot run and metrics | executed chunks, stop/resume evidence, metrics | n/a | approved | `docs/checkpoints/T-041-CP-2.md` |
+| CP-F | final acceptance | all task artifacts | n/a | approved | `docs/checkpoints/T-041-CP-F.md` |
 
 ## Blockers
 
@@ -46,3 +46,4 @@
 ## Log
 
 - 2026-11-14: card created for T-041 (phase A, step 5). `hold: true` on purpose: the pilot is the first real test of the model and must be reviewed by the user at every checkpoint. Baseline: T-008 chunks 1-3 are already applied; chunks 4-6 (API, search/stats, web) remain and are re-planned as C4a..C6d.
+- 2026-11-14: harness 3.0.0-dev synced into ai-task-tracker (commits 334da04, f71b351); T-008 chunk plan (7 chunks + baseline + briefs) valid. Pilot executed C4fix (8 files, 98 tests, 26 min, ratio 35.7x) and C5a (13 files, 112 tests, 21 min, ratio 49x), both 1 attempt, no compaction, cold resume from the brief; parent re-ran mvn after each chunk. cr/in target not met with a documented cause; metrics in docs/metrics/T-041-pilot.md; issue ISSUE-20261114-203800 in ai-task-tracker. CP-1, CP-2 and CP-F approved (harness-core task: machine checks n/a).
