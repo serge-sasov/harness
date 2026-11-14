@@ -1,0 +1,51 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam defaultFontName Segoe UI
+title Recursive decomposition - artifacts and their writers (ADR-006)
+
+package "Task package" {
+  artifact "docs/tasks/T-XXX-*.md\ncard: plan summary" as card
+  artifact "docs/chunks/T-XXX.json\nledger: per-chunk state" as ledger
+  artifact "docs/chunks/T-XXX/<id>.brief.md\nbrief: cold-start context" as brief
+  artifact "docs/plan.md\nboard: one row per task" as board
+}
+
+package "Rules and templates" {
+  artifact "harness/process.md\n11.1 budget + depth policy" as process
+  artifact "harness/templates/chunk-ledger.md\nschema and example" as tpl
+  artifact "harness/agents/harness-*.md\nrole UoW contract" as roles
+}
+
+package "Machine enforcement" {
+  component "chunk.ps1\ninit/plan/claim/complete/fail" as chunk
+  component "chunk-validate.py\nschema/owns/coverage/state" as validator
+  component "stage-done.ps1\n-Chunk, evidence rows" as stagedone
+  component "verify-artifacts.ps1\nchunk-* check types" as verify
+  artifact "docs/evidence/T-XXX.md\nsha256 ledger" as evidence
+  artifact "docs/metrics/tokens-<slug>.md\nper-chunk usage" as metrics
+}
+
+package "Runtime" {
+  component "lead (primary)\nroutes, does not write artifacts" as lead
+  component "role d1\nplans chunks, verifies" as d1
+  component "role d2\nsame role, one chunk" as d2
+  component "role d3\nsame role, escalation" as d3
+}
+
+lead --> board : routing
+lead --> card : creates
+d1 --> ledger : planning fields
+d1 --> brief : one per chunk
+d1 --> d2 : one at a time
+d2 --> d3 : only if still over budget
+d2 --> chunk : claim/complete
+d3 --> chunk : claim/complete
+chunk --> ledger : state, attempts, usage
+chunk --> validator : validate
+stagedone --> ledger : gate
+stagedone --> evidence : append sha256
+verify --> validator : delegate
+chunk --> metrics : attribute usage by chunk id
+process --> roles : contract
+tpl --> validator : schema
+@enduml

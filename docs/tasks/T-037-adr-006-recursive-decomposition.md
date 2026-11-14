@@ -7,7 +7,7 @@
 | workflow | feature |
 | stage | R-01 |
 | role | architect |
-| status | pending |
+| status | done |
 | hold | false |
 | depends_on | T-036 |
 | inputs | `harness/process.md`, `harness/agents/harness-coder.md`, `harness/agents/harness-architect.md`, `harness/workflows/feature.md`, `harness/templates/task-card-feature.md`, `harness/scripts/check-budget.ps1`, `harness/scripts/stage-done.ps1`, `harness/scripts/measure-tokens.ps1`, `harness/checks/feature.json`, `harness/version.json`, `docs/architecture/adr-005-responsibility-zones.md` |
@@ -20,7 +20,6 @@
 | usage | - |
 | issues | - |
 | commit | pending |
-
 ## Acceptance
 
 - [ ] ADR-006 exists at `docs/architecture/adr-006-recursive-decomposition.md` with `Context`, `Decision`, `Alternatives`, `Consequences`, and a `Contracts` section naming the scripts and artifacts it introduces.
@@ -37,8 +36,8 @@
 
 | ID | Stage | Artifacts | Checks | Status | Review file |
 |---|---|---|---|---|---|
-| CP-1 | R-01 solution design | ADR-006, diagrams | n/a | pending | `docs/checkpoints/T-037-CP-1.md` |
-| CP-F | final acceptance | all task artifacts | n/a | pending | `docs/checkpoints/T-037-CP-F.md` |
+| CP-1 | R-01 solution design | ADR-006, diagrams | n/a | approved | `docs/checkpoints/T-037-CP-1.md` |
+| CP-F | final acceptance | all task artifacts | n/a | approved | `docs/checkpoints/T-037-CP-F.md` |
 
 ## Blockers
 
@@ -47,3 +46,4 @@
 ## Log
 
 - 2026-11-14: card created for T-037 (phase A, step 1 of the recursive decomposition plan). Baseline for the decision: ai-task-tracker measured sessions (`harness` root chain of 16 compaction handoffs on T-008; `cr/in` from 10x to 64x per chunk; architect R-02 = 471089 in / 2395332 cr / 129 min in one session; ux-designer U-02 = 1046186 in in one session; coder chunk 1 of T-008 failed twice with an empty result).
+- 2026-11-14: ADR-006 written (14 decisions, 7 alternatives, consequences, contracts), two PlantUML diagrams authored and rendered to SVG, visual review ACCEPT (docs/qa/vision-review-ADR-006.md); CP-1 and CP-F approved (harness-core task: product stage registry not applicable, machine checks n/a).

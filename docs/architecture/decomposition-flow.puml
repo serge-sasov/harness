@@ -1,0 +1,44 @@
+@startuml
+skinparam defaultFontName Segoe UI
+title Recursive decomposition - chunk lifecycle and depth decision (ADR-006)
+
+start
+:Lead creates the task card;
+:Role d1 reads card inputs (grep/offset, not the corpus);
+if (Stage fits one budget unit?) then (yes)
+  :Write the artifact in one session;
+else (no)
+  :Write the chunk plan to docs/chunks/T-XXX.json;
+  :chunk-validate.py (schema, owns, coverage);
+  repeat
+    :Take the next pending chunk;
+    :chunk.ps1 claim (state = in_progress);
+    if (Chunk fits the budget?) then (yes)
+      :Execute at the current depth;
+    else (no)
+      if (depth < 3) then (yes)
+        :Brief, then spawn one same-role child (depth + 1);
+        :Child returns paths and <=10 lines;
+      else (no, d3)
+        :Stop and broaden ownership or split the artifact;
+      endif
+    endif
+    if (Chunk done?) then (yes)
+      :chunk.ps1 complete (state = done, produced sha256);
+    else (no)
+      :chunk.ps1 fail or blocked (attempts + 1);
+    endif
+  repeat while (Chunks remain?)
+endif
+:stage-done.ps1 -Chunk / checkpoint gate;
+:All chunks done -> checkpoint may close;
+stop
+
+note right
+  Invariants
+  - one child at a time, never parallel
+  - same role only (except ux-designer -> coder)
+  - a stop is safe only at a chunk boundary
+  - depth 4 is never spawned
+end note
+@enduml
