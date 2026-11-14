@@ -4,7 +4,7 @@
 |---|---|
 | Status | current |
 | Date | 2026-11-14 |
-| Version | 2.7.0 |
+| Version | 3.0.0 |
 | Scope | local multi-agent harness (feature + bugfix workflows) + pilot "Mini-CRUD service" |
 | Requirements source | [`requirements/initial.txt`](../../requirements/initial.txt) |
 | Process rules | [`harness/process.md`](../../harness/process.md) |
@@ -463,6 +463,33 @@ no speculative fix. Contract/schema/security/multi-module/UI-flow changes
 escalate to feature-style analysis and design.
 
 ---
+
+## 5a. Recursive decomposition (3.0.0)
+
+Execution is organised around a *chunk* rather than a role stage. The chunk plan
+is machine-readable and lives in `docs/chunks/T-XXX.json`; the card and the board
+carry only a summary.
+
+- A chunk has `id`, `parent`, `stage`, `role`, `depth` (1..3), `state`
+  (`pending`/`in_progress`/`done`/`failed`/`blocked`), `owns`, `inputs`, `brief`,
+  `acceptance`, `produced` (`path` + SHA256), `base_commit`, `attempts`, `usage`.
+- `owns` is exclusive between chunks that are not ancestor/descendant; the union
+  of the top-level `owns` covers the existing files under the card artifacts,
+  with a `baseline` snapshot exempting pre-ledger work.
+- Same-role depth is `d1 -> d2 -> d3`; a chunk is split only when it overflows the
+  ledger budget. Children are sequential, never parallel, never cross-role
+  (the only exception remains `ux-designer -> harness-coder` at depth 2).
+- A brief per chunk (`docs/chunks/T-XXX/<id>.brief.md`) and a ten-line return
+  contract make any chunk resumable in a cold session; a stop is safe only at a
+  chunk boundary.
+- Scripts: `chunk.ps1` (init/add/plan/claim/complete/fail/list/show/status/usage/
+  verify), `chunk-validate.py` (schema, ids, parent/depth, state, ownership,
+  coverage, hashes, role areas). `stage-done.ps1 -Chunk` refuses to close a
+  checkpoint while a chunk of the stage is not `done`.
+- Checks: `chunk-ownership-no-overlap`, `chunk-coverage`, `chunk-budget`
+  (type `chunk-ledger`); a task without a ledger is `NOT_APPLICABLE`.
+- Decision record: `docs/architecture/adr-006-recursive-decomposition.md`.
+  Pilot measurements: `docs/metrics/T-041-pilot.md`.
 
 ## 5. Conceptual class model
 

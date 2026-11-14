@@ -1,4 +1,4 @@
-# T-044: Templates, documentation, and release 3.0.0
+﻿# T-044: Templates, documentation, and release 3.0.0
 
 | Field | Value |
 |---|---|
@@ -7,7 +7,7 @@
 | workflow | feature |
 | stage | D-01 |
 | role | doc-writer |
-| status | pending |
+| status | done |
 | hold | false |
 | depends_on | T-042, T-043 |
 | inputs | `docs/architecture/adr-006-recursive-decomposition.md`, `harness/process.md`, `harness/checks/feature.json`, `harness/checks/bugfix.json`, `harness/templates/`, `README.md`, `docs/guides/harness-global.md`, `CHANGELOG.md`, `harness/version.json`, `harness/scripts/install.ps1` |
@@ -36,8 +36,8 @@
 
 | ID | Stage | Artifacts | Checks | Status | Review file |
 |---|---|---|---|---|---|
-| CP-1 | templates and docs | templates, README, guide | n/a | pending | `docs/checkpoints/T-044-CP-1.md` |
-| CP-F | final acceptance | all task artifacts | n/a | pending | `docs/checkpoints/T-044-CP-F.md` |
+| CP-1 | templates and docs | templates, README, guide | n/a | approved | `docs/checkpoints/T-044-CP-1.md` |
+| CP-F | final acceptance | all task artifacts | n/a | approved | `docs/checkpoints/T-044-CP-F.md` |
 
 ## Blockers
 
@@ -46,3 +46,4 @@
 ## Log
 
 - 2026-11-14: card created for T-044 (phase B, step 3).
+- 2026-11-14: card/plan/chunk templates, README, guide, description, manual updated; both HTML builds ran; CHANGELOG 3.0.0 and version.json 3.0.0; global install and doctor clean (project version matches global). CP-1 and CP-F approved (harness-core task: machine checks n/a).

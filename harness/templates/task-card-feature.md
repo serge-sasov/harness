@@ -14,8 +14,8 @@
 | artifacts | comma-separated output artifact paths |
 | e2e | required / not applicable (reason) |
 | ux | required / not applicable (reason) |
-| chunks | planned chunks and ownership (e.g., A-02a: UC-001..003; A-02b: UC-004..008) |
-| budget | max_write_kb / max_session_kb / context_stop_pct (defaults: 8/20/60, YAML 6/15/60, code 12/40/65) |
+| chunks | ledger path and granularity: `docs/chunks/T-XXX.json` (single source of truth for per-chunk state, `owns`, and usage); the plan is written with `harness/scripts/chunk.ps1` before authoring |
+| budget | `max_write_kb` / `max_session_kb` / `context_stop_pct` / `max_turns` / `max_input_tokens` / `max_wall_min` (defaults: 8/20/60, YAML 6/15/60, code 12/40/65; the ledger `budget` object holds the effective values) |
 | base_commit | commit hash the first checkpoint diff is measured from |
 | usage | measured token usage (filled by stage-done; e.g. in=0 out=0 cr=0 ratio=0x min=0) |
 | issues | ISSUE-... (links to docs/issues/ if problems occurred) |

@@ -213,6 +213,38 @@ Status colors: `pending` `#D3D3D3`, `in_progress` `#FFE082`,
 `awaiting_review` `#87CEFA`, `done` `#90EE90`, `failed` `#FF9090`, `blocked`
 `#FFB347`.
 
+## 4.2a. Recursive decomposition (since 3.0.0)
+
+A stage is not executed as one session. The role plans chunks and executes them
+one at a time; `docs/chunks/T-XXX.json` is the single source of truth for
+per-chunk progress (the card and the board keep a summary only).
+
+- Plan before authoring: `harness/scripts/chunk.ps1 init -Task T-XXX`, then
+  `add` or `plan` with `title`, `owns`, `inputs`, `acceptance`, and `brief`. Use
+  `-Baseline` on an existing project so pre-ledger files are exempt from the
+  coverage check.
+- Loop: `chunk.ps1 claim` -> author -> `chunk.ps1 complete -Produced <paths>`;
+  on a stop or an over-budget chunk: `chunk.ps1 fail` with a note, then stop. A
+  safe stop exists only at a chunk boundary.
+- Briefs live in `docs/chunks/T-XXX/<id>.brief.md`; a cold session must be able
+  to execute a chunk from the brief alone (goal, input line ranges, `owns`,
+  acceptance, stop rule, return format).
+- Depth: `d1` plans and executes what fits; `d2` is a same-role child for a chunk
+  that does not fit; `d3` is a further same-role split. Ceiling 3, one child at a
+  time, never parallel, never cross-role except `ux-designer -> harness-coder` at
+  depth 2. Requires `subagent_depth: 3` and an opencode restart after the change.
+- `stage-done.ps1` refuses to close a checkpoint while a chunk of that stage is
+  not `done`. Machine fields (`state`, `attempts`, `produced.sha256`, `usage`,
+  `base_commit`) are script-only.
+- Checks: `chunk-ownership-no-overlap`, `chunk-coverage`, `chunk-budget`
+  (type `chunk-ledger`). A task without a ledger is `NOT_APPLICABLE`.
+- Usage per chunk: name the session `T-XXX.<chunk>` (for example `T-008.C5a`) or
+  use `chunk.ps1 usage -Task T-XXX -Id <chunk> -Session <session-id>`.
+- Measured pilot (`docs/metrics/T-041-pilot.md`): chunks ran with one attempt and
+  no compaction, 21-26 min each against a 73.6 min baseline. `cr/in` is not a
+  usable criterion because it rises when a chunk gets smaller; use turns (<= 40)
+  and cache read per turn (<= 150K).
+
 ## 4.2. E2E and UX artifacts
 
 - Analyst: `docs/analysis/e2e-use-cases-<slug>.md` with `UC-E2E-NNN` use cases
@@ -351,18 +383,21 @@ manually from the template.
 
 ## 6. Versions and pins
 
-- Current version: `2.7.0` (architect stage split: Solution design (R-01) and
-  Interfaces and data model (R-02), ADR-004; overall architecture description,
-  component/per-scenario sequence/data/class/per-service swimlane diagrams,
-  OpenAPI 3.x specs, coverage and link checks; includes 2.6.0
-  deterministic checks and P2 approval, 2.4.0 per-scenario UX pages, and 2.3.0
-  budgets/chunking).
+- Current version: `3.0.0` (recursive same-role decomposition: chunk ledger,
+  briefs, depth 3, `chunk.ps1`/`chunk-validate.py`, `stage-done -Chunk` gate,
+  per-chunk usage, `chunk-ledger` checks, ADR-006; includes 2.8.0 responsibility
+  zones, 2.7.0 architect stage split, 2.6.0 deterministic checks and P2
+  approval, 2.4.0 per-scenario UX pages, and 2.3.0 budgets/chunking).
 - Global version: `~/.config/opencode/harness/version.json`.
 - Project version: `harness/version.json`, created by `/harness-init`.
 - `/harness-doctor` warns when the versions differ.
 - Upgrade note for 2.7.0: R-02 covers every diagram/spec in
   `docs/architecture`. Add `architecture-*.md` and link legacy diagrams there,
   or remove obsolete diagrams before resuming an R-01/R-02 task.
+- Upgrade note for 3.0.0: re-run `/harness-init` to copy `chunk.ps1`,
+  `chunk-validate.py`, and `chunk-ledger.md`; set `subagent_depth: 3` and restart
+  opencode. Existing tasks stay runnable (chunk checks are `NOT_APPLICABLE`
+  without a ledger).
 
 **Version record** (currently used) records the version, but the project keeps
 using global files. This is convenient for a single user and frequent updates.

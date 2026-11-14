@@ -27,3 +27,6 @@
   card log.
 - `e2e` / `ux` applicability, workflow, stage, and the checkpoint list live in
   the task card, not on the board.
+- Per-chunk progress lives in `docs/chunks/T-XXX.json`, never in a new board
+  column. The board keeps one row per task; a chunk `failed` or `blocked` is
+  reflected through the card log and, when it stops the stage, the task status.

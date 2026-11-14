@@ -28,13 +28,13 @@ Usage manual (RU, HTML): [`docs/manual/index.html`](docs/manual/index.html).
 - `harness/skills/harness-issues/SKILL.md` - harness issue tracking skill
 - `harness/templates/` - artifact templates (feature/bugfix task cards, bug card,
   adr, architecture-description, openapi, plan-row, issue, checkpoint,
-  e2e-use-case, e2e-test-data, ux-spec)
+  e2e-use-case, e2e-test-data, ux-spec, chunk-ledger)
 - `harness/checks/` - deterministic verification registry (`engine.json`,
   `feature.json`, `bugfix.json`)
 - `harness/scripts/` - `install.ps1`, `init.ps1`, `doctor.ps1`,
   `uninstall.ps1`, `new-issue.ps1`, `verify-artifacts.ps1`, `verify-stage.ps1`,
-  `stage-done.ps1`, `board-update.ps1`, `measure-tokens.ps1`,
-  `validate-e2e-data.py`, `validate-openapi.py`
+  `stage-done.ps1`, `board-update.ps1`, `measure-tokens.ps1`, `chunk.ps1`,
+  `chunk-validate.py`, `validate-e2e-data.py`, `validate-openapi.py`
 - `harness/version.json` - installation version
 - `docs/bugs/` - product bug registry (`BUG-XXX` cards + index)
 - `docs/issues/` - harness problem log (one MD per issue + index)
@@ -42,6 +42,8 @@ Usage manual (RU, HTML): [`docs/manual/index.html`](docs/manual/index.html).
 - `docs/tasks/` - task cards (one MD file per task)
 - `docs/checkpoints/` - user checkpoint decisions, edits, remarks, and machine
   check results (`*.checks.json`)
+- `docs/chunks/` - chunk ledger `T-XXX.json` (single source of truth for
+  per-chunk state, ownership, and usage) and per-chunk briefs
 - `docs/evidence/` - append-only SHA256 ledger per task (`T-XXX.md`)
 - `docs/metrics/` - measured token usage reports
 - `docs/qa/` - QA plans, reviews, and smoke reports
@@ -175,13 +177,14 @@ no status/dependency changes, preemption, or parallel execution are allowed.
 
 ## Versions
 
-- Current version: `2.8.0` (architect responsibility zones: hierarchy
-  `component -> module (optional) -> class`, exclusive zones per level,
-  `MOD-NNN`/`CLS-NNN` project-global IDs, `## Responsibility zones` section in
-  the architecture description, new `zones-unique` check type, ADR-005;
-  includes 2.7.0 architect stage split (Solution design R-01, Interfaces and
-  data model R-02), 2.6.0 deterministic checks and P2 approval, 2.4.0
-  per-scenario UX HTML pages, and 2.3.0 generation/context budgets).
+- Current version: `3.0.0` (recursive same-role decomposition: a chunk is the
+  unit of work, `docs/chunks/T-XXX.json` is the single source of truth for
+  per-chunk progress, briefs and a ten-line return make any chunk resumable in a
+  cold session, same-role chains up to `d1 -> d2 -> d3` with `subagent_depth: 3`,
+  `chunk.ps1`/`chunk-validate.py`, the `stage-done -Chunk` gate, per-chunk usage
+  attribution, the `chunk-ledger` check type, and ADR-006; includes 2.8.0
+  responsibility zones, 2.7.0 architect stage split, 2.6.0 deterministic checks
+  and P2 approval, 2.4.0 per-scenario UX pages, and 2.3.0 budgets).
 - Full version history: [`CHANGELOG.md`](CHANGELOG.md).
 - Upgrade note: R-02 checks cover every diagram/spec in `docs/architecture`.
   Existing projects must add `architecture-*.md` and link legacy diagrams there,
@@ -191,6 +194,13 @@ no status/dependency changes, preemption, or parallel execution are allowed.
   Add the section with the level tables and the explicit `No module
   decomposition (reason)` / `No class model (reason)` waivers before the next
   R-01/R-02 checkpoint.
+- Upgrade note (3.0.0): run `/harness-init` again to copy `chunk.ps1`,
+  `chunk-validate.py`, and `chunk-ledger.md`, and set `subagent_depth` to 3. A
+  config change applies only after an opencode restart
+  (`ISSUE-20261114-193500`). Tasks without a ledger keep working: the chunk
+  checks report `NOT_APPLICABLE`. To adopt the model on an existing task, run
+  `chunk.ps1 init -Task T-XXX -Baseline` so pre-ledger files are exempt from the
+  coverage check.
 - The global version is stored in `~/.config/opencode/harness/version.json`.
 - A project records the version in `harness/version.json` during `/harness-init`.
 - `/harness-doctor` warns about version divergence.
@@ -229,6 +239,9 @@ issue files in the task commit. Secrets are never written to issues.
 - At most one task is active across both workflows; feature and bugfix never run
   in parallel and cannot preempt each other. Cross-role calls are forbidden
   except `ux-designer -> harness-coder` for prototype pages (depth 2, sequential).
+  Same-role self-sub-sessions may chain to depth 3 (`d1 -> d2 -> d3`), one child
+  at a time; `subagent_depth: 3` is required, and the change applies only after
+  an opencode restart.
 - `docs/activity.puml/.svg` are derived visualizations; status and routing are
   taken only from the plan, cards, checkpoints, bug cards, workflows, and Git.
 - `git push`, `git tag`, history rewrite, and prod deployment are forbidden.

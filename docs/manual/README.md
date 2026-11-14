@@ -3,7 +3,7 @@
 | Поле | Значение |
 |---|---|
 | Статус | current |
-| Версия harness | 2.7.0 |
+| Версия harness | 3.0.0 |
 | Дата | 2026-11-14 |
 | Область | локальный мультиагентный harness: feature + bugfix workflows |
 | Нормативные источники | [`harness/process.md`](../../harness/process.md), [`harness/workflows/feature.md`](../../harness/workflows/feature.md), [`harness/workflows/bugfix.md`](../../harness/workflows/bugfix.md) |
@@ -558,6 +558,31 @@ routing/permission ошибке нельзя выполнять работу р�
 исправьте tool/plugin или начните новую root-сессию.
 
 ---
+
+## 4.1. Декомпозиция задач (3.0.0)
+
+Работа идёт не этапом целиком, а чанками. План чанков машиночитаем и хранится в
+`docs/chunks/T-XXX.json`; карточка и доска содержат только сводку.
+
+- Поля чанка: `id`, `parent`, `stage`, `role`, `depth` (1..3), `state`
+  (`pending`/`in_progress`/`done`/`failed`/`blocked`), `owns`, `inputs`, `brief`,
+  `acceptance`, `produced` (`path` + SHA256), `base_commit`, `attempts`, `usage`.
+- `owns` не пересекаются у чанков, не связанных отношением предок/потомок; все
+  существующие файлы под артефактами карточки должны быть кем-то покрыты, а
+  `baseline` в леджере исключает работу, сделанную до внедрения модели.
+- Глубина одной роли: `d1 -> d2 -> d3`. Дробление допускается только при
+  переполнении бюджета; дети последовательны, не параллельны и только той же
+  роли (единственное исключение — `ux-designer -> harness-coder`, глубина 2).
+- Бриф чанка (`docs/chunks/T-XXX/<id>.brief.md`) и возврат не более 10 строк
+  позволяют продолжить работу в холодной сессии; остановка безопасна только на
+  границе чанка.
+- Скрипты: `chunk.ps1` (`init`/`add`/`plan`/`claim`/`complete`/`fail`/`list`/
+  `show`/`status`/`usage`/`verify`) и `chunk-validate.py`. `stage-done.ps1
+  -Chunk` не закрывает чекпоинт, пока чанк этапа не `done`.
+- Проверки: `chunk-ownership-no-overlap`, `chunk-coverage`, `chunk-budget`
+  (тип `chunk-ledger`); задача без леджера — `NOT_APPLICABLE`.
+- Решение: `docs/architecture/adr-006-recursive-decomposition.md`. Метрики пилота:
+  `docs/metrics/T-041-pilot.md`.
 
 ## 5. Особые случаи (special, вне стандартного workflow)
 

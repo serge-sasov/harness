@@ -422,6 +422,7 @@ hr { border: none; border-top: 1px solid var(--line); margin: 2rem 0; }
 <li><a href="#m-10-диагностика-harness-и-issue-лог">M-10. Диагностика harness и issue-лог</a></li>
 </ul>
 </li>
+<li><a href="#41-декомпозиция-задач-300">4.1. Декомпозиция задач (3.0.0)</a></li>
 <li><a href="#5-особые-случаи-special-вне-стандартного-workflow">5. Особые случаи (special, вне стандартного workflow)</a><ul>
 <li><a href="#s-01-только-документацияadr">S-01. Только документация/ADR</a></li>
 <li><a href="#s-02-аудит-требований-reverse-engineering">S-02. Аудит требований / reverse engineering</a></li>
@@ -476,7 +477,7 @@ hr { border: none; border-top: 1px solid var(--line); margin: 2rem 0; }
 </tr>
 <tr>
 <td>Версия harness</td>
-<td>2.7.0</td>
+<td>3.0.0</td>
 </tr>
 <tr>
 <td>Дата</td>
@@ -1115,6 +1116,30 @@ prevention.</p>
 routing/permission ошибке нельзя выполнять работу роли inline — остановитесь,
 исправьте tool/plugin или начните новую root-сессию.</p>
 <hr />
+<h2 id="41-декомпозиция-задач-300">4.1. Декомпозиция задач (3.0.0)</h2>
+<p>Работа идёт не этапом целиком, а чанками. План чанков машиночитаем и хранится в
+<code>docs/chunks/T-XXX.json</code>; карточка и доска содержат только сводку.</p>
+<ul>
+<li>Поля чанка: <code>id</code>, <code>parent</code>, <code>stage</code>, <code>role</code>, <code>depth</code> (1..3), <code>state</code>
+  (<code>pending</code>/<code>in_progress</code>/<code>done</code>/<code>failed</code>/<code>blocked</code>), <code>owns</code>, <code>inputs</code>, <code>brief</code>,
+  <code>acceptance</code>, <code>produced</code> (<code>path</code> + SHA256), <code>base_commit</code>, <code>attempts</code>, <code>usage</code>.</li>
+<li><code>owns</code> не пересекаются у чанков, не связанных отношением предок/потомок; все
+  существующие файлы под артефактами карточки должны быть кем-то покрыты, а
+  <code>baseline</code> в леджере исключает работу, сделанную до внедрения модели.</li>
+<li>Глубина одной роли: <code>d1 -&gt; d2 -&gt; d3</code>. Дробление допускается только при
+  переполнении бюджета; дети последовательны, не параллельны и только той же
+  роли (единственное исключение — <code>ux-designer -&gt; harness-coder</code>, глубина 2).</li>
+<li>Бриф чанка (<code>docs/chunks/T-XXX/&lt;id&gt;.brief.md</code>) и возврат не более 10 строк
+  позволяют продолжить работу в холодной сессии; остановка безопасна только на
+  границе чанка.</li>
+<li>Скрипты: <code>chunk.ps1</code> (<code>init</code>/<code>add</code>/<code>plan</code>/<code>claim</code>/<code>complete</code>/<code>fail</code>/<code>list</code>/
+  <code>show</code>/<code>status</code>/<code>usage</code>/<code>verify</code>) и <code>chunk-validate.py</code>. <code>stage-done.ps1
+  -Chunk</code> не закрывает чекпоинт, пока чанк этапа не <code>done</code>.</li>
+<li>Проверки: <code>chunk-ownership-no-overlap</code>, <code>chunk-coverage</code>, <code>chunk-budget</code>
+  (тип <code>chunk-ledger</code>); задача без леджера — <code>NOT_APPLICABLE</code>.</li>
+<li>Решение: <code>docs/architecture/adr-006-recursive-decomposition.md</code>. Метрики пилота:
+  <code>docs/metrics/T-041-pilot.md</code>.</li>
+</ul>
 <h2 id="5-особые-случаи-special-вне-стандартного-workflow">5. Особые случаи (special, вне стандартного workflow)</h2>
 <h3 id="s-01-только-документацияadr">S-01. Только документация/ADR</h3>
 <p>Документация обновляется стадией <code>D-01</code> в feature-задаче или <code>B-04</code> в bugfix.
