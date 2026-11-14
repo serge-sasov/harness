@@ -12,6 +12,8 @@ permission:
     "**/docs/ux/**": "allow"
     "docs/tasks/**": "allow"
     "**/docs/tasks/**": "allow"
+    "docs/chunks/**": "allow"
+    "**/docs/chunks/**": "allow"
     "docs/issues/**": "allow"
     "**/docs/issues/**": "allow"
     "D:/*": "deny"
@@ -57,6 +59,8 @@ permission:
     "git show*": "allow"
     "*Test-Path*": "allow"
     "*new-issue.ps1*": "allow"
+    "*chunk.ps1*": "allow"
+    "*chunk-validate.py*": "allow"
     "*git commit*": "deny"
     "*git push*": "deny"
     "*Remove-Item*": "deny"
@@ -102,6 +106,36 @@ Before starting, verify that `harness/process.md`, the workflow file, and the ca
 2. Decide whether the defect is visual, interaction, copy, accessibility, or a flow problem.
 3. Define the minimal UX fix and affected states; update wireframes, UI spec, and the affected scenario page(s) only for the changed behavior. The coder may implement those pages under the same prototype delegation rules.
 4. Recommend feature-style escalation if the correct behavior or a new flow must be designed.
+
+## Chunks (unit of work)
+
+The stage is executed chunk by chunk. `docs/chunks/T-XXX.json` is the single
+source of truth for chunk progress; the card and the board carry a summary only.
+
+1. First action of the stage: `harness/scripts/chunk.ps1 init -Task T-XXX` (if
+   the ledger does not exist), then `chunk.ps1 add` or `chunk.ps1 plan` for each
+   chunk with `title`, `owns`, `inputs`, `acceptance`, and `brief`. Write the
+   brief `docs/chunks/T-XXX/<id>.brief.md` from
+   `harness/templates/chunk-ledger.md`. Only then write the artifact.
+2. Loop: `chunk.ps1 claim` -> author -> `chunk.ps1 complete -Produced <paths>`.
+   On a stop or an over-budget chunk: `chunk.ps1 fail` with a note, then stop; do
+   not continue through a compaction.
+3. `owns` must be concrete files or globs and must not overlap another chunk's
+   `owns` unless one is a parent of the other. Every produced path must be inside
+   `owns`.
+4. Machine fields in the ledger are script-only; never hand-edit `state`,
+   `attempts`, `produced.sha256`, `usage`, or `base_commit`.
+5. A stop is safe only at a chunk boundary. On resume read the card, the ledger,
+   and the next brief; do not re-read artifacts of chunks already `done`.
+
+### Granularity and delegation
+
+- U-01: one journey group or one screen group.
+- U-02: one wireframe set, one or two prototype pages, or one UI-spec section.
+- You do not self-delegate. The only child you may spawn is `harness-coder`, at
+  depth 2, one page group at a time, with a page brief and `owns` limited to
+  `docs/ux/prototype/<slug>/**`; that coder spawns no children. Everything else
+  goes through the lead.
 
 ## Artifacts (only write area)
 
@@ -157,7 +191,7 @@ Feature: stop at CP-1 (flows and screens) and CP-2 (wireframes, prototype, UI sp
 - Architecture decisions, production code, tests, CI/CD.
 - Changing `docs/analysis/`, `docs/architecture/`, `src/`, `tests/`, `docs/bugs/`.
 - Calling any role other than `harness-coder` for prototype pages; calling
-  other roles, self-sub-sessions, grandchildren, or making git commits.
+  other roles, self-sub-sessions, a third level, or making git commits.
 - Letting the coder edit UI spec, screens, wireframes, or non-prototype files.
 - External network dependencies in prototypes.
 

@@ -496,6 +496,24 @@ stop and request decomposition instead of attempting a larger write.
   `ux-designer -> harness-coder` prototype call. A depth-3 call is a same-role
   escalation only; depth 4 and all other cross-role calls are forbidden. The
   global `subagent_depth` must be 3.
+- Per-role chunk granularity (one chunk is one budget unit of the role's output):
+
+  | Role and stage | Chunk | Self-delegation |
+  |---|---|---|
+  | analyst A-01 | one business area with its `FR-NNN` group and questions | `d2`/`d3` |
+  | analyst A-02 | one use case with its YAML entries | `d2`/`d3` |
+  | ux-designer U-01 | one journey group or one screen group | none |
+  | ux-designer U-02 | one wireframe set, one or two prototype pages, or one UI-spec section | `harness-coder` only, `d2` |
+  | architect R-01 | one ADR, one description section group, or one diagram set (component plus at most three sequence diagrams) | `d2`/`d3` |
+  | architect R-02 | one OpenAPI specification, one contracts half, or one diagram group | `d2`/`d3` |
+  | coder I-01 | one module or file group with its unit tests | `d2`/`d3` |
+  | coder I-02 | runner, data validator, one UC batch, or cleanup | `d2`/`d3` |
+  | qa Q-01, Q-02 | one coverage-matrix batch, one review section, or one UC evidence batch | `d2` only |
+  | doc-writer D-01 | one guide or README section group | `d2` only |
+  | orchestrator | no delegation; owns the ledger | none |
+
+  A role uses the deeper level only when the chunk still overflows the budget;
+  `d2 only` roles never spawn a third level.
 
 ### 11.2 Verification and approval policy (P2)
 

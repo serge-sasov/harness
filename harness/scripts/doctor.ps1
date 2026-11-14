@@ -284,7 +284,7 @@ if (Test-Path -LiteralPath $configPath) {
         Write-Warn "no permission.task block in opencode.jsonc; run install.ps1 for explicit allow rules"
     }
 
-    $selfSessionRoles = @("harness-analyst", "harness-architect", "harness-coder")
+    $selfSessionRoles = @("harness-analyst", "harness-architect", "harness-coder", "harness-qa", "harness-doc-writer")
     $expectedCrossRole = @{ "harness-ux-designer" = "harness-coder" }
     $crossRole = @()
     foreach ($agentFile in $agentFiles) {

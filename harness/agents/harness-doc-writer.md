@@ -16,6 +16,8 @@ permission:
     "**/docs/architecture/adr-*.md": "allow"
     "docs/tasks/**": "allow"
     "**/docs/tasks/**": "allow"
+    "docs/chunks/**": "allow"
+    "**/docs/chunks/**": "allow"
     "docs/issues/**": "allow"
     "**/docs/issues/**": "allow"
     "D:/*": "deny"
@@ -55,10 +57,14 @@ permission:
     "git diff*": "allow"
     "git log*": "allow"
     "*new-issue.ps1*": "allow"
+    "*chunk.ps1*": "allow"
+    "*chunk-validate.py*": "allow"
     "*git commit*": "deny"
     "*git push*": "deny"
     "*Remove-Item*": "deny"
-  task: deny
+  task:
+    "*": "deny"
+    "harness-doc-writer": "allow"
   external_directory:
     "*": "deny"
 ---
@@ -83,6 +89,33 @@ Before starting, verify that `harness/process.md`, the workflow file, and the ca
 1. Update `CHANGELOG.md` or release notes from the bug card and fix commit.
 2. Update user-facing guides only when behavior, workarounds, or known limitations changed.
 3. Do not rewrite the bug card or its history; reference `BUG-XXX` and the fix task.
+
+## Chunks (unit of work)
+
+The stage is executed chunk by chunk. `docs/chunks/T-XXX.json` is the single
+source of truth for chunk progress; the card and the board carry a summary only.
+
+1. First action of the stage: `harness/scripts/chunk.ps1 init -Task T-XXX` (if
+   the ledger does not exist), then `chunk.ps1 add` or `chunk.ps1 plan` for each
+   chunk with `title`, `owns`, `inputs`, `acceptance`, and `brief`. Write the
+   brief `docs/chunks/T-XXX/<id>.brief.md` from
+   `harness/templates/chunk-ledger.md`. Only then write the artifact.
+2. Loop: `chunk.ps1 claim` -> author -> `chunk.ps1 complete -Produced <paths>`.
+   On a stop or an over-budget chunk: `chunk.ps1 fail` with a note, then stop; do
+   not continue through a compaction.
+3. `owns` must be concrete files or globs and must not overlap another chunk's
+   `owns` unless one is a parent of the other. Every produced path must be inside
+   `owns`.
+4. Machine fields in the ledger are script-only; never hand-edit `state`,
+   `attempts`, `produced.sha256`, `usage`, or `base_commit`.
+5. A stop is safe only at a chunk boundary. On resume read the card, the ledger,
+   and the next brief; do not re-read artifacts of chunks already `done`.
+
+### Granularity and delegation
+
+- D-01: one guide section or one README section group.
+- Self-delegation to `harness-doc-writer` is allowed at depth 2 only, one child
+  at a time; do not spawn a third level and never call another role.
 
 ## Artifacts (only write area)
 

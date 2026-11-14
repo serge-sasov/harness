@@ -139,6 +139,27 @@ a cold session.
 | Run each chunk as a separate CLI process or an external scheduler | true isolation, no depth config | outside the harness: no role prompt, no checkpoints, no evidence ledger, no board integration | the harness must stay inside opencode sessions |
 | Parallel children per chunk | wall-clock reduction | shared files and a single Ollama host; the harness already forbids parallel task execution | the measured bottleneck is context, not latency |
 
+## Amendment 1 (2026-11-14, T-042)
+
+Measured in the T-041 pilot (`docs/metrics/T-041-pilot.md`):
+
+1. **`cr/in` is not a usable primary criterion.** It is `sum(cache_read) /
+   sum(input)` and rises with turns x context per turn; a smaller chunk lowers
+   the input and therefore raises the ratio. The pilot measured 35.7x and 49.0x
+   with no quality regression, against a 34x baseline on a much larger input.
+   The rollout criteria become: turns per chunk <= 40, cache read per turn
+   <= 150K, no compaction inside a chunk, one attempt, wall <= 45 min, and a cold
+   resume from the ledger and the brief.
+2. **QA and doc-writer self-delegation is capped at depth 2.** Their units
+   (one coverage batch, one review section, one guide section) are small enough
+   that a third level only adds coordination cost; the cap is recorded in the
+   per-role table in `process.md` 11.1 and in the role prompts.
+3. **Coverage is checked against the real files, with an explicit `baseline`.**
+   Card artifacts are coarse globs; comparing them to fine-grained `owns` fails.
+   The ledger records a `baseline` snapshot of pre-ledger work, and coverage
+   requires every other existing file under the card artifacts to be owned by a
+   top-level chunk. No chunk may own a path outside the card artifacts.
+
 ## Consequences
 
 - `process.md` section 0 gains the three-level same-role chain and keeps the

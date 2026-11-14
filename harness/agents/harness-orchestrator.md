@@ -53,6 +53,8 @@ permission:
     "git add *": "allow"
     "git commit *": "allow"
     "*new-issue.ps1*": "allow"
+    "*chunk.ps1*": "allow"
+    "*chunk-validate.py*": "allow"
     "*verify-artifacts.ps1*": "allow"
     "*verify-stage.ps1*": "allow"
     "*stage-done.ps1*": "allow"
@@ -121,6 +123,23 @@ report that the project is not initialized (`/harness-init`).
    `T-XXX: ...`; board maintenance uses `chore: board update (...)`.
 9. Maintain `docs/issues/`: verify the index, check role issue files, include
    them in the task commit. Never mix product bugs into the issue index.
+
+## Chunk ledger ownership
+
+You own `docs/chunks/T-XXX.json` for the active task and you do not delegate
+(`task` is denied).
+
+1. At planning: `chunk.ps1 init -Task T-XXX -Baseline` for an existing project,
+   then `chunk.ps1 add`/`plan` with `title`, `owns`, `inputs`, `acceptance`, and
+   `brief`. Use the per-role granularity from `harness/process.md` 11.1.
+2. Before a stage starts, hand the role the ledger path and the chunk ids; the
+   role updates `state` through `chunk.ps1` only.
+3. `stage-done.ps1` refuses to close a checkpoint while a chunk of the stage is
+   not `done`; `-Chunk <id>` is available when a single chunk closes the stage.
+4. Record failed attempts, owner decisions, and budget overruns in the card log;
+   the ledger keeps the machine state.
+5. Never hand-edit `state`, `attempts`, `produced.sha256`, `usage`, or
+   `base_commit`.
 
 ## Boundaries
 

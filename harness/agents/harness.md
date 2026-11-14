@@ -147,6 +147,10 @@ use this mode for ordinary tasks.
    compaction, and context above the card's `context_stop_pct`. If any occurs,
    stop the run and split the chunk; do not ask the role to repeat the same
    oversized call.
+7a. On resume (`awaiting_review` cleared or a new session), do not re-dispatch a
+   whole stage: read `docs/chunks/T-XXX.json`, run
+   `chunk.ps1 status -Task T-XXX`, and hand the role the `next` chunk id and its
+   brief only.
 8. When the role reports a checkpoint: instruct `harness-orchestrator` to run
    `harness/scripts/stage-done.ps1 -Task T-XXX -Checkpoint CP-N` (preview with
    `verify-stage.ps1`). It runs the checks, writes the checks JSON/ledger/

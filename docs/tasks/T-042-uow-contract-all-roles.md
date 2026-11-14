@@ -1,4 +1,4 @@
-# T-042: UoW contract for the remaining five roles
+﻿# T-042: UoW contract for the remaining five roles
 
 | Field | Value |
 |---|---|
@@ -7,7 +7,7 @@
 | workflow | feature |
 | stage | implementation |
 | role | architect |
-| status | pending |
+| status | done |
 | hold | false |
 | depends_on | T-041 |
 | inputs | `docs/architecture/adr-006-recursive-decomposition.md`, `harness/process.md`, `harness/agents/harness-analyst.md`, `harness/agents/harness-ux-designer.md`, `harness/agents/harness-qa.md`, `harness/agents/harness-doc-writer.md`, `harness/agents/harness-orchestrator.md`, `docs/metrics/T-041-pilot.md` |
@@ -35,8 +35,8 @@
 
 | ID | Stage | Artifacts | Checks | Status | Review file |
 |---|---|---|---|---|---|
-| CP-1 | role contracts | five role prompts + process + skill | n/a | pending | `docs/checkpoints/T-042-CP-1.md` |
-| CP-F | final acceptance | all task artifacts | n/a | pending | `docs/checkpoints/T-042-CP-F.md` |
+| CP-1 | role contracts | five role prompts + process + skill | n/a | approved | `docs/checkpoints/T-042-CP-1.md` |
+| CP-F | final acceptance | all task artifacts | n/a | approved | `docs/checkpoints/T-042-CP-F.md` |
 
 ## Blockers
 
@@ -45,3 +45,4 @@
 ## Log
 
 - 2026-11-14: card created for T-042 (phase B, step 1). Depends on the pilot so the default granularity is calibrated on measured data, not on estimates.
+- 2026-11-14: five role prompts, process 11.1 table, skill, lead resume step, doctor self-allow checks, and ADR-006 Amendment 1 done; install + doctor green; CP-1 and CP-F approved (harness-core task: machine checks n/a).

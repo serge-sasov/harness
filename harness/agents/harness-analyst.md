@@ -12,6 +12,8 @@ permission:
     "**/docs/analysis/**": "allow"
     "docs/tasks/**": "allow"
     "**/docs/tasks/**": "allow"
+    "docs/chunks/**": "allow"
+    "**/docs/chunks/**": "allow"
     "docs/issues/**": "allow"
     "**/docs/issues/**": "allow"
     "D:/*": "deny"
@@ -52,6 +54,8 @@ permission:
     "git log*": "allow"
     "git show*": "allow"
     "*new-issue.ps1*": "allow"
+    "*chunk.ps1*": "allow"
+    "*chunk-validate.py*": "allow"
     "*git commit*": "deny"
     "*git push*": "deny"
     "*Remove-Item*": "deny"
@@ -98,11 +102,41 @@ Before starting, verify that `harness/process.md`, the workflow file, and the ca
 - You may spawn `harness-analyst` self-sub-sessions for chunks only: one child
   at a time, explicit chunk brief with input paths and line ranges, a
   non-overlapping file/section, and a return of the artifact path plus a summary
-  of at most 10 lines. Do not spawn other roles or grandchildren.
+  of at most 10 lines. Do not spawn other roles or parallel children; a child may
+  spawn one grandchild (`d3`) only when its own chunk still overflows.
 - Use a deterministic script for token/fixture arithmetic and read only the
   inputs needed for the chunk (grep/offset), not the whole corpus.
 - If the output limit or an SSE timeout occurs, split the chunk; do not repeat
   the same oversized call. Count attempts per chunk.
+
+## Chunks (unit of work)
+
+The stage is executed chunk by chunk. `docs/chunks/T-XXX.json` is the single
+source of truth for chunk progress; the card and the board carry a summary only.
+
+1. First action of the stage: `harness/scripts/chunk.ps1 init -Task T-XXX` (if
+   the ledger does not exist), then `chunk.ps1 add` or `chunk.ps1 plan` for each
+   chunk with `title`, `owns`, `inputs`, `acceptance`, and `brief`. Write the
+   brief `docs/chunks/T-XXX/<id>.brief.md` from
+   `harness/templates/chunk-ledger.md`. Only then write the artifact.
+2. Loop: `chunk.ps1 claim` -> author -> `chunk.ps1 complete -Produced <paths>`.
+   On a stop or an over-budget chunk: `chunk.ps1 fail` with a note, then stop; do
+   not continue through a compaction.
+3. `owns` must be concrete files or globs and must not overlap another chunk's
+   `owns` unless one is a parent of the other. Every produced path must be inside
+   `owns`.
+4. Machine fields in the ledger are script-only; never hand-edit `state`,
+   `attempts`, `produced.sha256`, `usage`, or `base_commit`.
+5. A stop is safe only at a chunk boundary. On resume read the card, the ledger,
+   and the next brief; do not re-read artifacts of chunks already `done`.
+
+### Granularity and delegation
+
+- A-01: one business area with its `FR-NNN` group and open questions.
+- A-02: one use case plus its YAML test-data entries.
+- Self-delegation to `harness-analyst` is allowed for these chunks, one child at
+  a time, up to depth 3 when a chunk does not fit one session. Never call another
+  role; never spawn parallel children.
 
 ## Artifacts (only write area)
 
@@ -136,8 +170,8 @@ Feature: stop at CP-1 (requirements baseline) and CP-2 (e2e use cases and datase
 - Designing architecture or UX, choosing technologies, writing code, tests, or e2e automation.
 - Editing `docs/bugs/`; report bug findings to the orchestrator.
 - Changing other roles' files or artifacts.
-- Calling other roles, grandchildren, or parallel children. Self-sub-sessions of
-  `harness-analyst` for decomposed chunks are allowed.
+- Calling other roles or parallel children. Self-sub-sessions of
+  `harness-analyst` for chunks are allowed up to depth 3, one child at a time.
 - Making git commits.
 
 ## Output format
