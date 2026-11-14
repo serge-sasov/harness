@@ -101,7 +101,7 @@ New-Item -ItemType Directory -Force -Path (Join-Path $HarnessDir "templates") | 
 New-Item -ItemType Directory -Force -Path (Join-Path $HarnessDir "workflows") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $HarnessDir "scripts") | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $HarnessDir "checks") | Out-Null
-foreach ($sub in @("tasks", "analysis", "ux", "architecture", "qa", "guides", "issues", "checkpoints", "bugs", "evidence", "metrics")) {
+foreach ($sub in @("tasks", "analysis", "ux", "architecture", "qa", "guides", "issues", "checkpoints", "bugs", "evidence", "metrics", "chunks")) {
     New-Item -ItemType Directory -Force -Path (Join-Path $DocsDir $sub) | Out-Null
 }
 

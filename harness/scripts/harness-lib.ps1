@@ -502,6 +502,98 @@ from chain group by 1 order by 1
     }
 }
 
+function Get-SessionUsage {
+    param(
+        [string]$ProjectPath = (Get-Location).Path,
+        [int]$Days = 0
+    )
+    $opencode = Get-Command opencode -ErrorAction SilentlyContinue
+    if (-not $opencode) { return $null }
+    $leaf = Split-Path -Leaf $ProjectPath
+    if (-not $leaf) { $leaf = $ProjectPath }
+    $safe = $leaf.Replace("'", "''")
+    $where = "directory like '%$safe%'"
+    if ($Days -gt 0) {
+        $where += " and time_created >= (strftime('%s','now') - $($Days * 86400)) * 1000"
+    }
+    $sql = @"
+with recursive s as (
+  select id,parent_id,title,tokens_input i,tokens_output o,tokens_reasoning rr,tokens_cache_read cr,cost,(time_updated-time_created)/60000 mins
+  from session where $where
+), chain(id,parent_id,root,rtitle,i,o,rr,cr,cost,mins) as (
+  select id,parent_id,id,title,i,o,rr,cr,cost,mins from s where parent_id is null
+  union all
+  select c.id,c.parent_id,ch.root,ch.rtitle,c.i,c.o,c.rr,c.cr,c.cost,c.mins
+  from chain ch join s c on c.parent_id=ch.id
+)
+select root, (rtitle), sum(i), sum(o), sum(rr), sum(cr), sum(cost), sum(mins), count(*)
+from chain group by root, rtitle order by root
+"@
+    $out = & $opencode.Source db $sql 2>&1
+    if ($LASTEXITCODE -ne 0) { return $null }
+    $lines = @($out | ForEach-Object { [string]$_ })
+    if ($lines.Count -lt 2) { return @() }
+    $rows = @()
+    foreach ($line in $lines[1..($lines.Count - 1)]) {
+        if (-not $line.Trim()) { continue }
+        $c = $line -split "`t"
+        if ($c.Count -lt 9) { continue }
+        $rows += [pscustomobject]@{
+            root       = $c[0]
+            title      = $c[1]
+            input      = [int64]$c[2]
+            output     = [int64]$c[3]
+            reasoning  = [int64]$c[4]
+            cache_read = [int64]$c[5]
+            cost       = [double]$c[6]
+            minutes    = [double]$c[7]
+            sessions   = [int]$c[8]
+        }
+    }
+    $rows
+}
+
+function Get-ChunkUsage {
+    param(
+        [string]$Task = '',
+        [string]$ProjectPath = (Get-Location).Path,
+        [int]$Days = 0
+    )
+    $rows = @(Get-SessionUsage -ProjectPath $ProjectPath -Days $Days)
+    if ($null -eq $rows) { return $null }
+    if ($rows.Count -eq 0) { return @() }
+    $groups = @{}
+    foreach ($row in $rows) {
+        $m = [regex]::Match([string]$row.title, 'T-(\d{3,})(?:\.([A-Za-z0-9][A-Za-z0-9._-]*))?')
+        $taskId = if ($m.Success) { 'T-' + $m.Groups[1].Value } else { '~' }
+        $chunkId = if ($m.Success -and $m.Groups[2].Success) { $m.Groups[2].Value } else { '~' }
+        $key = "$taskId|$chunkId"
+        if (-not $groups.ContainsKey($key)) {
+            $groups[$key] = [pscustomobject]@{
+                task = $taskId; chunk = $chunkId; sessions = 0
+                input = [int64]0; output = [int64]0; reasoning = [int64]0
+                cache_read = [int64]0; cost = [double]0; minutes = [double]0
+            }
+        }
+        $g = $groups[$key]
+        $g.sessions += $row.sessions
+        $g.input += $row.input
+        $g.output += $row.output
+        $g.reasoning += $row.reasoning
+        $g.cache_read += $row.cache_read
+        $g.cost += $row.cost
+        $g.minutes += $row.minutes
+    }
+    $result = @($groups.Values | Sort-Object task, chunk)
+    if ($Task) { $result = @($result | Where-Object { $_.task -eq $Task }) }
+    foreach ($g in $result) {
+        $ratio = 0
+        if ($g.input -gt 0) { $ratio = [math]::Round([double]$g.cache_read / [double]$g.input, 1) }
+        $g | Add-Member -NotePropertyName ratio -NotePropertyValue $ratio -Force
+    }
+    $result
+}
+
 function Get-TaskBaseCommit {
     param([string]$Root, [hashtable]$Card, [string]$Task)
     if ($Card -and $Card.ContainsKey('base_commit')) {

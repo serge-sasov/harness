@@ -21,6 +21,7 @@ review for every checkpoint.
 param(
     [Parameter(Mandatory = $true)][string]$Task,
     [string]$Checkpoint = '',
+    [string]$Chunk = '',
     [string]$Root = '',
     [string]$ChecksDir = '',
     [switch]$AutoApprove,
@@ -84,6 +85,35 @@ if ((Test-Path -LiteralPath $cpPath) -and -not $Force) {
 
 Write-Host "stage-done $Task $Checkpoint ($workflow/$stage)" -ForegroundColor Cyan
 
+$chunkLedgerRel = "docs/chunks/$Task.json"
+$chunkLedgerPath = Join-Path $Root ($chunkLedgerRel -replace '/', '\')
+$stageChunks = @()
+$chunkSummary = @()
+if (Test-Path -LiteralPath $chunkLedgerPath) {
+    $py = Get-Command python -ErrorAction SilentlyContinue
+    if (-not $py) { $py = Get-Command py -ErrorAction SilentlyContinue }
+    if (-not $py) { throw "python not found; cannot validate $chunkLedgerRel" }
+    & $py.Source (Join-Path $PSScriptRoot 'chunk-validate.py') $chunkLedgerPath '--root' $Root '--no-hash'
+    if ($LASTEXITCODE -ne 0) { throw "chunk ledger is invalid: $chunkLedgerRel" }
+    $ledger = (Read-Utf8 $chunkLedgerPath) | ConvertFrom-Json
+    $stageChunks = @($ledger.chunks | Where-Object { $_.stage -eq $stage })
+    $notDone = @($stageChunks | Where-Object { $_.state -ne 'done' })
+    if ($notDone.Count -gt 0 -and -not $Force) {
+        $list = ($notDone | ForEach-Object { "$($_.id)=$($_.state)" }) -join ', '
+        throw "chunks not done for stage ${stage}: $list"
+    }
+    if ($Chunk -and @($stageChunks | Where-Object { $_.id -eq $Chunk }).Count -eq 0) {
+        throw "chunk '$Chunk' is not part of stage $stage"
+    }
+    foreach ($c in $stageChunks) {
+        $chunkSummary += ('| {0} | {1} | d{2} | {3} | {4} | {5} |' -f `
+                $c.id, $c.state, $c.depth, $c.role, @($c.produced).Count, $c.title)
+    }
+}
+elseif ($Chunk) {
+    throw "chunk ledger not found: $chunkLedgerRel"
+}
+
 $verifyArgs = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $PSScriptRoot 'verify-artifacts.ps1'),
     '-Root', $Root, '-Task', $Task, '-Stage', $stage, '-Json', $checksPath)
 if ($ChecksDir) { $verifyArgs += @('-ChecksDir', $ChecksDir) }
@@ -102,6 +132,14 @@ $declared = Expand-Artifacts -Items @($card['artifacts']) -AllFiles $allFiles -R
 $artifacts = @($declared.Files)
 if ($declared.Unresolved.Count -gt 0) {
     Write-Host "[warn] unresolved artifacts: $($declared.Unresolved -join ', ')" -ForegroundColor Yellow
+}
+foreach ($c in $stageChunks) {
+    foreach ($p in @($c.produced)) {
+        $relP = ConvertTo-ForwardSlash ([string]$p.path)
+        if (-not $relP) { continue }
+        if (-not (Test-Path -LiteralPath (Join-Path $Root ($relP -replace '/', '\')))) { continue }
+        if ($artifacts -notcontains $relP) { $artifacts += $relP }
+    }
 }
 
 $hashes = @()
@@ -184,6 +222,16 @@ $lines.Add('')
 $lines.Add("- Stage ``$stage`` acceptance for $Task.")
 foreach ($item in $acceptance) { $lines.Add('- ' + $item) }
 $lines.Add('')
+if ($chunkSummary.Count -gt 0) {
+    $lines.Add('## Chunks')
+    $lines.Add('')
+    $lines.Add('| Chunk | State | Depth | Role | Produced | Title |')
+    $lines.Add('|---|---|---|---|---|---|')
+    foreach ($row in $chunkSummary) { $lines.Add($row) }
+    $lines.Add('')
+    $lines.Add("Ledger: ``$chunkLedgerRel``")
+    $lines.Add('')
+}
 $lines.Add('## Checks')
 $lines.Add('')
 $lines.Add('| ID | Check | Result | Detail |')
@@ -286,7 +334,7 @@ if ($NoCommit) {
 
 $commitPaths = New-Object System.Collections.Generic.List[string]
 foreach ($p in $artifacts) { $commitPaths.Add($p) }
-foreach ($p in @('docs/plan.md', $cpRel, $checksRel, $ledgerRel, 'docs/activity.puml', 'docs/activity.svg')) {
+foreach ($p in @('docs/plan.md', $cpRel, $checksRel, $ledgerRel, $chunkLedgerRel, 'docs/activity.puml', 'docs/activity.svg')) {
     if (Test-Path -LiteralPath (Join-Path $Root $p)) { $commitPaths.Add($p) }
 }
 $cardRel = ConvertTo-ForwardSlash ((Resolve-Path -LiteralPath $cardPath).Path.Substring($Root.TrimEnd('\').Length + 1))

@@ -7,7 +7,7 @@
 | workflow | feature |
 | stage | implementation |
 | role | coder |
-| status | pending |
+| status | done |
 | hold | false |
 | depends_on | T-037 |
 | inputs | `docs/architecture/adr-006-recursive-decomposition.md`, `harness/scripts/harness-lib.ps1`, `harness/scripts/stage-done.ps1`, `harness/scripts/measure-tokens.ps1`, `harness/scripts/board-update.ps1`, `harness/scripts/verify-artifacts.ps1`, `harness/scripts/check-budget.ps1`, `harness/templates/task-card-feature.md` |
@@ -35,8 +35,8 @@
 
 | ID | Stage | Artifacts | Checks | Status | Review file |
 |---|---|---|---|---|---|
-| CP-1 | chunk tooling | `chunk.ps1`, `chunk-validate.py`, template | n/a | pending | `docs/checkpoints/T-038-CP-1.md` |
-| CP-F | final acceptance | all task artifacts | n/a | pending | `docs/checkpoints/T-038-CP-F.md` |
+| CP-1 | chunk tooling | `chunk.ps1`, `chunk-validate.py`, template | n/a | approved | `docs/checkpoints/T-038-CP-1.md` |
+| CP-F | final acceptance | all task artifacts | n/a | approved | `docs/checkpoints/T-038-CP-F.md` |
 
 ## Blockers
 
@@ -45,3 +45,4 @@
 ## Log
 
 - 2026-11-14: card created for T-038 (phase A, step 2). Implements the ledger and scripts required by ADR-006 (T-037).
+- 2026-11-14: implemented `chunk-validate.py` (12 self-test cases green), `chunk.ps1` (init/add/plan/claim/complete/fail/list/show/status/usage/verify), `templates/chunk-ledger.md`, `stage-done.ps1 -Chunk` with the stage gate and `## Chunks`, `measure-tokens.ps1 -ByChunk`, `harness-lib.ps1` chunk usage, `init.ps1` docs/chunks; CP-1 and CP-F approved (harness-core task: machine checks n/a).
