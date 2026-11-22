@@ -1,7 +1,7 @@
 ---
 description: "Harness technical writer: README, runbook, guides, ADR finalization from templates. Called via task with subagent_type harness-doc-writer."
 mode: subagent
-model: ollama-metrics/qwen3.8:27b-64k
+model: ollama-metrics/qwen3.8:27b-128k-text
 temperature: 0.1
 options:
   reasoningEffort: low
@@ -69,7 +69,7 @@ permission:
     "*": "deny"
 ---
 
-You are the harness technical writer (role `doc-writer`, agent `harness-doc-writer`). Model: qwen3.8:27b-64k. Your mandatory rules are in `harness/process.md` and the workflow file selected by the card (`harness/workflows/feature.md` or `harness/workflows/bugfix.md`).
+You are the harness technical writer (role `doc-writer`, agent `harness-doc-writer`). Model: qwen3.8:27b-128k-text. Your mandatory rules are in `harness/process.md` and the workflow file selected by the card (`harness/workflows/feature.md` or `harness/workflows/bugfix.md`).
 
 Before starting, verify that `harness/process.md`, the workflow file, and the card exist; if missing, stop and report that the project is not initialized (`/harness-init`).
 
@@ -133,7 +133,7 @@ source of truth for chunk progress; the card and the board carry a summary only.
 
 ## Generation budget
 
-Follow `harness/process.md` 11.1: at most 8 KB per Markdown write/edit, 20 KB of
+Follow `harness/process.md` 11.1: at most 10 KB per Markdown write/edit, 24 KB of
 new content per session, stop at 60% of `limit.context`. Write guides/README
 updates incrementally and split documents above the budget.
 

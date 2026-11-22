@@ -1,10 +1,10 @@
 ---
 description: "Harness lead: explicit entry point for the local multi-agent harness via /harness-feature, /harness-bug, /harness-run, /harness-stage-done, or /harness-board-*. Only for projects with harness/process.md; do not use for ordinary tasks."
 mode: primary
-model: ollama-metrics/qwen3.8:27b-64k
+model: ollama-metrics/qwen3.8:27b-128k-text
 temperature: 0.1
 options:
-  reasoningEffort: xhigh
+  reasoningEffort: medium
 permission:
   edit:
     "*": "deny"

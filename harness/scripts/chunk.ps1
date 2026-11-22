@@ -163,12 +163,12 @@ switch ($Action) {
             updated = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ss')
             baseline = @($baselineFiles)
             budget  = [ordered]@{
-                max_write_kb     = 12
-                max_session_kb   = 40
+                max_write_kb     = 16
+                max_session_kb   = 48
                 context_stop_pct = 65
                 max_turns        = 40
-                max_input_tokens = 60000
-                max_wall_min     = 45
+                max_input_tokens = 76000
+                max_wall_min     = 60
             }
             chunks  = @()
         }

@@ -343,7 +343,7 @@ if (Test-Path -LiteralPath $configPath) {
 
     if ($config -match '"plantuml-render"') { Write-Ok "MCP plantuml-render configured" } else { Write-Warn "MCP plantuml-render not found in config" }
     if ($config -match '"local-rag"') { Write-Ok "MCP local-rag configured" } else { Write-Warn "MCP local-rag not found in config" }
-    if ($config -match 'qwen3\.8:27b-64k') { Write-Ok "model qwen3.8:27b-64k declared" } else { Write-Warn "model qwen3.8:27b-64k not found in config" }
+    if ($config -match 'qwen3\.8:27b-128k-text') { Write-Ok "model qwen3.8:27b-128k-text declared" } else { Write-Warn "model qwen3.8:27b-128k-text not found in config" }
     if ($config -match 'tiel-coder:35b-a3b-mtp-128k-text') { Write-Ok "tiel-coder text model declared" } else { Write-Warn "tiel-coder text model not found in config" }
     if ($config -match 'tiel-coder:35b-a3b-mtp-128k-vision') { Write-Ok "tiel-coder vision model declared" } else { Write-Warn "tiel-coder vision model not found in config" }
 

@@ -26,12 +26,12 @@ import tempfile
 STATES = {"pending", "in_progress", "done", "failed", "blocked"}
 STATES_WITH_ISSUE = {"blocked"}
 DEFAULT_BUDGET = {
-    "max_write_kb": 12,
-    "max_session_kb": 40,
+    "max_write_kb": 16,
+    "max_session_kb": 48,
     "context_stop_pct": 65,
     "max_turns": 40,
-    "max_input_tokens": 60000,
-    "max_wall_min": 45,
+    "max_input_tokens": 76000,
+    "max_wall_min": 60,
 }
 REQUIRED_CHUNK = [
     "id", "parent", "stage", "role", "depth", "title", "state", "owns",

@@ -383,11 +383,13 @@ manually from the template.
 
 ## 6. Versions and pins
 
-- Current version: `3.0.0` (recursive same-role decomposition: chunk ledger,
-  briefs, depth 3, `chunk.ps1`/`chunk-validate.py`, `stage-done -Chunk` gate,
-  per-chunk usage, `chunk-ledger` checks, ADR-006; includes 2.8.0 responsibility
-  zones, 2.7.0 architect stage split, 2.6.0 deterministic checks and P2
-  approval, 2.4.0 per-scenario UX pages, and 2.3.0 budgets/chunking).
+- Current version: `3.1.0` (Qwen text roles use the text-only 128K model;
+  generation and chunk budgets raised for the larger context; includes 3.0.x
+  recursive same-role decomposition, chunk ledger, briefs, depth 3,
+  `chunk.ps1`/`chunk-validate.py`, `stage-done -Chunk` gate, per-chunk usage,
+  `chunk-ledger` checks, and ADR-006; 2.8.0 responsibility zones, 2.7.0
+  architect stage split, 2.6.0 deterministic checks and P2 approval, 2.4.0
+  per-scenario UX pages, and 2.3.0 budgets/chunking).
 - Global version: `~/.config/opencode/harness/version.json`.
 - Project version: `harness/version.json`, created by `/harness-init`.
 - `/harness-doctor` warns when the versions differ.
@@ -398,6 +400,10 @@ manually from the template.
   `chunk-validate.py`, and `chunk-ledger.md`; set `subagent_depth: 3` and restart
   opencode. Existing tasks stay runnable (chunk checks are `NOT_APPLICABLE`
   without a ledger).
+- Upgrade note for 3.1.0: re-run `/harness-init` and approve overwrite
+  (`init.ps1 -Force`) to copy the updated agents, scripts, and templates;
+  existing ledgers keep their stored budgets. Qwen roles use the text-only 128K
+  model; images go to `qa-vision`.
 
 **Version record** (currently used) records the version, but the project keeps
 using global files. This is convenient for a single user and frequent updates.

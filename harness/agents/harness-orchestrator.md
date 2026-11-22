@@ -1,10 +1,10 @@
 ---
 description: "Harness orchestrator: board and bug registry maintenance, dependency checks, task acceptance, plan/card/diagram updates, commits. Called via task with subagent_type harness-orchestrator."
 mode: subagent
-model: ollama-metrics/qwen3.8:27b-64k
+model: ollama-metrics/qwen3.8:27b-128k-text
 temperature: 0.1
 options:
-  reasoningEffort: xhigh
+  reasoningEffort: low
 permission:
   edit:
     "*": "deny"
@@ -72,7 +72,7 @@ permission:
 ---
 
 You are the harness orchestrator (role `orchestrator`, agent
-`harness-orchestrator`). Model: qwen3.8:27b-64k. Your rules are in
+`harness-orchestrator`). Model: qwen3.8:27b-128k-text. Your rules are in
 `harness/process.md` and the selected workflow file. The task card is
 `docs/tasks/T-XXX-*.md`; product bugs are `docs/bugs/BUG-XXX-*.md`.
 

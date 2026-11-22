@@ -62,15 +62,17 @@ Usage manual (RU, HTML): [`docs/manual/index.html`](docs/manual/index.html).
 
 | Role | Agent | Model (Ollama) |
 |---|---|---|
-| harness lead | `harness` | qwen3.8:27b-64k (thinking: xhigh) |
-| orchestrator | `harness-orchestrator` | qwen3.8:27b-64k (thinking: xhigh) |
-| analyst | `harness-analyst` | qwen3.8:27b-64k (thinking: medium) |
-| ux-designer | `harness-ux-designer` | qwen3.8:27b-64k (thinking: xhigh) |
-| architect | `harness-architect` | qwen3.8:27b-64k (thinking: xhigh) |
+| harness lead | `harness` | qwen3.8:27b-128k-text (thinking: medium) |
+| orchestrator | `harness-orchestrator` | qwen3.8:27b-128k-text (thinking: low) |
+| analyst | `harness-analyst` | qwen3.8:27b-128k-text (thinking: medium) |
+| ux-designer | `harness-ux-designer` | qwen3.8:27b-128k-text (thinking: medium) |
+| architect | `harness-architect` | qwen3.8:27b-128k-text (thinking: xhigh; only exception) |
 | coder | `harness-coder` | tiel-coder:35b-a3b-mtp-128k-text |
-| qa | `harness-qa` | qwen3.8:27b-64k (thinking: low, 64K) |
+| qa | `harness-qa` | qwen3.8:27b-128k-text (thinking: medium, 128K, text-only) |
 | qa-vision | `harness-qa-vision` | tiel-coder:35b-a3b-mtp-128k-vision |
-| doc-writer | `harness-doc-writer` | qwen3.8:27b-64k (thinking: low) |
+| doc-writer | `harness-doc-writer` | qwen3.8:27b-128k-text (thinking: low) |
+
+Qwen roles use the text-only 128K model; `qa-vision` handles images.
 
 ## Global installation (once)
 
@@ -177,10 +179,12 @@ no status/dependency changes, preemption, or parallel execution are allowed.
 
 ## Versions
 
-- Current version: `3.0.0` (recursive same-role decomposition: a chunk is the
-  unit of work, `docs/chunks/T-XXX.json` is the single source of truth for
-  per-chunk progress, briefs and a ten-line return make any chunk resumable in a
-  cold session, same-role chains up to `d1 -> d2 -> d3` with `subagent_depth: 3`,
+- Current version: `3.1.0` (Qwen text roles use the text-only 128K model;
+  generation and chunk budgets raised for the larger context; includes 3.0.x
+  recursive same-role decomposition: a chunk is the unit of work,
+  `docs/chunks/T-XXX.json` is the single source of truth for per-chunk progress,
+  briefs and a ten-line return make any chunk resumable in a cold session,
+  same-role chains up to `d1 -> d2 -> d3` with `subagent_depth: 3`,
   `chunk.ps1`/`chunk-validate.py`, the `stage-done -Chunk` gate, per-chunk usage
   attribution, the `chunk-ledger` check type, and ADR-006; includes 2.8.0
   responsibility zones, 2.7.0 architect stage split, 2.6.0 deterministic checks
@@ -201,6 +205,10 @@ no status/dependency changes, preemption, or parallel execution are allowed.
   checks report `NOT_APPLICABLE`. To adopt the model on an existing task, run
   `chunk.ps1 init -Task T-XXX -Baseline` so pre-ledger files are exempt from the
   coverage check.
+- Upgrade note (3.1.0): re-run `/harness-init` and approve overwrite
+  (`init.ps1 -Force`) to copy the updated agents, scripts, and templates;
+  existing ledgers keep their stored budgets. Qwen roles use
+  `qwen3.8:27b-128k-text` (text-only); images go to `qa-vision`.
 - The global version is stored in `~/.config/opencode/harness/version.json`.
 - A project records the version in `harness/version.json` during `/harness-init`.
 - `/harness-doctor` warns about version divergence.

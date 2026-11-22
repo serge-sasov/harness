@@ -84,12 +84,12 @@ Only `done` chunks count as coverage. A partially written file makes a chunk
   "version": 1,
   "updated": "2026-11-14T12:00:00",
   "budget": {
-    "max_write_kb": 12,
-    "max_session_kb": 40,
+    "max_write_kb": 16,
+    "max_session_kb": 48,
     "context_stop_pct": 65,
     "max_turns": 40,
-    "max_input_tokens": 60000,
-    "max_wall_min": 45
+    "max_input_tokens": 76000,
+    "max_wall_min": 60
   },
   "chunks": [
     {
@@ -134,7 +134,7 @@ without re-reading the corpus:
 | role | coder |
 | depth | 1 |
 | owns | backend/src/main/java/**/api/** |
-| budget | 12 KB write, 40 KB session, stop at 65% |
+| budget | 16 KB write, 48 KB session, stop at 65% |
 
 ## Goal
 

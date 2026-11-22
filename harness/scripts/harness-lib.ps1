@@ -347,10 +347,15 @@ function Invoke-Git {
     finally {
         $ErrorActionPreference = $previousEap
     }
+    $stdout = @($output | Where-Object { $null -ne $_ -and $_ -isnot [System.Management.Automation.ErrorRecord] } | ForEach-Object { [string]$_ })
+    $stderr = @($output | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } | ForEach-Object { $_.ToString() })
     if ($code -ne 0 -and -not $AllowFail) {
-        throw "git $($Arguments -join ' ') failed ($code): $($output -join ' ')"
+        throw "git $($Arguments -join ' ') failed ($code): $((@($stderr) + @($stdout)) -join ' ')"
     }
-    [pscustomobject]@{ ExitCode = $code; Output = @($output) }
+    if ($code -eq 0 -and $stderr.Count -gt 0) {
+        Write-Verbose ("git {0}: {1}" -f ($Arguments -join ' '), ($stderr -join ' '))
+    }
+    [pscustomobject]@{ ExitCode = $code; Output = $stdout; StdErr = $stderr }
 }
 
 function Get-BoardStatusColor {

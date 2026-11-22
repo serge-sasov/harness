@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Status | current |
-| Date | 2026-11-14 |
-| Version | 3.0.0 |
+| Date | 2026-11-18 |
+| Version | 3.1.0 |
 | Scope | local multi-agent harness (feature + bugfix workflows) + pilot "Mini-CRUD service" |
 | Requirements source | [`requirements/initial.txt`](../../requirements/initial.txt) |
 | Process rules | [`harness/process.md`](../../harness/process.md) |
@@ -88,7 +88,7 @@ Solution layers:
 | Control | opencode, primary agent `harness`, `/harness-*` commands, global installation | explicit start, workflow routing, artifact sync |
 | Workflows | `feature`, `bugfix`, bug registry | stage gates, regression evidence, escalation |
 | Roles | `harness-orchestrator`, `harness-analyst`, `harness-ux-designer`, `harness-architect`, `harness-coder`, `harness-qa`, `harness-qa-vision`, `harness-doc-writer` | work within responsibility areas |
-| Models | `qwen3.8:27b-64k`, `tiel-coder:35b-a3b-mtp-128k-text`, `tiel-coder:35b-a3b-mtp-128k-vision` | local inference without external APIs |
+| Models | `qwen3.8:27b-128k-text`, `tiel-coder:35b-a3b-mtp-128k-text`, `tiel-coder:35b-a3b-mtp-128k-vision` | local inference without external APIs |
 | Sources of truth | `docs/plan.md`, `docs/tasks/*.md`, `docs/bugs/*.md`, `docs/checkpoints/*.md` | work scope, statuses, defects, acceptance, user decisions |
 | Artifacts | `docs/analysis`, `docs/ux`, `docs/architecture`, `docs/qa`, `docs/guides`, `docs/issues`, `src`, `tests` | role results |
 | Tools | MCP `plantuml-render`, `local-rag`, Git | diagram validation/rendering, source search, versioning |
@@ -107,15 +107,17 @@ until `CP-F` and closure.
 
 | Role | Ollama model | Thinking | Main task |
 |---|---|---|---|
-| harness lead | `qwen3.8:27b-64k` | xhigh | explicit start, marker, routing, checkpoints, report |
-| orchestrator | `qwen3.8:27b-64k` | xhigh | board, dependencies, checkpoints, acceptance, commits |
-| analyst | `qwen3.8:27b-64k` | medium | requirements, RAG analysis, questions, glossary, e2e UC/YAML |
-| ux-designer | `qwen3.8:27b-64k` | xhigh | user flows, screens, wireframes, UI spec, per-scenario HTML mockups; may delegate page code to coder |
-| architect | `qwen3.8:27b-64k` | xhigh | ADR, PlantUML diagrams, contracts |
+| harness lead | `qwen3.8:27b-128k-text` | medium | explicit start, marker, routing, checkpoints, report |
+| orchestrator | `qwen3.8:27b-128k-text` | low | board, dependencies, checkpoints, acceptance, commits |
+| analyst | `qwen3.8:27b-128k-text` | medium | requirements, RAG analysis, questions, glossary, e2e UC/YAML |
+| ux-designer | `qwen3.8:27b-128k-text` | medium | user flows, screens, wireframes, UI spec, per-scenario HTML mockups; may delegate page code to coder |
+| architect | `qwen3.8:27b-128k-text` | xhigh (only exception) | ADR, PlantUML diagrams, contracts |
 | coder | `tiel-coder:35b-a3b-mtp-128k-text` | - | code, unit/e2e tests, CI/CD, local deployment; UX prototype page support |
-| qa | `qwen3.8:27b-64k` | low | text/code review, e2e coverage/run/report, verdict |
+| qa | `qwen3.8:27b-128k-text` | medium | text/code review, e2e coverage/run/report, verdict |
 | qa-vision | `tiel-coder:35b-a3b-mtp-128k-vision` | - | visual checks of diagrams, wireframes, screenshots |
-| doc-writer | `qwen3.8:27b-64k` | low | README, runbook, guides, ADR finalization |
+| doc-writer | `qwen3.8:27b-128k-text` | low | README, runbook, guides, ADR finalization |
+
+Qwen roles use the text-only 128K model; `qa-vision` handles images.
 
 Agents are installed globally as `harness`, `harness-orchestrator`,
 `harness-analyst`, `harness-ux-designer`, `harness-architect`, `harness-coder`,

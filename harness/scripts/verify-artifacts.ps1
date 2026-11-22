@@ -1175,6 +1175,28 @@ function Invoke-SelfTest {
         New-TextFile $d 'stray.txt' 'y'
         Invoke-Case -Name 'tree-clean stray' -Type 'tree-clean' -Params @{ allow = @('tracked.txt') } -Dir $d -Expect 'FAIL'
 
+        $d = New-CaseDir 'git-crlf-warning'
+        $null = Invoke-Git -Root $d -Arguments @('init', '-q')
+        $null = Invoke-Git -Root $d -Arguments @('config', 'core.autocrlf', 'true')
+        $null = Invoke-Git -Root $d -Arguments @('config', 'core.safecrlf', 'warn')
+        New-TextFile $d 'lf.txt' "line one`nline two`n"
+        $crlfOk = 'FAIL'
+        $previousEap = $ErrorActionPreference
+        try {
+            $ErrorActionPreference = 'Stop'
+            $r = Invoke-Git -Root $d -Arguments @('add', '--', 'lf.txt')
+            $stderrText = $r.StdErr -join "`n"
+            $stdoutText = $r.Output -join "`n"
+            if ($r.ExitCode -eq 0 -and $stderrText -match 'LF will be replaced by CRLF' -and $stdoutText -notmatch 'warning:') { $crlfOk = 'PASS' }
+        }
+        catch {
+            Write-Host ("       {0}" -f $_.Exception.Message) -ForegroundColor Red
+        }
+        finally {
+            $ErrorActionPreference = $previousEap
+        }
+        Assert-Equal -Label 'Invoke-Git tolerates a CRLF warning under EAP=Stop' -Actual $crlfOk -Expected 'PASS' -Failed ([ref]$failed)
+
         $d = New-CaseDir 'sanity-good'
         New-TextFile $d 'docs/a.md' "# A`n`n## Required`n`ntext"
         New-TextFile $d 'p/index.html' '<html lang="ru"><head><title>X</title></head><body><a href="uc-e2e-001.html">1</a></body></html>'
@@ -1296,12 +1318,12 @@ function Invoke-SelfTest {
         New-TextFile $d 'docs/architecture/architecture-x.md' $mixedDoc
         Invoke-Case -Name 'zones-unique waiver with unfilled table' -Type 'zones-unique' -Params @{ globs = @('docs/architecture/architecture-*.md'); levels = @('components', 'modules') } -Dir $d -Expect 'FAIL'
 
-        $chunkHead = '{"task":"T-999","version":1,"budget":{"max_write_kb":12,"max_session_kb":__S__,'
-        $chunkHead += '"context_stop_pct":65,"max_turns":40,"max_input_tokens":60000,"max_wall_min":45},"chunks":['
+        $chunkHead = '{"task":"T-999","version":1,"budget":{"max_write_kb":16,"max_session_kb":__S__,'
+        $chunkHead += '"context_stop_pct":65,"max_turns":40,"max_input_tokens":76000,"max_wall_min":60},"chunks":['
         $chunkTail = ']}'
 
         $d = New-CaseDir 'chunk-valid'
-        New-TextFile $d 'docs/chunks/T-999.json' (($chunkHead -replace '__S__', '40') + '{"id":"C1","parent":null,"stage":"I-01","role":"coder","depth":1,"title":"core","state":"pending","owns":["src/**"],"inputs":[],"brief":"docs/chunks/T-999/C1.brief.md","acceptance":[],"produced":[],"base_commit":"abc1234","attempts":0,"usage":{"in":0,"out":0,"cr":0,"min":0},"issues":[],"notes":[],"started":null,"finished":null}' + $chunkTail)
+        New-TextFile $d 'docs/chunks/T-999.json' (($chunkHead -replace '__S__', '48') + '{"id":"C1","parent":null,"stage":"I-01","role":"coder","depth":1,"title":"core","state":"pending","owns":["src/**"],"inputs":[],"brief":"docs/chunks/T-999/C1.brief.md","acceptance":[],"produced":[],"base_commit":"abc1234","attempts":0,"usage":{"in":0,"out":0,"cr":0,"min":0},"issues":[],"notes":[],"started":null,"finished":null}' + $chunkTail)
         Invoke-Case -Name 'chunk-ledger valid' -Type 'chunk-ledger' -Params @{ rule = 'ownership' } -Dir $d -Expect 'PASS'
 
         $d = New-CaseDir 'chunk-missing'
@@ -1310,13 +1332,13 @@ function Invoke-SelfTest {
         $d = New-CaseDir 'chunk-overlap'
         $two = '{"id":"C1","parent":null,"stage":"I-01","role":"coder","depth":1,"title":"core","state":"pending","owns":["src/**"],"inputs":[],"brief":"docs/chunks/T-999/C1.brief.md","acceptance":[],"produced":[],"base_commit":"abc1234","attempts":0,"usage":{"in":0,"out":0,"cr":0,"min":0},"issues":[],"notes":[],"started":null,"finished":null},'
         $two += '{"id":"C2","parent":null,"stage":"I-01","role":"coder","depth":1,"title":"api","state":"pending","owns":["src/api/**"],"inputs":[],"brief":"docs/chunks/T-999/C2.brief.md","acceptance":[],"produced":[],"base_commit":"abc1234","attempts":0,"usage":{"in":0,"out":0,"cr":0,"min":0},"issues":[],"notes":[],"started":null,"finished":null}'
-        New-TextFile $d 'docs/chunks/T-999.json' (($chunkHead -replace '__S__', '40') + $two + $chunkTail)
+        New-TextFile $d 'docs/chunks/T-999.json' (($chunkHead -replace '__S__', '48') + $two + $chunkTail)
         Invoke-Case -Name 'chunk-ledger owns overlap' -Type 'chunk-ledger' -Params @{ rule = 'ownership' } -Dir $d -Expect 'FAIL'
 
         $d = New-CaseDir 'chunk-coverage'
         New-TextFile $d 'docs/tasks/T-999-x.md' "| Field | Value |`n|---|---|`n| title | x |`n| artifacts | ``src/**`` |"
         New-TextFile $d 'src/a.py' 'print(1)'
-        New-TextFile $d 'docs/chunks/T-999.json' (($chunkHead -replace '__S__', '40') + '{"id":"C1","parent":null,"stage":"I-01","role":"coder","depth":1,"title":"core","state":"pending","owns":["other/**"],"inputs":[],"brief":"docs/chunks/T-999/C1.brief.md","acceptance":[],"produced":[],"base_commit":"abc1234","attempts":0,"usage":{"in":0,"out":0,"cr":0,"min":0},"issues":[],"notes":[],"started":null,"finished":null}' + $chunkTail)
+        New-TextFile $d 'docs/chunks/T-999.json' (($chunkHead -replace '__S__', '48') + '{"id":"C1","parent":null,"stage":"I-01","role":"coder","depth":1,"title":"core","state":"pending","owns":["other/**"],"inputs":[],"brief":"docs/chunks/T-999/C1.brief.md","acceptance":[],"produced":[],"base_commit":"abc1234","attempts":0,"usage":{"in":0,"out":0,"cr":0,"min":0},"issues":[],"notes":[],"started":null,"finished":null}' + $chunkTail)
         Invoke-Case -Name 'chunk-ledger uncovered artifact' -Type 'chunk-ledger' -Params @{ rule = 'coverage' } -Dir $d -Expect 'FAIL'
 
         $d = New-CaseDir 'chunk-budget'

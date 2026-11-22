@@ -129,15 +129,21 @@ here; workflow-specific stages and task graphs live in
 
 | Role | Model (Ollama) | Use |
 |---|---|---|
-| harness (lead) | `qwen3.8:27b-64k` (xhigh) | routing/reporting |
-| orchestrator | `qwen3.8:27b-64k` (xhigh) | planning/context, board, bug registry |
-| analyst | `qwen3.8:27b-64k` (medium) | requirements/RAG/e2e; bug impact when behavior is unclear |
-| ux-designer | `qwen3.8:27b-64k` (xhigh) | UX flows, wireframes, UI spec, per-scenario HTML mockups (coder-assisted); UI bugs on escalation |
-| architect | `qwen3.8:27b-64k` (xhigh) | design; design-level defects on escalation |
+| harness (lead) | `qwen3.8:27b-128k-text` (medium) | routing/reporting |
+| orchestrator | `qwen3.8:27b-128k-text` (low) | planning/context, board, bug registry |
+| analyst | `qwen3.8:27b-128k-text` (medium) | requirements/RAG/e2e; bug impact when behavior is unclear |
+| ux-designer | `qwen3.8:27b-128k-text` (medium) | UX flows, wireframes, UI spec, per-scenario HTML mockups (coder-assisted); UI bugs on escalation |
+| architect | `qwen3.8:27b-128k-text` (xhigh; only exception) | design; design-level defects on escalation |
 | coder | `tiel-coder:35b-a3b-mtp-128k-text` | code/tests/e2e; bug reproduction/strict regression fix |
-| qa | `qwen3.8:27b-64k` (low) | text/code QA, e2e coverage/run/verdict; independent bug verification |
+| qa | `qwen3.8:27b-128k-text` (medium) | text/code QA, e2e coverage/run/verdict; independent bug verification |
 | qa-vision | `tiel-coder:35b-a3b-mtp-128k-vision` | image/visual QA; visual UI bugs |
-| doc-writer | `qwen3.8:27b-64k` (low) | docs; changelog/guide updates for bugfixes |
+| doc-writer | `qwen3.8:27b-128k-text` (low) | docs; changelog/guide updates for bugfixes |
+
+Qwen roles use the text-only 128K model; images are handled by `qa-vision`
+(`tiel-coder:35b-a3b-mtp-128k-vision`).
+
+`xhigh` reasoning is reserved for the architect; other roles use it only in an
+explicit experiment and return to their listed level afterward.
 
 ## 3. Workflows and routing
 
@@ -434,18 +440,18 @@ stop and request decomposition instead of attempting a larger write.
 
 | Artifact | Max per write/edit | Max new content per role session | Chunk size | Stop at context |
 |---|---|---|---|---|
-| Markdown docs (analyst, architect, ux-designer, qa, doc-writer) | 8 KB | 20 KB | 2-3 use cases or one section | 60% of `limit.context` |
-| PlantUML diagrams (architect/ux-designer) | 8 KB | 20 KB | one diagram | 60% of `limit.context` |
-| OpenAPI 3.x YAML/JSON contracts | 6 KB | 15 KB | one API specification | 60% of `limit.context` |
-| YAML e2e data | 6 KB | 15 KB | 2-3 use-case entries | 60% of `limit.context` |
-| Code (coder) | 12 KB | 40 KB | one module/file group | 65% of `limit.context` |
-| HTML/CSS/JS prototype (ux-designer or delegated coder) | 12 KB | 40 KB | one scenario page or shared asset | 65% of `limit.context` |
-| Any final report | 4 KB | - | - | - |
+| Markdown docs (analyst, architect, ux-designer, qa, doc-writer) | 10 KB | 24 KB | 2-3 use cases or one section | 60% of `limit.context` |
+| PlantUML diagrams (architect/ux-designer) | 10 KB | 24 KB | one diagram | 60% of `limit.context` |
+| OpenAPI 3.x YAML/JSON contracts | 8 KB | 18 KB | one API specification | 60% of `limit.context` |
+| YAML e2e data | 8 KB | 18 KB | 2-3 use-case entries | 60% of `limit.context` |
+| Code (coder) | 16 KB | 48 KB | one module/file group | 65% of `limit.context` |
+| HTML/CSS/JS prototype (ux-designer or delegated coder) | 16 KB | 48 KB | one scenario page or shared asset | 65% of `limit.context` |
+| Any final report | 6 KB | - | - | - |
 
 - Never create a large artifact in one `write`. Write a skeleton and fill it
   with one `edit` per section or use case.
-- An artifact larger than 40 KB must be split into parts or generated in several
-  role sessions; above 80 KB, split it into separate files.
+- An artifact larger than 48 KB must be split into parts or generated in several
+  role sessions; above 96 KB, split it into separate files.
 - Do not use compaction as a decomposition tool. If compaction happens during
   artifact generation, stop, record the state, and continue in a fresh session
   with a handoff note.

@@ -360,7 +360,7 @@ hr { border: none; border-top: 1px solid var(--line); margin: 2rem 0; }
     <div class="eyebrow">Local harness | solution description</div>
     <h1>Local harness: solution description</h1>
     <p class="subtitle">Architecture, scenarios, class model, and pilot case</p>
-    <p class="meta">Generated from README.md | 2026-11-14 | diagrams: 20 | offline version</p>
+    <p class="meta">Generated from README.md | 2026-11-18 | diagrams: 20 | offline version</p>
   </div>
 </header>
 <div class="layout wrap">
@@ -450,11 +450,11 @@ hr { border: none; border-top: 1px solid var(--line); margin: 2rem 0; }
 </tr>
 <tr>
 <td>Date</td>
-<td>2026-11-14</td>
+<td>2026-11-18</td>
 </tr>
 <tr>
 <td>Version</td>
-<td>3.0.0</td>
+<td>3.1.0</td>
 </tr>
 <tr>
 <td>Scope</td>
@@ -565,7 +565,7 @@ multi-user operation, pagination, and note search.</p>
 </tr>
 <tr>
 <td>Models</td>
-<td><code>qwen3.8:27b-64k</code>, <code>tiel-coder:35b-a3b-mtp-128k-text</code>, <code>tiel-coder:35b-a3b-mtp-128k-vision</code></td>
+<td><code>qwen3.8:27b-128k-text</code>, <code>tiel-coder:35b-a3b-mtp-128k-text</code>, <code>tiel-coder:35b-a3b-mtp-128k-vision</code></td>
 <td>local inference without external APIs</td>
 </tr>
 <tr>
@@ -611,32 +611,32 @@ until <code>CP-F</code> and closure.</p>
 <tbody>
 <tr>
 <td>harness lead</td>
-<td><code>qwen3.8:27b-64k</code></td>
-<td>xhigh</td>
+<td><code>qwen3.8:27b-128k-text</code></td>
+<td>medium</td>
 <td>explicit start, marker, routing, checkpoints, report</td>
 </tr>
 <tr>
 <td>orchestrator</td>
-<td><code>qwen3.8:27b-64k</code></td>
-<td>xhigh</td>
+<td><code>qwen3.8:27b-128k-text</code></td>
+<td>low</td>
 <td>board, dependencies, checkpoints, acceptance, commits</td>
 </tr>
 <tr>
 <td>analyst</td>
-<td><code>qwen3.8:27b-64k</code></td>
+<td><code>qwen3.8:27b-128k-text</code></td>
 <td>medium</td>
 <td>requirements, RAG analysis, questions, glossary, e2e UC/YAML</td>
 </tr>
 <tr>
 <td>ux-designer</td>
-<td><code>qwen3.8:27b-64k</code></td>
-<td>xhigh</td>
+<td><code>qwen3.8:27b-128k-text</code></td>
+<td>medium</td>
 <td>user flows, screens, wireframes, UI spec, per-scenario HTML mockups; may delegate page code to coder</td>
 </tr>
 <tr>
 <td>architect</td>
-<td><code>qwen3.8:27b-64k</code></td>
-<td>xhigh</td>
+<td><code>qwen3.8:27b-128k-text</code></td>
+<td>xhigh (only exception)</td>
 <td>ADR, PlantUML diagrams, contracts</td>
 </tr>
 <tr>
@@ -647,8 +647,8 @@ until <code>CP-F</code> and closure.</p>
 </tr>
 <tr>
 <td>qa</td>
-<td><code>qwen3.8:27b-64k</code></td>
-<td>low</td>
+<td><code>qwen3.8:27b-128k-text</code></td>
+<td>medium</td>
 <td>text/code review, e2e coverage/run/report, verdict</td>
 </tr>
 <tr>
@@ -659,12 +659,13 @@ until <code>CP-F</code> and closure.</p>
 </tr>
 <tr>
 <td>doc-writer</td>
-<td><code>qwen3.8:27b-64k</code></td>
+<td><code>qwen3.8:27b-128k-text</code></td>
 <td>low</td>
 <td>README, runbook, guides, ADR finalization</td>
 </tr>
 </tbody>
 </table></div>
+<p>Qwen roles use the text-only 128K model; <code>qa-vision</code> handles images.</p>
 <p>Agents are installed globally as <code>harness</code>, <code>harness-orchestrator</code>,
 <code>harness-analyst</code>, <code>harness-ux-designer</code>, <code>harness-architect</code>, <code>harness-coder</code>,
 <code>harness-qa</code>, <code>harness-qa-vision</code>, <code>harness-doc-writer</code>; the lead calls them via
