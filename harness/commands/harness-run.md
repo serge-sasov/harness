@@ -44,15 +44,16 @@ and Git evidence; `docs/activity.puml` and its derivatives are informational.
    per chunk.
    The orchestrator runs `harness/scripts/stage-done.ps1 -Task T-XXX
    -Checkpoint CP-N` (preview with `verify-stage.ps1`). It runs the checks,
-   writes the checks JSON/ledger/checkpoint, applies P2, updates
-   plan/card/activity, and commits the snapshot. Update the bug status in a
-   separate `chore: bug ...` commit. P2 auto-approves only intermediate
-   checkpoints with `FAIL=0`, `UNCHECKED=0`, `MANUAL=0`, and `hold: false`;
-   `CP-F` and manual items wait for the user. The lead reports machine results,
-   artifacts, manual items, and the review checklist to the user and ends the
-   run for a human checkpoint. A task becomes `done` only after the final role
-   checkpoint and `CP-F` approval; `-AutoApprove` is allowed only when the user
-   explicitly requested it for `CP-F` in this session and all checks are clean.
+   writes the checks JSON/ledger/checkpoint, applies the active approval policy,
+   updates plan/card/activity, and commits the snapshot. Update the bug status in
+   a separate `chore: bug ...` commit. Legacy mode auto-approves only clean
+   intermediate checkpoints with `hold: false`; risk mode uses the stage tier,
+   batch gate, closure, UX gate, and `hold`. `CP-F`, manual items, and risk gates
+   wait for the user. The lead reports machine results, artifacts, risk, group,
+   manual items, and the review checklist, then ends the run. Record the human
+   decision only with `harness/scripts/approve.ps1`. A task becomes `done` only
+   after its final checkpoint is approved; `-AutoApprove` is legacy-only and
+   allowed only for `CP-F` when explicitly requested in this session.
 6. Close via `harness-orchestrator`: success -> `done`, update artifacts, bug
    status (`fixed`/`verified`/`closed` as appropriate), and commit; failure ->
    `failed`, cause in `Blockers`, up to 3 attempts per chunk, then `blocked` and

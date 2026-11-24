@@ -1,5 +1,5 @@
 ---
-description: "Close a harness checkpoint deterministically (checks, ledger, P2, snapshot) for T-XXX"
+description: "Close a harness checkpoint deterministically (checks, ledger, approval policy, snapshot) for T-XXX"
 agent: harness
 ---
 
@@ -18,15 +18,16 @@ ask. If another task is active, stop: only the current task may be closed.
    fails.
 2. Instruct `harness-orchestrator` to run
    `harness/scripts/stage-done.ps1 -Task T-XXX -Checkpoint CP-N`. Add
-   `-AutoApprove` only for `CP-F` when the user explicitly requested it in this
-   session AND the preview has `FAIL=0`, `UNCHECKED=0`, `MANUAL=0`, and the card
-   has `hold: false`. Add `-Force` only to regenerate an existing checkpoint
-   after a recorded reason.
+   `-AutoApprove` only in legacy mode for `CP-F` when the user explicitly
+   requested it in this session AND the preview has `FAIL=0`, `UNCHECKED=0`,
+   `MANUAL=0`, and the card has `hold: false`. Add `-Force` only to regenerate
+   an existing checkpoint after a recorded reason.
 3. The script writes `docs/checkpoints/T-XXX-CP-N.checks.json`, appends artifact
-   hashes to `docs/evidence/T-XXX.md`, renders the checkpoint, applies policy
-   P2, updates plan/card/board machine fields, re-renders `docs/activity.*`, and
-   commits the snapshot (unless `-NoCommit`/`-DryRun`). Never hand-edit these
-   machine fields.
+   hashes to `docs/evidence/T-XXX.md`, renders the checkpoint, applies the active
+   policy, updates plan/card/board machine fields, re-renders `docs/activity.*`,
+   and commits the snapshot (unless `-NoCommit`/`-DryRun`). It reports
+   `policy_mode`, `risk_tier`, `review_group`, and `gate`. Never hand-edit these
+   machine fields; human decisions are written only by `approve.ps1`.
 4. If the script exits 1 or 2, do not approve: report the failing check or the
    configuration error, record it in the card log, and stop. The checkpoint may
    remain `awaiting_review`.

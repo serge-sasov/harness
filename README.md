@@ -22,19 +22,22 @@ Usage manual (RU, HTML): [`docs/manual/index.html`](docs/manual/index.html).
   `harness-architect`, `harness-coder`, `harness-qa`, `harness-qa-vision`,
   `harness-doc-writer`)
 - `harness/commands/` - opencode commands: `/harness-feature`, `/harness-bug`,
-  `/harness-run`, `/harness-stage-done`, `/harness-board-update`,
-  `/harness-board-report`, `/harness-init`, `/harness-doctor`
+  `/harness-run`, `/harness-stage-done`, `/harness-review`, `/harness-approve`,
+  `/harness-board-update`, `/harness-board-report`, `/harness-init`,
+  `/harness-doctor`
 - `harness/skills/harness/SKILL.md` - global skill with a short workflow
 - `harness/skills/harness-issues/SKILL.md` - harness issue tracking skill
 - `harness/templates/` - artifact templates (feature/bugfix task cards, bug card,
   adr, architecture-description, openapi, plan-row, issue, checkpoint,
   e2e-use-case, e2e-test-data, ux-spec, chunk-ledger)
 - `harness/checks/` - deterministic verification registry (`engine.json`,
-  `feature.json`, `bugfix.json`)
+  `feature.json`, `bugfix.json`), approval policy (`risk-policy.json`), and batch
+  groups (`review-groups.json`)
 - `harness/scripts/` - `install.ps1`, `init.ps1`, `doctor.ps1`,
   `uninstall.ps1`, `new-issue.ps1`, `verify-artifacts.ps1`, `verify-stage.ps1`,
-  `stage-done.ps1`, `board-update.ps1`, `measure-tokens.ps1`, `chunk.ps1`,
-  `chunk-validate.py`, `validate-e2e-data.py`, `validate-openapi.py`
+  `stage-done.ps1`, `review.ps1`, `approve.ps1`, `migrate-risk.ps1`,
+  `board-update.ps1`, `measure-tokens.ps1`, `chunk.ps1`, `chunk-validate.py`,
+  `validate-e2e-data.py`, `validate-openapi.py`
 - `harness/version.json` - installation version
 - `docs/bugs/` - product bug registry (`BUG-XXX` cards + index)
 - `docs/issues/` - harness problem log (one MD per issue + index)
@@ -108,9 +111,10 @@ project, run:
 2. Start work with `/harness-feature <slug> [e2e] [ux]` or
    `/harness-bug <report or BUG-XXX>`; both only register pending work.
 3. `/harness-run T-XXX` - execute the task until the next checkpoint.
-4. Review/edit artifacts in `docs/checkpoints/T-XXX-CP-N.md` and record a
-   decision, or let policy P2 close an intermediate checkpoint when all checks
-   are clean (`/harness-stage-done T-XXX`); then run `/harness-run T-XXX` again.
+4. Review pending checkpoints with `/harness-review` (task, group, or stats)
+   and record a decision with `/harness-approve`; legacy P2 or the risk policy
+   may close a clean intermediate checkpoint automatically
+   (`/harness-stage-done T-XXX`). Then run `/harness-run T-XXX` again.
 5. `/harness-board-update all` - sync the board from checkpoint files when no
    task is active.
 6. `/harness-board-report` - summary without changes, including pending reviews
@@ -131,12 +135,12 @@ and suggests `/harness-init`.
    pages under the single cross-role exception.
 4. At a checkpoint the orchestrator runs `stage-done.ps1`: it executes the
    registry checks, writes the checks JSON, SHA256 ledger, and checkpoint,
-   applies policy P2, updates plan/card/activity, and commits the snapshot. An
-   intermediate checkpoint with `FAIL=0`, `UNCHECKED=0`, `MANUAL=0`, and
-   `hold: false` is approved automatically (`auto (P2)`); manual items or CP-F
-   wait for the user.
-5. `/harness-run T-XXX` resumes the task: `approved` continues the role,
-   `changes_requested` returns to the same checkpoint. Silence is not approval.
+   applies the active approval policy, updates plan/card/activity, and commits
+   the snapshot. Legacy P2 auto-approves clean intermediate checkpoints with
+   `hold: false`; risk mode uses stage tiers, batch gates, closure/UX gates, and
+   `hold`. `FAIL`, `UNCHECKED`, `MANUAL`, and gates wait for the user. Human
+   decisions are recorded only with `approve.ps1`; `changes_requested` returns
+   to the same checkpoint. Silence is not approval.
 6. After the final checkpoint and mandatory `CP-F` approval,
    `harness-orchestrator` accepts the result.
 7. On success - `done`, plan/card update, derived activity/SVG re-render, and
@@ -188,7 +192,7 @@ no status/dependency changes, preemption, or parallel execution are allowed.
   `chunk.ps1`/`chunk-validate.py`, the `stage-done -Chunk` gate, per-chunk usage
   attribution, the `chunk-ledger` check type, and ADR-006; includes 2.8.0
   responsibility zones, 2.7.0 architect stage split, 2.6.0 deterministic checks
-  and P2 approval, 2.4.0 per-scenario UX pages, and 2.3.0 budgets).
+   and policy approval, 2.4.0 per-scenario UX pages, and 2.3.0 budgets).
 - Full version history: [`CHANGELOG.md`](CHANGELOG.md).
 - Upgrade note: R-02 checks cover every diagram/spec in `docs/architecture`.
   Existing projects must add `architecture-*.md` and link legacy diagrams there,
@@ -255,7 +259,8 @@ issue files in the task commit. Secrets are never written to issues.
 - `git push`, `git tag`, history rewrite, and prod deployment are forbidden.
 - E2E tests target local/staging only, use isolated data, and must clean up.
 - Checkpoints require an explicit user decision; a silence keeps the task in
-  `awaiting_review` (P2 only auto-approves clean intermediate checkpoints).
+   `awaiting_review` (legacy P2 or the risk policy only auto-approves a clean
+   non-gate checkpoint).
 - If `opencode.jsonc` contains comments, `install.ps1` cannot patch it: add the
   printed `harness-ux-designer` allow rule manually and restart opencode.
 - Models and MCP (`plantuml-render`, `local-rag`) must be available locally.

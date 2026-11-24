@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "feature": [
+    {
+      "id": "RG-PLAN",
+      "title": "Feature planning",
+      "stages": ["P-00"],
+      "gate_stage": "P-00",
+      "gate_checkpoint": "CP-1"
+    },
+    {
+      "id": "RG-DISCOVERY",
+      "title": "Requirements, e2e data, UX flows and prototype",
+      "stages": ["A-01", "A-02", "U-01", "U-02"],
+      "gate_stage": "U-02",
+      "gate_checkpoint": "CP-2"
+    },
+    {
+      "id": "RG-DESIGN",
+      "title": "Architecture and design review",
+      "stages": ["R-01", "R-02"],
+      "gate_stage": "R-02",
+      "gate_checkpoint": "CP-2"
+    },
+    {
+      "id": "RG-BUILD",
+      "title": "Implementation and quality",
+      "stages": ["I-01", "I-02", "Q-01", "Q-02"],
+      "gate_stage": "Q-02",
+      "gate_checkpoint": "CP-2"
+    },
+    {
+      "id": "RG-CLOSE",
+      "title": "Documentation and final acceptance",
+      "stages": ["D-01", "F-01"],
+      "gate_stage": "F-01",
+      "gate_checkpoint": "CP-F"
+    }
+  ],
+  "bugfix": [
+    {
+      "id": "RG-TRIAGE",
+      "title": "Bug triage and impact",
+      "stages": ["B-00", "B-01"],
+      "gate_stage": "B-01",
+      "gate_checkpoint": "CP-1"
+    },
+    {
+      "id": "RG-FIX",
+      "title": "Fix, verification and docs",
+      "stages": ["B-02", "B-03", "B-04"],
+      "gate_stage": "B-03",
+      "gate_checkpoint": "CP-F"
+    },
+    {
+      "id": "RG-CLOSE",
+      "title": "Bug closure",
+      "stages": ["B-05"],
+      "gate_stage": "B-05",
+      "gate_checkpoint": "CP-F"
+    }
+  ]
+}

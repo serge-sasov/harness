@@ -108,6 +108,8 @@ $globalFiles = @(
     (Join-Path $GlobalRoot "commands\harness-bug.md"),
     (Join-Path $GlobalRoot "commands\harness-run.md"),
     (Join-Path $GlobalRoot "commands\harness-stage-done.md"),
+    (Join-Path $GlobalRoot "commands\harness-review.md"),
+    (Join-Path $GlobalRoot "commands\harness-approve.md"),
     (Join-Path $GlobalRoot "commands\harness-board-update.md"),
     (Join-Path $GlobalRoot "commands\harness-board-report.md"),
     (Join-Path $GlobalRoot "commands\harness-doctor.md"),
@@ -140,9 +142,14 @@ $globalFiles = @(
     (Join-Path $GlobalHarness "scripts\stage-done.ps1"),
     (Join-Path $GlobalHarness "scripts\board-update.ps1"),
     (Join-Path $GlobalHarness "scripts\measure-tokens.ps1"),
+    (Join-Path $GlobalHarness "scripts\review.ps1"),
+    (Join-Path $GlobalHarness "scripts\approve.ps1"),
+    (Join-Path $GlobalHarness "scripts\migrate-risk.ps1"),
     (Join-Path $GlobalHarness "checks\engine.json"),
     (Join-Path $GlobalHarness "checks\feature.json"),
-    (Join-Path $GlobalHarness "checks\bugfix.json")
+    (Join-Path $GlobalHarness "checks\bugfix.json"),
+    (Join-Path $GlobalHarness "checks\risk-policy.json"),
+    (Join-Path $GlobalHarness "checks\review-groups.json")
 )
 $missingGlobal = @()
 foreach ($file in $globalFiles) {
@@ -181,6 +188,42 @@ if (Test-Path -LiteralPath $enginePath) {
 else {
     Write-Err "checks/engine.json not found"
 }
+$riskPolicyPath = Join-Path $checksRoot "risk-policy.json"
+$reviewGroupsPath = Join-Path $checksRoot "review-groups.json"
+if (Test-Path -LiteralPath $riskPolicyPath) {
+    try {
+        $riskPolicy = Get-Content -LiteralPath $riskPolicyPath -Raw | ConvertFrom-Json
+        if ($riskPolicy.mode -notin @("legacy", "risk")) { Write-Err "risk-policy mode must be legacy or risk" }
+        else { Write-Ok "risk policy mode: $($riskPolicy.mode)" }
+        if ($riskPolicy.max_batch_stages -lt 1 -or $riskPolicy.max_batch_stages -gt 4) {
+            Write-Err "risk-policy max_batch_stages must be 1..4"
+        }
+    }
+    catch { Write-Err "cannot parse checks/risk-policy.json: $_" }
+}
+else { Write-Err "checks/risk-policy.json not found" }
+if (Test-Path -LiteralPath $reviewGroupsPath) {
+    try {
+        $reviewGroups = Get-Content -LiteralPath $reviewGroupsPath -Raw | ConvertFrom-Json
+        $groupErrors = New-Object System.Collections.Generic.List[string]
+        foreach ($workflow in @("feature", "bugfix")) {
+            foreach ($group in @($reviewGroups.$workflow)) {
+                if (-not $group) { continue }
+                $stages = @($group.stages)
+                if (-not $group.id -or $stages.Count -eq 0 -or -not $group.gate_stage -or -not $group.gate_checkpoint) {
+                    $groupErrors.Add("$workflow group missing id/stages/gate")
+                    continue
+                }
+                if ($stages.Count -gt 4) { $groupErrors.Add("$($group.id) has $($stages.Count) stages") }
+                if ($stages -notcontains $group.gate_stage) { $groupErrors.Add("$($group.id) gate not in stages") }
+            }
+        }
+        if ($groupErrors.Count -eq 0) { Write-Ok "review groups and gates are consistent" }
+        else { $groupErrors | ForEach-Object { Write-Err "review-groups: $_" } }
+    }
+    catch { Write-Err "cannot parse checks/review-groups.json: $_" }
+}
+else { Write-Err "checks/review-groups.json not found" }
 foreach ($workflowName in @("feature", "bugfix")) {
     $registryPath = Join-Path $checksRoot "$workflowName.json"
     if (-not (Test-Path -LiteralPath $registryPath)) {
@@ -208,9 +251,9 @@ foreach ($workflowName in @("feature", "bugfix")) {
 $leadAgentPath = Join-Path $GlobalRoot "agents\harness.md"
 if (Test-Path -LiteralPath $leadAgentPath) {
     $leadText = Get-Content -LiteralPath $leadAgentPath -Raw
-    $scriptPatterns = @("*stage-done.ps1*", "*board-update.ps1*", "*measure-tokens.ps1*", "*verify-artifacts.ps1*", "*verify-stage.ps1*")
+    $scriptPatterns = @("*stage-done.ps1*", "*review.ps1*", "*approve.ps1*", "*board-update.ps1*", "*measure-tokens.ps1*", "*verify-artifacts.ps1*", "*verify-stage.ps1*")
     $missingPatterns = @($scriptPatterns | Where-Object { $leadText -notmatch [regex]::Escape($_) })
-    if ($missingPatterns.Count -eq 0) { Write-Ok "lead agent allows the five harness scripts" }
+    if ($missingPatterns.Count -eq 0) { Write-Ok "lead agent allows the seven harness scripts" }
     else { Write-Warn "lead agent is missing allow patterns: $($missingPatterns -join ', ')" }
     if ($leadText -match '"git\*"\s*:\s*"allow"') {
         Write-Warn "lead agent has a broad git allow pattern; review permission.bash manually"
@@ -573,7 +616,7 @@ if ((Test-Path -LiteralPath $marker) -and (Test-Path -LiteralPath $plan)) {
         Write-Warn "missing docs directories: $($missingDirs -join ', '); run /harness-init -Force"
     }
     $projectChecks = Join-Path $Project "harness\checks"
-    $missingChecks = @(@("engine.json", "feature.json", "bugfix.json") | Where-Object {
+    $missingChecks = @(@("engine.json", "feature.json", "bugfix.json", "risk-policy.json", "review-groups.json") | Where-Object {
         -not (Test-Path -LiteralPath (Join-Path $projectChecks $_))
     })
     if ($missingChecks.Count -eq 0) {
@@ -582,7 +625,7 @@ if ((Test-Path -LiteralPath $marker) -and (Test-Path -LiteralPath $plan)) {
     else {
         Write-Warn "missing harness/checks: $($missingChecks -join ', '); run /harness-init -Force"
     }
-    $projectScripts = @("harness-lib.ps1", "verify-artifacts.ps1", "verify-stage.ps1", "stage-done.ps1", "board-update.ps1", "measure-tokens.ps1", "validate-openapi.py")
+    $projectScripts = @("harness-lib.ps1", "verify-artifacts.ps1", "verify-stage.ps1", "stage-done.ps1", "board-update.ps1", "measure-tokens.ps1", "review.ps1", "approve.ps1", "migrate-risk.ps1", "validate-openapi.py")
     $missingScripts = @($projectScripts | Where-Object {
         -not (Test-Path -LiteralPath (Join-Path $Project "harness\scripts\$_"))
     })

@@ -146,6 +146,8 @@ $requiredSource = @(
     (Join-Path $SourceRoot "commands\harness-feature.md"),
     (Join-Path $SourceRoot "commands\harness-bug.md"),
     (Join-Path $SourceRoot "commands\harness-stage-done.md"),
+    (Join-Path $SourceRoot "commands\harness-review.md"),
+    (Join-Path $SourceRoot "commands\harness-approve.md"),
     (Join-Path $SourceRoot "skills\harness\SKILL.md"),
     (Join-Path $SourceRoot "skills\harness-issues\SKILL.md"),
     (Join-Path $SourceRoot "workflows\feature.md"),
@@ -174,9 +176,14 @@ $requiredSource = @(
     (Join-Path $SourceRoot "scripts\measure-tokens.ps1"),
     (Join-Path $SourceRoot "scripts\chunk.ps1"),
     (Join-Path $SourceRoot "scripts\chunk-validate.py"),
+    (Join-Path $SourceRoot "scripts\review.ps1"),
+    (Join-Path $SourceRoot "scripts\approve.ps1"),
+    (Join-Path $SourceRoot "scripts\migrate-risk.ps1"),
     (Join-Path $SourceRoot "checks\engine.json"),
     (Join-Path $SourceRoot "checks\feature.json"),
     (Join-Path $SourceRoot "checks\bugfix.json"),
+    (Join-Path $SourceRoot "checks\risk-policy.json"),
+    (Join-Path $SourceRoot "checks\review-groups.json"),
     (Join-Path $SourceRoot "process.md"),
     (Join-Path $SourceRoot "version.json")
 )

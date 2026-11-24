@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "mode": "legacy",
+  "engine": "feature",
+  "default_tier": "medium",
+  "unknown_tier": "high",
+  "review_mode": "auto",
+  "max_batch_stages": 4,
+  "stage_tiers": {
+    "P-00": "medium",
+    "A-01": "medium",
+    "A-02": "medium",
+    "U-01": "medium",
+    "U-02": "high",
+    "R-01": "medium",
+    "R-02": "critical",
+    "I-01": "medium",
+    "I-02": "medium",
+    "Q-01": "low",
+    "Q-02": "high",
+    "D-01": "low",
+    "F-01": "critical",
+    "B-00": "medium",
+    "B-01": "medium",
+    "B-02": "high",
+    "B-03": "high",
+    "B-04": "low",
+    "B-05": "critical"
+  },
+  "closure_stages": ["F-01", "B-05"],
+  "ux_gates": ["U-02:CP-2"],
+  "flags": [
+    {
+      "id": "public-contract",
+      "tier": "high",
+      "patterns": [
+        "docs/architecture/contracts-*",
+        "docs/architecture/openapi-*",
+        "**/openapi*.yaml",
+        "**/*.proto",
+        "**/migrations/**",
+        "src/**/api/**",
+        "src/**/schema*"
+      ]
+    },
+    {
+      "id": "security-auth",
+      "tier": "critical",
+      "patterns": [
+        "**/auth/**",
+        "**/security/**",
+        "**/permissions/**",
+        "**/secrets/**"
+      ]
+    },
+    {
+      "id": "release-infra",
+      "tier": "high",
+      "patterns": [
+        ".github/workflows/**",
+        "Dockerfile",
+        "docker-compose*",
+        "**/deploy*",
+        "infra/**"
+      ]
+    }
+  ]
+}

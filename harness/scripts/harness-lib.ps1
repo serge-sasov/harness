@@ -651,3 +651,569 @@ function Get-TaskBaseCommit {
     if ($r.ExitCode -eq 0 -and $r.Output.Count -gt 0) { return ([string]$r.Output[0]).Trim() }
     $null
 }
+
+$script:HarnessSupportDir = Split-Path -Parent $PSScriptRoot
+
+function Get-JsonPropertyValue {
+    param($Object, [string]$Name)
+    if ($null -eq $Object -or -not $Name) { return $null }
+    if ($Object -is [hashtable]) {
+        if ($Object.ContainsKey($Name)) { return $Object[$Name] }
+        return $null
+    }
+    $prop = $Object.PSObject.Properties[$Name]
+    if ($prop) { return $prop.Value }
+    $null
+}
+
+function Get-SupportDir {
+    param([string]$Root = '')
+    if (-not $Root) { $Root = Get-HarnessRoot }
+    $candidates = @()
+    if ($script:HarnessSupportDir) { $candidates += $script:HarnessSupportDir }
+    $candidates += @((Join-Path $Root 'harness'), (Join-Path $Root 'harness-sdd'))
+    foreach ($candidate in $candidates) {
+        if ($candidate -and (Test-Path -LiteralPath (Join-Path $candidate 'process.md'))) {
+            return (Resolve-Path -LiteralPath $candidate).Path
+        }
+    }
+    $script:HarnessSupportDir
+}
+
+function Get-RiskPolicy {
+    param([string]$Root = '')
+    $support = Get-SupportDir -Root $Root
+    if (-not $support) { throw "harness support directory not found" }
+    $path = Join-Path $support 'checks\risk-policy.json'
+    $result = [ordered]@{
+        Path           = $path
+        Exists         = $false
+        Mode           = 'legacy'
+        Engine         = ''
+        DefaultTier    = 'medium'
+        UnknownTier    = 'high'
+        ReviewMode     = 'auto'
+        MaxBatchStages = 4
+        Data           = $null
+    }
+    if (-not (Test-Path -LiteralPath $path)) {
+        return [pscustomobject]$result
+    }
+    try {
+        $data = Read-Utf8 $path | ConvertFrom-Json
+    }
+    catch {
+        throw "cannot parse risk policy '$path': $_"
+    }
+    $mode = [string](Get-JsonPropertyValue $data 'mode')
+    if (-not $mode) { $mode = 'legacy' }
+    $mode = $mode.ToLowerInvariant()
+    if ($mode -notin @('legacy', 'risk')) {
+        throw "risk policy '$path' has invalid mode '$mode' (expected legacy or risk)"
+    }
+    $result.Exists = $true
+    $result.Mode = $mode
+    $result.Engine = [string](Get-JsonPropertyValue $data 'engine')
+    $defaultTier = [string](Get-JsonPropertyValue $data 'default_tier')
+    if ($defaultTier) { $result.DefaultTier = $defaultTier }
+    $unknownTier = [string](Get-JsonPropertyValue $data 'unknown_tier')
+    if ($unknownTier) { $result.UnknownTier = $unknownTier }
+    $reviewMode = [string](Get-JsonPropertyValue $data 'review_mode')
+    if ($reviewMode) { $result.ReviewMode = $reviewMode }
+    $maxBatch = Get-JsonPropertyValue $data 'max_batch_stages'
+    if ($null -ne $maxBatch) { $result.MaxBatchStages = [int]$maxBatch }
+    $result.Data = $data
+    [pscustomobject]$result
+}
+
+function Get-ReviewGroups {
+    param([string]$Root = '')
+    $support = Get-SupportDir -Root $Root
+    if (-not $support) { throw "harness support directory not found" }
+    $path = Join-Path $support 'checks\review-groups.json'
+    $result = [ordered]@{ Path = $path; Exists = $false; Data = $null }
+    if (-not (Test-Path -LiteralPath $path)) { return [pscustomobject]$result }
+    try {
+        $data = Read-Utf8 $path | ConvertFrom-Json
+    }
+    catch {
+        throw "cannot parse review groups '$path': $_"
+    }
+    $result.Exists = $true
+    $result.Data = $data
+    [pscustomobject]$result
+}
+
+function Get-ReviewGroupForStage {
+    param($Config, [string]$Workflow, [string]$Stage)
+    if (-not $Config -or -not $Workflow -or -not $Stage) { return $null }
+    $data = Get-JsonPropertyValue $Config 'Data'
+    if (-not $data) { $data = $Config }
+    $workflowGroups = Get-JsonPropertyValue $data $Workflow
+    foreach ($group in @($workflowGroups)) {
+        if (@((Get-JsonPropertyValue $group 'stages')) -contains $Stage) { return $group }
+    }
+    $null
+}
+
+function Get-ReviewGroupById {
+    param($Config, [string]$Id)
+    if (-not $Config -or -not $Id) { return $null }
+    $data = Get-JsonPropertyValue $Config 'Data'
+    if (-not $data) { $data = $Config }
+    foreach ($workflow in @('feature', 'bugfix', 'sdd')) {
+        foreach ($group in @((Get-JsonPropertyValue $data $workflow))) {
+            if ((Get-JsonPropertyValue $group 'id') -eq $Id) { return $group }
+        }
+    }
+    $null
+}
+
+function Get-RiskRank {
+    param([string]$Tier)
+    switch (([string]$Tier).ToLowerInvariant()) {
+        'low' { 0 }
+        'medium' { 1 }
+        'high' { 2 }
+        'critical' { 3 }
+        default { 3 }
+    }
+}
+
+function Get-HighestRiskTier {
+    param([string[]]$Tiers = @())
+    $best = 'low'
+    $bestRank = -1
+    foreach ($tier in $Tiers) {
+        if (-not $tier) { continue }
+        $rank = Get-RiskRank $tier
+        if ($rank -gt $bestRank) {
+            $bestRank = $rank
+            $best = $tier.ToLowerInvariant()
+        }
+    }
+    $best
+}
+
+function Get-RiskFlagsForFiles {
+    param([string[]]$Files = @(), [object[]]$FlagDefs = @())
+    $hits = New-Object System.Collections.Generic.List[object]
+    foreach ($def in @($FlagDefs)) {
+        if (-not $def) { continue }
+        $matched = @()
+        $patterns = @((Get-JsonPropertyValue $def 'patterns'))
+        foreach ($file in @($Files)) {
+            if (-not $file) { continue }
+            if (Test-GlobAny -Path $file -Patterns $patterns) { $matched += $file }
+        }
+        if ($matched.Count -gt 0) {
+            $hits.Add([pscustomobject]@{
+                    id    = [string](Get-JsonPropertyValue $def 'id')
+                    tier  = [string](Get-JsonPropertyValue $def 'tier')
+                    files = @($matched | Sort-Object -Unique)
+                })
+        }
+    }
+    $hits.ToArray()
+}
+
+function Get-ChangedFiles {
+    param([string]$Root, [string]$BaseCommit = '')
+    $set = New-Object 'System.Collections.Generic.HashSet[string]'
+    function Add-GitLines {
+        param($Lines)
+        foreach ($line in @($Lines)) {
+            if ($null -eq $line) { continue }
+            $rel = ([string]$line).Trim().Replace('\', '/')
+            if ($rel.StartsWith('./')) { $rel = $rel.Substring(2) }
+            if ($rel) { [void]$set.Add($rel) }
+        }
+    }
+    if ($BaseCommit -and $BaseCommit -ne '-') {
+        $r = Invoke-Git -Root $Root -Arguments @('diff', '--name-only', "$BaseCommit..HEAD") -AllowFail
+        if ($r.ExitCode -eq 0) { Add-GitLines $r.Output }
+    }
+    foreach ($gitArgs in @(
+            @('diff', '--name-only'),
+            @('diff', '--cached', '--name-only'),
+            @('ls-files', '--others', '--exclude-standard')
+        )) {
+        $r = Invoke-Git -Root $Root -Arguments $gitArgs -AllowFail
+        if ($r.ExitCode -eq 0) { Add-GitLines $r.Output }
+    }
+    @($set | Sort-Object)
+}
+
+function Get-CardStageFinalCheckpoint {
+    param([string]$Path, [string]$Stage)
+    if (-not $Path -or -not (Test-Path -LiteralPath $Path)) { return $null }
+    $rows = @(Get-CardCheckpointRows -Path $Path | Where-Object {
+            [string](Get-JsonPropertyValue $_ 'stage') -eq $Stage
+        })
+    if ($rows.Count -eq 0) { return $null }
+    [string](Get-JsonPropertyValue $rows[$rows.Count - 1] 'id')
+}
+
+function Get-RiskAssessment {
+    param(
+        [string]$Root = (Get-Location).Path,
+        [string]$Task = '',
+        [string]$Workflow = 'feature',
+        [string]$Stage = '',
+        [string]$Checkpoint = '',
+        [hashtable]$Card = @{},
+        [string]$CardPath = '',
+        [object]$Policy = $null,
+        [object]$ReviewGroups = $null,
+        [string[]]$ChangedFiles = @(),
+        [string[]]$Artifacts = @(),
+        [string]$BaseCommit = ''
+    )
+    if (-not $Policy) { $Policy = Get-RiskPolicy -Root $Root }
+    if (-not $ReviewGroups) { $ReviewGroups = Get-ReviewGroups -Root $Root }
+    $mode = [string]$Policy.Mode
+    if (-not $mode) { $mode = 'legacy' }
+    $tier = [string]$Policy.DefaultTier
+    if (-not $tier) { $tier = 'medium' }
+    $reasons = New-Object System.Collections.Generic.List[string]
+
+    $stageTiers = Get-JsonPropertyValue $Policy.Data 'stage_tiers'
+    $stageTier = [string](Get-JsonPropertyValue $stageTiers $Stage)
+    if ($stageTier) {
+        $tier = $stageTier
+        $reasons.Add("stage $Stage tier $stageTier")
+    }
+    else {
+        $tier = [string]$Policy.UnknownTier
+        if (-not $tier) { $tier = 'high' }
+        $reasons.Add("unknown stage $Stage tier $tier")
+    }
+
+    $allFiles = @(@($ChangedFiles) + @($Artifacts) | Where-Object { $_ } | Sort-Object -Unique)
+    $flags = @()
+    if ($allFiles.Count -gt 0) {
+        $flags = @(Get-RiskFlagsForFiles -Files $allFiles -FlagDefs @((Get-JsonPropertyValue $Policy.Data 'flags')))
+        foreach ($flag in $flags) {
+            $tier = Get-HighestRiskTier @($tier, [string]$flag.tier)
+            $reasons.Add("flag $($flag.id) tier $($flag.tier)")
+        }
+    }
+
+    if ($Card -and $Card -is [hashtable]) {
+        $override = ''
+        foreach ($key in @('risk_tier', 'risk')) {
+            if ($Card.ContainsKey($key)) {
+                $value = ([string]$Card[$key]).Trim().ToLowerInvariant()
+                if ($value -and $value -notin @('-', 'auto', 'default')) { $override = $value; break }
+            }
+        }
+        if ($override) {
+            $tier = Get-HighestRiskTier @($tier, $override)
+            $reasons.Add("card risk override $override")
+        }
+    }
+
+    $reviewMode = 'auto'
+    if ($Policy.ReviewMode) { $reviewMode = [string]$Policy.ReviewMode }
+    if ($Card -and $Card -is [hashtable] -and $Card.ContainsKey('review_mode')) {
+        $value = ([string]$Card['review_mode']).Trim().ToLowerInvariant()
+        if ($value -in @('auto', 'human')) { $reviewMode = $value }
+    }
+
+    $group = Get-ReviewGroupForStage -Config $ReviewGroups -Workflow $Workflow -Stage $Stage
+    $groupId = ''
+    $gate = ''
+    $isBatchGate = $false
+    if ($group) {
+        $groupId = [string](Get-JsonPropertyValue $group 'id')
+        $gateStage = [string](Get-JsonPropertyValue $group 'gate_stage')
+        $gateCheckpoint = [string](Get-JsonPropertyValue $group 'gate_checkpoint')
+        if ($gateStage -and $gateCheckpoint) { $gate = "$gateStage $gateCheckpoint" }
+        if ($gateStage -eq $Stage -and $gateCheckpoint -eq $Checkpoint) { $isBatchGate = $true }
+    }
+
+    $closureStages = @((Get-JsonPropertyValue $Policy.Data 'closure_stages'))
+    $uxGates = @((Get-JsonPropertyValue $Policy.Data 'ux_gates'))
+    $isClosure = ($closureStages -contains $Stage)
+    $isUxGate = ($uxGates -contains ('{0}:{1}' -f $Stage, $Checkpoint))
+
+    $stageFinal = $null
+    if ($CardPath) { $stageFinal = Get-CardStageFinalCheckpoint -Path $CardPath -Stage $Stage }
+    if (-not $stageFinal -and $Card -and $Card -is [hashtable] -and $Card.ContainsKey('final_checkpoint')) {
+        $stageFinal = ([string]$Card['final_checkpoint']).Trim()
+        if ($stageFinal -eq '-') { $stageFinal = $null }
+    }
+    if (-not $stageFinal -and $Checkpoint -eq 'CP-F') { $stageFinal = 'CP-F' }
+    $isStageFinal = ($stageFinal -and $Checkpoint -eq $stageFinal)
+
+    [pscustomobject]@{
+        Mode                 = $mode
+        Task                 = $Task
+        Workflow             = $Workflow
+        Stage                = $Stage
+        Checkpoint           = $Checkpoint
+        RiskTier             = $tier.ToLowerInvariant()
+        StageTier            = $stageTier
+        Reasons              = @($reasons)
+        Flags                = @($flags)
+        Files                = @($allFiles)
+        ReviewMode           = $reviewMode
+        ReviewGroup          = $group
+        ReviewGroupId        = $groupId
+        Gate                 = $gate
+        IsBatchGate          = $isBatchGate
+        IsClosure            = $isClosure
+        IsUxGate             = $isUxGate
+        StageFinalCheckpoint = $stageFinal
+        IsStageFinal         = $isStageFinal
+    }
+}
+
+function Get-ApprovalDecision {
+    param(
+        [ValidateSet('legacy', 'risk')][string]$PolicyMode = 'legacy',
+        [bool]$IsFinal = $false,
+        [bool]$IsUxGate = $false,
+        [bool]$LegacyUxGate = $false,
+        [bool]$IsClosure = $false,
+        [bool]$IsBatchGate = $false,
+        [bool]$IsStageFinal = $false,
+        [string]$RiskTier = 'medium',
+        [string]$ReviewMode = 'auto',
+        [bool]$Hold = $false,
+        [int]$Fail = 0,
+        [int]$Manual = 0,
+        [int]$Unchecked = 0,
+        [switch]$AutoApprove,
+        [string]$ReviewGroup = '',
+        [string]$Gate = ''
+    )
+    $result = [ordered]@{
+        Approved      = $false
+        Reviewer      = 'user'
+        Decision      = '-'
+        Reason        = ''
+        HumanRequired = $true
+        RiskTier      = $RiskTier
+        PolicyMode    = $PolicyMode
+        ReviewGroup   = $ReviewGroup
+        Gate          = $Gate
+    }
+    $machineOk = ($Fail -eq 0 -and $Unchecked -eq 0)
+    $autoOk = ($machineOk -and $Manual -eq 0)
+
+    if ($PolicyMode -eq 'legacy') {
+        if ($IsFinal) {
+            if ($AutoApprove -and $autoOk) {
+                $result.Approved = $true
+                $result.Reviewer = 'auto (explicit -AutoApprove)'
+                $result.Decision = 'approved'
+                $result.HumanRequired = $false
+                $result.Reason = 'legacy CP-F explicitly auto-approved with clean checks'
+            }
+            else {
+                $result.Reason = 'legacy CP-F requires the user unless -AutoApprove is explicit and checks are clean'
+            }
+        }
+        elseif ($LegacyUxGate) {
+            $result.Reason = 'legacy UX prototype CP-2 requires the user'
+        }
+        elseif (-not $Hold -and $autoOk) {
+            $result.Approved = $true
+            $result.Reviewer = 'auto (legacy P2)'
+            $result.Decision = 'approved'
+            $result.HumanRequired = $false
+            $result.Reason = 'legacy P2 auto-approved a clean non-gate checkpoint'
+        }
+        else {
+            if ($Hold) { $result.Reason = 'hold: true requires the user' }
+            elseif (-not $machineOk) { $result.Reason = 'failed or unchecked checks require the user' }
+            else { $result.Reason = 'manual review requires the user' }
+        }
+        return [pscustomobject]$result
+    }
+
+    $tierRank = Get-RiskRank $RiskTier
+    $reviewMode = ([string]$ReviewMode).ToLowerInvariant()
+    if (-not $machineOk) {
+        $result.Reason = 'failed or unchecked checks require the user'
+    }
+    elseif ($Manual -gt 0) {
+        $result.Reason = 'manual review items require the user'
+    }
+    elseif ($Hold) {
+        $result.Reason = 'hold: true requires the user'
+    }
+    elseif ($reviewMode -eq 'human') {
+        $result.Reason = 'review_mode human requires the user'
+    }
+    elseif ($IsClosure) {
+        $result.Reason = 'closure checkpoint requires the user'
+    }
+    elseif ($IsUxGate) {
+        $result.Reason = 'UX gate requires the user'
+    }
+    elseif ($IsBatchGate) {
+        $result.Reason = "batch gate $Gate requires the user"
+    }
+    elseif ($tierRank -ge 3) {
+        $result.Reason = 'critical risk requires the user at every checkpoint'
+    }
+    elseif ($tierRank -ge 2) {
+        if ($ReviewGroup -and -not $IsBatchGate) {
+            $result.Approved = $true
+            $result.Reviewer = 'auto (risk)'
+            $result.Decision = 'approved'
+            $result.HumanRequired = $false
+            $result.Reason = 'high-risk stage inside a batch; covered by the group gate'
+        }
+        elseif (-not $ReviewGroup -and -not $IsStageFinal) {
+            $result.Approved = $true
+            $result.Reviewer = 'auto (risk)'
+            $result.Decision = 'approved'
+            $result.HumanRequired = $false
+            $result.Reason = 'high-risk stage intermediate checkpoint'
+        }
+        else {
+            $result.Reason = 'high risk at stage final or checkpoint gate requires the user'
+        }
+    }
+    else {
+        $result.Approved = $true
+        $result.Reviewer = 'auto (risk)'
+        $result.Decision = 'approved'
+        $result.HumanRequired = $false
+        $result.Reason = 'low/medium non-gate checkpoint auto-approved'
+    }
+    [pscustomobject]$result
+}
+
+function Get-CheckpointFields {
+    param([string]$Path)
+    if (-not $Path -or -not (Test-Path -LiteralPath $Path)) { return @{} }
+    $fields = Get-CardFields -Path $Path
+    $fields
+}
+
+function Get-OpenCheckpoints {
+    param([string]$Root)
+    $dir = Join-Path $Root 'docs\checkpoints'
+    if (-not (Test-Path -LiteralPath $dir)) { return @() }
+    $rows = New-Object System.Collections.Generic.List[object]
+    $cardCache = @{}
+    $policy = Get-RiskPolicy -Root $Root
+    $reviewGroups = Get-ReviewGroups -Root $Root
+    foreach ($file in @(Get-ChildItem -LiteralPath $dir -Filter 'T-*-CP-*.md' -File -ErrorAction SilentlyContinue)) {
+        $fields = Get-CheckpointFields -Path $file.FullName
+        if ([string](Get-JsonPropertyValue $fields 'status') -ne 'awaiting_review') { continue }
+        $task = [string](Get-JsonPropertyValue $fields 'task')
+        $checkpoint = [string](Get-JsonPropertyValue $fields 'checkpoint')
+        $workflow = [string](Get-JsonPropertyValue $fields 'workflow')
+        $stage = [string](Get-JsonPropertyValue $fields 'stage')
+        $riskTier = [string](Get-JsonPropertyValue $fields 'risk_tier')
+        $policyMode = [string](Get-JsonPropertyValue $fields 'policy_mode')
+        $reviewGroup = [string](Get-JsonPropertyValue $fields 'review_group')
+        $gate = [string](Get-JsonPropertyValue $fields 'gate')
+        $card = $null
+        if ($task -and -not $cardCache.ContainsKey($task)) {
+            $cardPath = Get-CardFile -Root $Root -Task $task
+            $cardCache[$task] = if ($cardPath) { Get-CardFields -Path $cardPath } else { $null }
+        }
+        if ($task -and $cardCache.ContainsKey($task)) { $card = $cardCache[$task] }
+        if (-not $workflow -and $card) { $workflow = [string](Get-JsonPropertyValue $card 'workflow') }
+        if (-not $stage -and $card) { $stage = [string](Get-JsonPropertyValue $card 'stage') }
+        if (-not $riskTier -or -not $reviewGroup -or -not $policyMode) {
+            try {
+                $risk = Get-RiskAssessment -Root $Root -Task $task -Workflow $workflow -Stage $stage `
+                    -Checkpoint $checkpoint -Card $card -Policy $policy -ReviewGroups $reviewGroups
+                if (-not $riskTier) { $riskTier = $risk.RiskTier }
+                if (-not $policyMode) { $policyMode = $risk.Mode }
+                if (-not $reviewGroup) { $reviewGroup = $risk.ReviewGroupId }
+                if (-not $gate) { $gate = $risk.Gate }
+            }
+            catch { }
+        }
+        $requested = [string](Get-JsonPropertyValue $fields 'requested_at')
+        $waitHours = $null
+        if ($requested -and $requested -ne '-') {
+            try {
+                $dt = [datetime]::Parse($requested, [System.Globalization.CultureInfo]::InvariantCulture)
+                $waitHours = [math]::Round(((Get-Date) - $dt).TotalHours, 1)
+            }
+            catch { }
+        }
+        $checksPath = $file.FullName -replace '\.md$', '.checks.json'
+        $pass = 0; $fail = 0; $manual = 0; $unchecked = 0
+        if (Test-Path -LiteralPath $checksPath) {
+            try {
+                $checks = Read-Utf8 $checksPath | ConvertFrom-Json
+                $pass = [int]$checks.summary.pass
+                $fail = [int]$checks.summary.fail
+                $manual = [int]$checks.summary.manual
+                $unchecked = [int]$checks.summary.unchecked
+            }
+            catch { }
+        }
+        $rows.Add([pscustomobject]@{
+                Task         = $task
+                Checkpoint   = $checkpoint
+                Workflow     = $workflow
+                Stage        = $stage
+                Status       = [string](Get-JsonPropertyValue $fields 'status')
+                RiskTier     = $riskTier
+                PolicyMode   = $policyMode
+                ReviewGroup  = $reviewGroup
+                Gate         = $gate
+                Reviewer     = [string](Get-JsonPropertyValue $fields 'reviewer')
+                Decision     = [string](Get-JsonPropertyValue $fields 'decision')
+                RequestedAt  = $requested
+                WaitHours    = $waitHours
+                Pass         = $pass
+                Fail         = $fail
+                Manual       = $manual
+                Unchecked    = $unchecked
+                Path         = $file.FullName
+                ChecksFile   = $checksPath
+            })
+    }
+    @($rows | Sort-Object RequestedAt, Task, Checkpoint)
+}
+
+function Get-CardEntries {
+    param([string]$Root)
+    $dir = Join-Path $Root 'docs\tasks'
+    if (-not (Test-Path -LiteralPath $dir)) { return @() }
+    $rows = New-Object System.Collections.Generic.List[object]
+    foreach ($file in @(Get-ChildItem -LiteralPath $dir -Filter 'T-*.md' -File -ErrorAction SilentlyContinue)) {
+        $fields = Get-CardFields -Path $file.FullName
+        $fields['path'] = $file.FullName
+        $rows.Add([pscustomobject]$fields)
+    }
+    @($rows | Sort-Object id)
+}
+
+function Set-CheckpointField {
+    param([string]$Path, [string]$Name, [string]$Value)
+    Set-CardField -Path $Path -Name $Name -Value $Value
+}
+
+function Add-MarkdownSectionItem {
+    param([string]$Path, [string]$Heading, [string]$Item)
+    if (-not (Test-Path -LiteralPath $Path)) { return }
+    $content = Read-Utf8 $Path
+    $pattern = "(?ms)^##\s+" + [regex]::Escape($Heading) + "\s*\r?\n(.*?)(?=^##\s+|\z)"
+    $match = [regex]::Match($content, $pattern)
+    if (-not $match.Success) {
+        $content = $content.TrimEnd([char[]]"`r`n") + "`r`n`r`n## $Heading`r`n`r`n$Item`r`n"
+    }
+    else {
+        $body = $match.Groups[1].Value
+        $body = [regex]::Replace($body, '(?m)^-\s*\(user fills[^\r\n]*\)\s*\r?\n?', '')
+        $body = $body.TrimEnd([char[]]"`r`n")
+        if ($body) { $body += "`r`n" }
+        $body += $Item + "`r`n"
+        $replacement = "## $Heading`r`n`r`n" + $body + "`r`n"
+        $content = $content.Substring(0, $match.Index) + $replacement + $content.Substring($match.Index + $match.Length)
+    }
+    Write-Utf8NoBom $Path $content
+}

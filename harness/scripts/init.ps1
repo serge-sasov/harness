@@ -66,9 +66,14 @@ $requiredGlobal = @(
     (Join-Path $GlobalHarness "scripts\stage-done.ps1"),
     (Join-Path $GlobalHarness "scripts\board-update.ps1"),
     (Join-Path $GlobalHarness "scripts\measure-tokens.ps1"),
+    (Join-Path $GlobalHarness "scripts\review.ps1"),
+    (Join-Path $GlobalHarness "scripts\approve.ps1"),
+    (Join-Path $GlobalHarness "scripts\migrate-risk.ps1"),
     (Join-Path $GlobalHarness "checks\engine.json"),
     (Join-Path $GlobalHarness "checks\feature.json"),
     (Join-Path $GlobalHarness "checks\bugfix.json"),
+    (Join-Path $GlobalHarness "checks\risk-policy.json"),
+    (Join-Path $GlobalHarness "checks\review-groups.json"),
     (Join-Path $GlobalRoot "agents\harness.md"),
     (Join-Path $GlobalRoot "agents\harness-ux-designer.md")
 )

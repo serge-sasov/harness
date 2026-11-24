@@ -9,6 +9,8 @@
 | role | orchestrator / analyst / ux-designer / architect / coder / qa / doc-writer |
 | status | pending |
 | hold | false (true forces human review at every checkpoint) |
+| risk_tier | auto (uses stage policy) / low / medium / high / critical |
+| review_mode | auto / human (human forces manual review) |
 | depends_on | T-YYY, T-ZZZ |
 | inputs | comma-separated input artifact paths |
 | artifacts | comma-separated output artifact paths |

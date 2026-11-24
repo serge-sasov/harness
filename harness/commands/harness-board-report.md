@@ -19,8 +19,10 @@ Give `harness-orchestrator` a read-only task:
 4. List separately:
    - tasks ready to start (`pending`, all `depends_on` are `done`, no active
      task);
-   - tasks `awaiting_review` with their pending checkpoint, review file, and
-     requested date;
+   - tasks `awaiting_review` with their pending checkpoint, review file,
+     requested date, risk tier, review group, and gate;
+   - the pending review queue, batch gates, and average wait from
+     `harness/scripts/review.ps1 -Stats`;
    - `failed`/`blocked` tasks with the cause from the card;
    - completed tasks and their commits;
    - bugs without a linked task or with stale status.

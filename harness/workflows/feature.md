@@ -113,8 +113,11 @@ Rules:
   optional level is waived only by `No module decomposition (reason)` or
   `No class model (reason)`.
 - Machine checks must report `FAIL=0` and `UNCHECKED=0`; `MANUAL` items are
-  listed for the user and are never auto-approved. Intermediate checkpoints may
-  be approved by policy P2 only when `MANUAL=0` and `hold: false`.
+  listed for the user and are never auto-approved. In legacy mode, intermediate
+  checkpoints may be approved by P2 only when `MANUAL=0` and `hold: false`. In
+  risk mode, the stage tier, batch gate, closure, UX gate, and `hold` decide;
+  risks and groups are listed in `checks/risk-policy.json` and
+  `checks/review-groups.json`.
 - No `done` without all acceptance items and `CP-F`.
 - `docs/activity.puml`/`.svg` are derived visualizations, never acceptance or
   status evidence; the plan/card/checkpoints are authoritative.

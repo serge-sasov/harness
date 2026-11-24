@@ -148,7 +148,9 @@ backs up to `.harness-backup-<timestamp>/`.
 | `/harness-feature <slug> [e2e] [ux]` | create a pending `P-00` feature planning task |
 | `/harness-bug <report or BUG-XXX>` | create/triage a `BUG-XXX` card and pending bugfix tasks |
 | `/harness-run T-XXX` | execute a task until a checkpoint, or resume after review |
-| `/harness-stage-done T-XXX [CP-N]` | run checks, write the ledger/checkpoint, apply P2, and commit the snapshot |
+| `/harness-stage-done T-XXX [CP-N]` | run checks, write the ledger/checkpoint, apply the approval policy, and commit the snapshot |
+| `/harness-review [T-XXX \| RG-... \| -Stats]` | read-only pending, task, group, or statistics review |
+| `/harness-approve T-XXX [CP-N]` | record an explicit human checkpoint decision |
 | `/harness-board-update all / T-XXX` | sync plan/cards from checkpoint files, then re-render the derived activity when no task is active |
 | `/harness-board-report` | read-only board/bug summary, including pending reviews |
 | `/harness-doctor` | check the installation and the project |
@@ -164,10 +166,12 @@ Run flow:
   -> harness-analyst | harness-ux-designer | harness-architect |
     harness-coder | harness-qa | harness-qa-vision | harness-doc-writer
   -> role stops: CHECKPOINT CP-N reached
-  -> harness-orchestrator: stage-done.ps1 (checks, ledger, checkpoint, P2)
-  -> clean intermediate CP: approved (auto P2), task stays in_progress
-  -> manual items / FAIL / CP-F: awaiting_review; user decides
-  -> /harness-run T-XXX (resume; repeat until CP-F)
+  -> harness-orchestrator: stage-done.ps1 (checks, ledger, checkpoint, policy)
+  -> legacy clean intermediate CP: approved (auto P2)
+  -> risk mode: stage tier/group gate decides; gate/closure/UX/critical waits
+  -> manual items / FAIL / gates: awaiting_review; user decides
+  -> /harness-approve T-XXX CP-N (approved | changes_requested | rejected)
+  -> /harness-run T-XXX (resume; repeat until the final CP)
   -> harness-orchestrator (acceptance, bug status, done/failed, final commit)
 ```
 
@@ -191,14 +195,16 @@ Flow:
    `CHECKPOINT <ID> reached`.
 2. The orchestrator runs `stage-done.ps1`: it executes the registry checks,
    writes `T-XXX-CP-N.checks.json`, appends SHA256 hashes to
-   `docs/evidence/T-XXX.md`, renders the checkpoint, applies policy P2, updates
-   plan/card/board machine fields, re-renders activity, and commits the snapshot.
-3. P2: an intermediate checkpoint with `FAIL=0`, `UNCHECKED=0`, `MANUAL=0`, and
-   `hold: false` becomes `approved` (`auto (P2)`) and the task stays
-   `in_progress`. Any manual item, failed/unchecked check, `hold: true`, or
-   `CP-F` sets `awaiting_review` for the user.
-4. The user reviews artifacts, edits files if needed, and records a decision:
-   `approved`, `changes_requested`, or no decision (keep reviewing).
+   `docs/evidence/T-XXX.md`, renders the checkpoint, applies the active
+   approval policy, updates plan/card/board machine fields, re-renders activity,
+   and commits the snapshot.
+3. Legacy P2: a clean intermediate checkpoint with `hold: false` becomes
+   `approved` (`auto (legacy P2)`) and the task stays `in_progress`. Risk mode:
+   stage tiers, batch gates, closure/UX gates, and `hold` decide; critical and
+   gates wait for the user. Manual/failed/unchecked checks always wait.
+4. Review with `/harness-review` and record only an explicit decision with
+   `/harness-approve`: `approved`, `changes_requested` (or `rejected`), or no
+   decision (keep reviewing).
 5. `/harness-run T-XXX` resumes:
    - `approved` -> `in_progress`, the role continues to the next checkpoint;
    - `changes_requested` -> the role applies the requested changes and returns
@@ -400,6 +406,9 @@ manually from the template.
   `chunk-validate.py`, and `chunk-ledger.md`; set `subagent_depth: 3` and restart
   opencode. Existing tasks stay runnable (chunk checks are `NOT_APPLICABLE`
   without a ledger).
+- Upgrade note for 3.2.0: re-run install and `/harness-init` to copy the risk
+  policy, review groups, and review/approve scripts; existing projects stay in
+  legacy mode until `migrate-risk.ps1` is run.
 - Upgrade note for 3.1.0: re-run `/harness-init` and approve overwrite
   (`init.ps1 -Force`) to copy the updated agents, scripts, and templates;
   existing ledgers keep their stored budgets. Qwen roles use the text-only 128K

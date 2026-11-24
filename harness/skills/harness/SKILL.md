@@ -9,7 +9,10 @@ metadata:
 
 ## When to use
 
-Only when the user explicitly asks to run harness or execute `/harness-run`, `/harness-stage-done`, `/harness-feature`, `/harness-bug`, `/harness-board-update`, or `/harness-board-report` in a project that has `harness/process.md` and `docs/plan.md`.
+Only when the user explicitly asks to run harness or execute `/harness-run`,
+`/harness-stage-done`, `/harness-review`, `/harness-approve`, `/harness-feature`,
+`/harness-bug`, `/harness-board-update`, or `/harness-board-report` in a project
+that has `harness/process.md` and `docs/plan.md`.
 
 Do not use for ordinary development, analysis, or documentation tasks.
 
@@ -30,7 +33,9 @@ Before any action:
 - `/harness-feature <slug> [e2e] [ux]`: create a pending `feature` planning task (`P-00`); does not start work.
 - `/harness-bug <report or BUG-XXX>`: create/triage a `BUG-XXX` card and pending bugfix tasks; does not start work.
 - `/harness-run T-XXX`: execute or resume exactly one task from either workflow.
-- `/harness-stage-done T-XXX [CP-N]`: run checks, write the ledger/checkpoint, apply P2, and commit the snapshot.
+- `/harness-stage-done T-XXX [CP-N]`: run checks, write the ledger/checkpoint, apply the approval policy, and commit the snapshot.
+- `/harness-review [T-XXX|RG-...|-Stats]`: read-only pending/task/group/statistics review.
+- `/harness-approve T-XXX [CP-N]`: record an explicit human decision (`approved`, `changes_requested`, `rejected`).
 - `/harness-board-update all|T-XXX`: reconcile the board from checkpoint files when no task is active.
 - `/harness-board-report`: read-only board report.
 - `/harness-doctor`: installation and project health check, including engine self-test, registry completeness, issue index, model context, compaction plugin, and RAG timeout checks.
@@ -98,7 +103,7 @@ Tasks run strictly sequentially across both workflows: at most one active task (
 
 Status decisions use the plan, task cards, checkpoints, bug cards, workflow files, and Git evidence. `docs/activity.puml`, `docs/activity.svg`, and derivatives are informational only; never use them to determine or reconcile status, dependencies, active task, acceptance, checkpoint decisions, or routing. If activity disagrees with the board/card, the board/card wins and activity is re-rendered.
 
-Every task has at least one checkpoint; `CP-F` is mandatory before `done`. At a checkpoint the role stops and the orchestrator runs `stage-done.ps1`, which executes the registry checks, writes the checks JSON and evidence ledger, renders the checkpoint, and applies policy P2. An intermediate checkpoint with `FAIL=0`, `UNCHECKED=0`, `MANUAL=0`, and `hold: false` is approved by `auto (P2)`; manual items, failed/unchecked checks, `hold: true`, and `CP-F` wait for the user. Without explicit approval, the task stays `awaiting_review`.
+Every task has at least one checkpoint; `CP-F` is mandatory before `done`. At a checkpoint the role stops and the orchestrator runs `stage-done.ps1`, which executes the registry checks, writes the checks JSON and evidence ledger, renders the checkpoint, and applies the active approval policy. Legacy P2 auto-approves clean intermediate checkpoints with `hold: false`; risk mode uses stage tiers, batch gates, closure/UX gates, and `hold`. Manual items, failed/unchecked checks, and gates wait for the user. Human decisions are recorded only with `approve.ps1`; without one, the task stays `awaiting_review`.
 
 A task is closed only by the card's `acceptance` criteria and `CP-F` approval. On failure, set `failed` with the cause in `Blockers`; up to 3 attempts per chunk, then `blocked`. A bug that cannot be reproduced after 3 attempts is `blocked` with evidence, not a speculative fix.
 

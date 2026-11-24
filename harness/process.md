@@ -112,9 +112,9 @@ here; workflow-specific stages and task graphs live in
 - User edits made at a checkpoint are authoritative; roles must preserve them
   and report conflicts instead of overwriting.
 - Checkpoints are closed by `harness/scripts/stage-done.ps1`: it runs the
-  deterministic checks, writes the checks JSON, records artifact hashes in
+  registry, writes `docs/checkpoints/T-XXX-CP-N.checks.json`, records hashes in
   `docs/evidence/T-XXX.md`, renders the checkpoint from machine data, applies
-  approval policy P2 (section 11.2), updates plan/card/board machine fields,
+  the active approval policy (section 11.2), updates plan/card/board machine fields,
   re-renders the derived activity diagram, and commits the snapshot.
 - Scripts own machine fields: checks, hashes, `base_commit`, `usage`,
   `snapshot_commit`, `generated_by`, and the board `Status`/`Usage`/`Commit`
@@ -173,17 +173,19 @@ explicit experiment and return to their listed level afterward.
   pointer.
 - Shared card fields: `id, title, workflow, stage, role, status, depends_on,
   inputs, artifacts, e2e, ux, chunks, budget, base_commit, usage, hold,
-  checkpoints, issues, commit`.
+  risk_tier, review_mode, checkpoints, issues, commit`.
 - Bugfix cards add `bug, severity, profile`; feature cards add e2e/UX
   applicability. `profile: hotfix` is allowed only for P0/P1.
 - `hold: true` forces human review at every checkpoint, including intermediate
-  ones; it disables P2 auto-approval for that task.
+  ones; it disables auto-approval in both legacy and risk modes.
+- `risk_tier` overrides the stage tier (`auto` uses the policy); `review_mode:
+  human` forces human review regardless of stage risk.
 - `base_commit` is the revision a checkpoint diff is measured from; when absent,
   the latest checkpoint snapshot is used, then the first commit of the task.
 - Task statuses: `pending`, `in_progress`, `awaiting_review`, `done`, `failed`,
   `blocked`.
 - Transitions: `pending -> in_progress`; `in_progress -> awaiting_review` at a
-  checkpoint that needs a human; `in_progress -> in_progress` when P2
+  checkpoint that needs a human; `in_progress -> in_progress` when the policy
   auto-approves an intermediate checkpoint; `awaiting_review -> in_progress`
   after approval or a change request (intermediate checkpoints);
   `awaiting_review -> done` only after `CP-F` approval; `awaiting_review ->
@@ -217,21 +219,24 @@ explicit experiment and return to their listed level afterward.
 7. Orchestrator runs
    `harness/scripts/stage-done.ps1 -Task T-XXX -Checkpoint CP-N` (or
    `verify-stage.ps1` first for a preview). The script runs the checks, writes
-   the checks JSON, records hashes, renders the checkpoint, applies policy P2
-   (section 11.2), updates the board/card machine fields, re-renders the derived
+   the checks JSON, records hashes, renders the checkpoint, applies the active
+   approval policy (section 11.2), updates the board/card machine fields, re-renders the derived
    activity diagram, and commits the checkpoint snapshot.
-8. A checkpoint with `FAIL=0`, `UNCHECKED=0`, and `MANUAL=0` on an intermediate
-   stage is `approved` by `auto (P2)` and the task stays `in_progress`; any
-   other result sets `awaiting_review`. `CP-F` always waits for the user unless
-   the user explicitly requested `-AutoApprove` and all checks are clean. A card
-   with `hold: true` always waits for the user.
+8. Apply the active approval policy (section 11.2). In `legacy` mode, a clean
+   intermediate checkpoint with `hold: false` is approved by `auto (legacy P2)`
+   and the task stays `in_progress`; `CP-F` waits for the user unless `-AutoApprove`
+   was explicitly requested. In `risk` mode, the stage tier, batch gate, closure,
+   UX gate, and `hold` decide whether the checkpoint auto-approves or waits.
+   `FAIL`, `UNCHECKED`, and `MANUAL` always wait for the user.
 9. The lead reports the checkpoint to the user: artifacts, machine results,
-   manual items, how to edit/comment, and resume command. The run ends; no
-   auto-continue for human checkpoints.
+   manual items, risk/group/gate, how to edit/comment, and the review/resume
+   command. The run ends; no auto-continue for human checkpoints.
 10. On `/harness-run T-XXX` in `awaiting_review`: read the checkpoint file and
-    user edits. If no decision, stop and ask. If `approved`, finalize at `CP-F`
-    (step 11) or continue past an intermediate checkpoint. If
-    `changes_requested`, return to the same checkpoint after fixes.
+    user edits. If no decision, stop and ask. Record it only with
+    `harness/scripts/approve.ps1` (`approved`, `changes_requested`, or
+    `rejected`). If `approved`, finalize at `CP-F` (step 11) or continue past an
+    intermediate checkpoint. If `changes_requested`, return to the same
+    checkpoint after fixes; `rejected` sets `failed`.
 11. After the last role checkpoint and `CP-F` approval, verify acceptance, set
     `done`, log files/commands/results, update artifacts, update the linked bug
     status, and commit.
@@ -245,20 +250,23 @@ explicit experiment and return to their listed level afterward.
 - Checkpoint file: `docs/checkpoints/T-XXX-CP-N.md`, rendered by
   `stage-done.ps1` from machine data; machine check details live in
   `docs/checkpoints/T-XXX-CP-N.checks.json`.
-- Checkpoint statuses: `awaiting_review`, `approved`, `changes_requested`.
+- Checkpoint statuses: `awaiting_review`, `approved`, `changes_requested`,
+  `rejected`.
 - Required fields: task, workflow, bug, checkpoint, role, stage, artifacts,
   status, requested_at, reviewed_at, reviewer, decision, snapshot_commit,
-  generated_by, checks_file, user remarks, user edits, role response,
+  generated_by, checks_file, policy_mode, risk_tier, risk_flags, review_group,
+  gate, approval_reason, manual_ack, user remarks, user edits, role response,
   next action, usage, diff stat.
-- Machine fields (`status`, `reviewed_at`, `reviewer` for auto approvals,
-  `snapshot_commit`, `generated_by`, `checks_file`, `usage`, `diff stat`) are
-  written by the script. Semantic fields (a human `decision`, remarks, edits,
-  role response) are written by the user or orchestrator.
-- Approval policy P2 (section 11.2): an intermediate checkpoint with
-  `FAIL=0`, `UNCHECKED=0`, `MANUAL=0`, and `hold: false` is approved
-  automatically as `auto (P2)`. Any manual item, failed/unchecked check, or
-  `hold: true` requires the user. `CP-F` always requires the user unless
-  `-AutoApprove` was explicitly requested and the same all-zero condition holds.
+- Machine fields (`status` for auto decisions, `reviewed_at`, `reviewer` for
+  auto approvals, `snapshot_commit`, `generated_by`, `checks_file`,
+  `policy_mode`, `risk_tier`, `risk_flags`, `review_group`, `gate`,
+  `approval_reason`, `manual_ack`, `usage`, `diff stat`) are written by the
+  scripts. Human decisions are written only by `approve.ps1`; remarks, edits,
+  and role response are written by the user or orchestrator.
+- Approval policy (section 11.2): legacy P2 auto-approves clean intermediate
+  checkpoints with `hold: false`; risk mode uses the stage tier, batch gate,
+  closure, UX gate, and `hold`. `FAIL`, `UNCHECKED`, and `MANUAL` always require
+  the user.
 - The user may edit artifacts directly and/or write remarks in the checkpoint
   file. Chat remarks may be transcribed by the orchestrator into the file.
 - The role must read the checkpoint decision, user remarks, and `git diff` since
@@ -526,26 +534,44 @@ stop and request decomposition instead of attempting a larger write.
   A role uses the deeper level only when the chunk still overflows the budget;
   `d2 only` roles never spawn a third level.
 
-### 11.2 Verification and approval policy (P2)
+### 11.2 Verification and approval policy
 
-`stage-done.ps1` is the only writer of checkpoint status. The decision matrix:
+`stage-done.ps1` writes machine and automatic decisions; `approve.ps1` is the
+only writer of human decisions. `checks/risk-policy.json` selects `legacy`
+(default) or `risk`; `checks/review-groups.json` defines batch groups and one
+gate per group. `migrate-risk.ps1` activates risk mode and is opt-in.
+
+Legacy mode:
 
 | Result | Intermediate CP | CP-F |
 |---|---|---|
 | `FAIL>0` or `UNCHECKED>0` | `awaiting_review`; no auto-approval | `awaiting_review` |
 | `MANUAL>0` | `awaiting_review`; user checks the listed items | `awaiting_review` |
-| all zero, `hold: false` | `approved` by `auto (P2)`; task stays `in_progress` | user approves; only explicit `-AutoApprove` may auto-approve |
+| all zero, `hold: false` | `approved` by `auto (legacy P2)`; task stays `in_progress` | user approves; only explicit `-AutoApprove` may auto-approve |
 | `hold: true` | `awaiting_review` | `awaiting_review` |
 
+Risk mode:
+
+- `FAIL>0`, `UNCHECKED>0`, `MANUAL>0`, `hold: true`, `review_mode: human`,
+  closure stages, UX gates, batch gates, and critical risk -> `awaiting_review`.
+- low/medium non-gate -> approved by `auto (risk)`.
+- high inside a batch, non-gate -> approved by `auto (risk)`; the group gate is
+  the human review.
+- high outside a batch, intermediate -> approved by `auto (risk)`; high at stage
+  final -> `awaiting_review`.
+- A batch group has one review packet at its gate; non-gate clean checkpoints
+  may auto-approve, but the gate waits for the user.
+- Approve with
+  `harness/scripts/approve.ps1 -Task T-XXX -Checkpoint CP-N -Decision approved`.
+  Add `-AcknowledgeManual` for manual items, `-Remarks`, or `-Reopen T-YYY`.
+  `changes_requested` returns the task to `in_progress`; `rejected` sets
+  `failed`.
+- `-AutoApprove` is legacy-only for `CP-F`. Risk mode ignores it with a warning.
+- `migrate-risk` does not change existing checkpoint decisions.
 - `UNCHECKED` means a declared artifact is not covered by any check. Fix the
-  registry or the card; never mark it approved.
-- A failed check cannot be waived with prose. If the registry is wrong, fix the
-  registry and record why in the card log.
-- `-AutoApprove` is allowed only for `CP-F`, only when the user explicitly asked
-  for it in the current session, and only with `FAIL=0`, `UNCHECKED=0`,
-  `MANUAL=0`, and `hold: false`.
+  registry or card; never approve it.
 - Manual checks are review items, not failures. The user decides them; the role
-  must not set their result.
+  must not set their result or approve its own checkpoint.
 - Approval is never inferred from silence, file edits, an empty remarks section,
   or a passing exit code alone.
 
@@ -620,9 +646,9 @@ roles never edit them.
 - Hand-editing machine fields: checks JSON results, ledger hashes, checkpoint
   `snapshot_commit`/`generated_by`, or board/card `Usage`/`Commit`; bypassing a
   `FAIL`/`UNCHECKED` result with prose; setting a checkpoint `status` without a
-  decision or a P2 all-zero result.
+  human decision or an automatic policy result.
 - Deleting or rewriting evidence ledger rows or checkpoint snapshots.
-- Broadening harness `allow` patterns to `*`, `git*`, or `Remove-Item`; the five
+- Broadening harness `allow` patterns to `*`, `git*`, or `Remove-Item`; the
   approved script patterns are exact and doctor-checked.
 - Mixing product bugs (`docs/bugs/`) with harness problems (`docs/issues/`).
 - Access outside drive `C:` (see agent permissions).

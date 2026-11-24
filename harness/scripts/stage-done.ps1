@@ -5,13 +5,17 @@ Close a harness stage checkpoint deterministically.
 
 .DESCRIPTION
 Runs the deterministic checks, records hashes in the evidence ledger, renders the
-checkpoint from machine data, applies the P2 approval policy, updates the board
-and card, re-renders activity, and commits the snapshot.
+checkpoint from machine data, applies the active approval policy, updates the
+board and card, re-renders activity, and commits the snapshot.
 
-Policy P2: an intermediate checkpoint with FAIL=0, UNCHECKED=0 and MANUAL=0 is
-approved automatically (reviewer "auto (P2)"). CP-F and any checkpoint with
-MANUAL items always require the user. A card with "hold: true" forces human
-review for every checkpoint.
+Legacy policy: an intermediate checkpoint with FAIL=0, UNCHECKED=0, MANUAL=0,
+and hold=false is approved automatically (reviewer "auto (legacy P2)"). CP-F and
+any checkpoint with MANUAL items wait for the user. A card with "hold: true"
+always waits.
+
+Risk policy (checks/risk-policy.json mode=risk): stage tiers, batch gates,
+closure/UX gates, and hold decide; critical and gates wait for the user. Human
+decisions are recorded only by approve.ps1. -AutoApprove is legacy-only.
 
 .EXAMPLE
 .\stage-done.ps1 -Task T-005 -Checkpoint CP-F
@@ -149,25 +153,40 @@ foreach ($a in $artifacts) {
 
 $isFinal = ($Checkpoint -eq 'CP-F')
 $hold = ($card.ContainsKey('hold') -and $card['hold'].Trim().ToLowerInvariant() -eq 'true')
-$machineOk = ($fail -eq 0 -and $unchecked -eq 0)
-$autoOk = ($machineOk -and $manual -eq 0)
-$approved = $false
-$reviewer = 'user'
-if ($isFinal) {
-    if ($AutoApprove -and $autoOk) {
-        $approved = $true
-        $reviewer = 'auto (explicit -AutoApprove)'
-    }
-}
-elseif (-not $hold -and $autoOk) {
-    $approved = $true
-    $reviewer = 'auto (P2)'
-}
+$riskPolicy = Get-RiskPolicy -Root $Root
+$reviewGroups = Get-ReviewGroups -Root $Root
+$changedFiles = @()
+try { $changedFiles = @(Get-ChangedFiles -Root $Root -BaseCommit $baseCommit) }
+catch { Write-Host "[warn] changed-file risk scan skipped: $_" -ForegroundColor Yellow }
+$risk = Get-RiskAssessment -Root $Root -Task $Task -Workflow $workflow -Stage $stage -Checkpoint $Checkpoint `
+    -Card $card -CardPath $cardPath -Policy $riskPolicy -ReviewGroups $reviewGroups `
+    -ChangedFiles $changedFiles -Artifacts $artifacts -BaseCommit $baseCommit
+$legacyUxGate = ($riskPolicy.Mode -eq 'legacy' -and $workflow -eq 'sdd' -and $stage -eq 'UX-01' -and $Checkpoint -eq 'CP-2')
+$decisionInfo = Get-ApprovalDecision -PolicyMode $riskPolicy.Mode -IsFinal $isFinal `
+    -IsUxGate $risk.IsUxGate -LegacyUxGate $legacyUxGate -IsClosure $risk.IsClosure `
+    -IsBatchGate $risk.IsBatchGate -IsStageFinal $risk.IsStageFinal `
+    -RiskTier $risk.RiskTier -ReviewMode $risk.ReviewMode -Hold $hold `
+    -Fail $fail -Manual $manual -Unchecked $unchecked -AutoApprove:$AutoApprove `
+    -ReviewGroup $risk.ReviewGroupId -Gate $risk.Gate
+$approved = [bool]$decisionInfo.Approved
+$reviewer = [string]$decisionInfo.Reviewer
 $decision = if ($approved) { 'approved' } else { '-' }
+$approvalReason = [string]$decisionInfo.Reason
+$policyMode = [string]$risk.Mode
+$riskTier = [string]$risk.RiskTier
+$riskFlags = if (@($risk.Flags).Count -gt 0) { (@($risk.Flags | ForEach-Object { $_.id }) -join ', ') } else { '-' }
+$reviewGroupText = if ($risk.ReviewGroupId) { [string]$risk.ReviewGroupId } else { '-' }
+$gateText = if ($risk.Gate) { [string]$risk.Gate } else { '-' }
+if ($policyMode -eq 'risk' -and $AutoApprove) {
+    Write-Host "[info] -AutoApprove does not bypass risk gates; use approve.ps1 for human decisions" -ForegroundColor Yellow
+}
 $now = Get-Date
 $reviewedAt = if ($approved) { $now.ToString('yyyy-MM-ddTHH:mm:ss') } else { '-' }
 $cpStatus = if ($approved) { 'approved' } else { 'awaiting_review' }
-$nextAction = if ($approved -and $isFinal) { 'accept task' } elseif ($approved) { 'continue' } else { 'return to this checkpoint' }
+$nextAction = if ($approved -and $isFinal) { 'accept task' }
+elseif ($approved) { 'continue' }
+elseif ($risk.IsBatchGate) { "review group $reviewGroupText gate; run approve.ps1 -Task $Task -Checkpoint $Checkpoint" }
+else { "review checkpoint; run approve.ps1 -Task $Task -Checkpoint $Checkpoint" }
 $newCardStatus = Get-CardStatusForCheckpoint -Approved $approved -IsFinal $isFinal
 
 $usage = Get-TaskUsage -Task $Task -ProjectPath $Root
@@ -213,8 +232,15 @@ $lines.Add('| requested_at | ' + $now.ToString('yyyy-MM-ddTHH:mm:ss') + ' |')
 $lines.Add('| reviewed_at | ' + $reviewedAt + ' |')
 $lines.Add('| reviewer | ' + $reviewer + ' |')
 $lines.Add('| decision | ' + $decision + ' |')
+$lines.Add('| policy_mode | ' + $policyMode + ' |')
+$lines.Add('| risk_tier | ' + $riskTier + ' |')
+$lines.Add('| risk_flags | ' + $riskFlags + ' |')
+$lines.Add('| review_group | ' + $reviewGroupText + ' |')
+$lines.Add('| gate | ' + $gateText + ' |')
+$lines.Add('| approval_reason | ' + $approvalReason + ' |')
+$lines.Add('| manual_ack | - |')
 $lines.Add('| snapshot_commit | - |')
-$lines.Add('| generated_by | stage-done/1 |')
+$lines.Add('| generated_by | stage-done/2 |')
 $lines.Add('| checks_file | ' + $checksRel + ' |')
 $lines.Add('')
 $lines.Add('## Review scope')
@@ -317,8 +343,8 @@ $null = Set-CardField -Path $cardPath -Name 'status' -Value $newCardStatus
 $null = Set-CardField -Path $cardPath -Name 'usage' -Value $usageLine
 $checksCell = '{0}P/{1}F/{2}M' -f $checks.summary.pass, $fail, $manual
 $null = Set-CardCheckpointRow -Path $cardPath -Checkpoint $Checkpoint -Status $cpStatus -ReviewFile $cpRel -Checks $checksCell
-$logLine = ('- {0}: {1} {2} ({3}); checks {4} PASS/{5} FAIL/{6} MANUAL/{7} UNCHECKED; usage {8}; reviewer {9}' -f `
-        (Get-Date -Format 'yyyy-MM-dd'), $Checkpoint, $cpStatus, $stage, $checks.summary.pass, $fail, $manual, $unchecked, $usageLine, $reviewer)
+$logLine = ('- {0}: {1} {2} ({3}); checks {4} PASS/{5} FAIL/{6} MANUAL/{7} UNCHECKED; usage {8}; risk {9}/{10} group {11}; reviewer {12}' -f `
+        (Get-Date -Format 'yyyy-MM-dd'), $Checkpoint, $cpStatus, $stage, $checks.summary.pass, $fail, $manual, $unchecked, $usageLine, $riskTier, $policyMode, $reviewGroupText, $reviewer)
 $cardText = (Read-Utf8 $cardPath).TrimEnd([char[]]"`r`n") + "`r`n" + $logLine + "`r`n"
 Write-Utf8NoBom $cardPath $cardText
 

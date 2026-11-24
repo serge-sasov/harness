@@ -9,6 +9,8 @@
 | role | coder / qa / analyst / architect / ux-designer / doc-writer / orchestrator |
 | status | pending |
 | hold | false (true forces human review at every checkpoint) |
+| risk_tier | auto (uses stage policy) / low / medium / high / critical |
+| review_mode | auto / human (human forces manual review) |
 | depends_on | T-YYY, T-ZZZ |
 | bug | BUG-XXX |
 | severity | P0 / P1 / P2 / P3 |

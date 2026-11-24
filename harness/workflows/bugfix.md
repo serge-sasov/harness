@@ -128,6 +128,8 @@ QA:
 Closure:
 
 - machine checks report `FAIL=0` and `UNCHECKED=0`; manual items are user-decided;
+- intermediate checkpoints follow legacy P2 or the risk batch groups; the final
+  checkpoint is always a human decision;
 - bug status is correct (`fixed`/`verified`/`closed`/`duplicate`/`wontfix`);
 - bug index links to all tasks and the fix commit;
 - P0/P1 postmortem exists;

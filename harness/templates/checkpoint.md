@@ -2,8 +2,9 @@
 
 > Rendered by `harness/scripts/stage-done.ps1` from machine data. The table
 > fields `status`, `reviewed_at`, `reviewer`, `snapshot_commit`, `generated_by`,
-> `checks_file` are machine-owned; do not hand-edit. A human reviewer fills
-> `decision`, `user remarks`, and `user edits`.
+> `checks_file`, `policy_mode`, `risk_tier`, `risk_flags`, `review_group`, `gate`,
+> `approval_reason`, `manual_ack` are machine-owned; do not hand-edit. A human
+> reviewer fills `decision`, `user remarks`, and `user edits`.
 
 | Field | Value |
 |---|---|
@@ -14,14 +15,21 @@
 | role | analyst / ux-designer / architect / coder / qa / doc-writer / orchestrator |
 | stage | feature stage ID (P-00..F-01) or bugfix stage ID (B-00..B-05) |
 | artifacts | comma-separated artifact paths |
-| status | awaiting_review / approved |
+| status | awaiting_review / approved / changes_requested / rejected |
 | requested_at | YYYY-MM-DDTHH:MM:SS |
 | reviewed_at | - |
-| reviewer | user / auto (P2) |
-| decision | - (approved / changes_requested) |
+| reviewer | user / auto (legacy / risk) |
+| decision | - (approved / changes_requested / rejected) |
 | snapshot_commit | - |
-| generated_by | stage-done/1 |
+| generated_by | stage-done/2 |
 | checks_file | docs/checkpoints/T-XXX-CP-N.checks.json |
+| policy_mode | legacy / risk |
+| risk_tier | low / medium / high / critical |
+| risk_flags | comma-separated flag ids or - |
+| review_group | RG-... or - |
+| gate | stage CP-N or - |
+| approval_reason | machine or human reason |
+| manual_ack | yes / no |
 
 ## Review scope
 

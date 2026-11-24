@@ -58,6 +58,8 @@ permission:
     "*verify-artifacts.ps1*": "allow"
     "*verify-stage.ps1*": "allow"
     "*stage-done.ps1*": "allow"
+    "*review.ps1*": "allow"
+    "*approve.ps1*": "allow"
     "*board-update.ps1*": "allow"
     "*measure-tokens.ps1*": "allow"
     "git push*": "deny"
@@ -102,10 +104,10 @@ report that the project is not initialized (`/harness-init`).
    `openapi-api-*` and `swimlane-svc-*` outputs are governed by the architecture
    description's `Scope and applicability` section and stage checks.
 5. Manage checkpoints with `harness/scripts/stage-done.ps1`: it runs the checks,
-   writes the checks JSON/evidence ledger/checkpoint, applies P2, updates
-   plan/card/activity, and commits the snapshot. Preview with
-   `verify-stage.ps1`. Record user decisions/edits/role responses and resume
-   after approval or changes. For chunked stages, close one checkpoint after all
+   writes the checks JSON/evidence ledger/checkpoint, applies the active
+   approval policy, updates plan/card/activity, and commits the snapshot. Preview
+   with `verify-stage.ps1`. Record human decisions only with `approve.ps1`
+   (`approved`, `changes_requested`, `rejected`); never infer one. For chunked stages, close one checkpoint after all
    chunks pass validation; record each failed attempt (time, error, token
    counts, context, artifact status) in the card log.
 6. Accept the task against `acceptance` and `CP-F`; on failure, set `failed` and
@@ -172,15 +174,16 @@ You own `docs/chunks/T-XXX.json` for the active task and you do not delegate
    to `in_progress` for the first linked bugfix task.
 5. When the role reports a checkpoint: run
    `harness/scripts/stage-done.ps1 -Task T-XXX -Checkpoint CP-N`. It runs the
-   registry checks, writes the checks JSON/ledger/checkpoint, applies P2, updates
-   plan/card/activity, and commits the snapshot. Update the linked bug status in
-   a separate `chore: bug ...` commit. Do not continue the role. P2 auto-approves
-   only intermediate checkpoints with `FAIL=0`, `UNCHECKED=0`, `MANUAL=0`, and
-   `hold: false`; `CP-F` and any manual item wait for the user.
+   registry checks, writes the checks JSON/ledger/checkpoint, applies the active
+   approval policy, updates plan/card/activity, and commits the snapshot. Update
+   the linked bug status in a separate `chore: bug ...` commit. Do not continue
+   the role. Legacy P2 auto-approves clean intermediate checkpoints with
+   `hold: false`; risk mode uses stage tiers, batch gates, closure/UX gates, and
+   `hold`. `CP-F`, manual/failed/unchecked checks, and gates wait for the user.
 6. On resume: read the decision and user edits; if `approved`, finalize at
    `CP-F` or set `in_progress` and continue past an intermediate checkpoint; if
-   `changes_requested`, return to the same checkpoint; if no decision, stop and
-   ask.
+   `changes_requested`, return to the same checkpoint; `rejected` sets `failed`;
+   if no decision, stop and ask. Record decisions with `approve.ps1`.
 7. After the final role checkpoint and `CP-F`: accept against `acceptance`, set
    `done`/`failed`; update plan, card, diagram, SVG, bug card/index, and issues.
 8. `git add` affected files and `git commit`.
